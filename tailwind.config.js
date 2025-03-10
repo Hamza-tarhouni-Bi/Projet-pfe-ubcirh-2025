@@ -21,6 +21,7 @@ module.exports = {
   theme: {
     colors: {
       ...colors,
+      cadetblue: '#5F9EA0',
     },
     extend: {
       minHeight: {

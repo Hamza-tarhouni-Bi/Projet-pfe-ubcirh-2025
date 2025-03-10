@@ -21,8 +21,9 @@ export default function Auth() {
           <div
             className="absolute top-0 w-full h-full bg-blueGray-800 bg-no-repeat bg-full"
             style={{
+              backgroundColor:"cadetblue",
               backgroundImage:
-                "url(" + require("assets/img/bclogin.jpg").default + ")",
+                "url(" + require("assets/img/test.png").default + ")",
             }}
           ></div>
           <Switch>

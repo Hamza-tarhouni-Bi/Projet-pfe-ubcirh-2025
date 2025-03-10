@@ -48,6 +48,7 @@ export default function Index() {
 
         <img
   className="absolute top-0 right-0 pt-16 sm:w-6/12 sm:max-h-full -mt-48 sm:mt-0 w-full h-auto max-h-[860px] object-cover"
+ 
   src={require("assets/img/pattern_react.png").default}
   alt="..."
 />

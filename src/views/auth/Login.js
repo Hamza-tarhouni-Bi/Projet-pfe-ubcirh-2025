@@ -2,6 +2,14 @@ import React from "react";
 import { Link } from "react-router-dom";
 
 export default function Login() {
+  const handleGithubLogin = () => {
+    window.location.href = "https://github.com/login"; 
+  };
+
+  const handleGoogleLogin = () => {
+    window.location.href = "https://accounts.google.com/signin"; 
+  };
+
   return (
     <>
       <div className="container mx-auto px-4 h-full">
@@ -18,6 +26,7 @@ export default function Login() {
                   <button
                     className="bg-white active:bg-blueGray-50 text-blueGray-700 font-normal px-4 py-2 rounded outline-none focus:outline-none mr-2 mb-1 uppercase shadow hover:shadow-md inline-flex items-center font-bold text-xs ease-linear transition-all duration-150"
                     type="button"
+                    onClick={handleGithubLogin}
                   >
                     <img
                       alt="..."
@@ -29,6 +38,7 @@ export default function Login() {
                   <button
                     className="bg-white active:bg-blueGray-50 text-blueGray-700 font-normal px-4 py-2 rounded outline-none focus:outline-none mr-1 mb-1 uppercase shadow hover:shadow-md inline-flex items-center font-bold text-xs ease-linear transition-all duration-150"
                     type="button"
+                    onClick={handleGoogleLogin}
                   >
                     <img
                       alt="..."

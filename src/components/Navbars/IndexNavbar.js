@@ -15,10 +15,10 @@ export default function Navbar(props) {
               to="/"
               className="text-blueGray-700 text-sm font-bold leading-relaxed inline-block mr-4 py-2 whitespace-nowrap uppercase"
             >
-              <img 
-                src="https://www.ubci.tn/wp-content/themes/ubci/img/logo-banque-ubci-xs.png" 
-                alt="UBCI Logo" 
-                style={{ height: '40px', width: '150px' }} 
+              <img
+                src="https://www.ubci.tn/wp-content/themes/ubci/img/logo-banque-ubci-xs.png"
+                alt="UBCI Logo"
+                style={{ height: "40px", width: "150px" }}
               />
             </Link>
             <button
@@ -36,61 +36,25 @@ export default function Navbar(props) {
             }
             id="example-navbar-warning"
           >
-           {/* <ul className="flex flex-col lg:flex-row list-none mr-auto">
-              <li className="flex items-center">
-                <a
-                  className="hover:text-blueGray-500 text-blueGray-700 px-3 py-4 lg:py-2 flex items-center text-xs uppercase font-bold"
-                  href="https://www.creative-tim.com/learning-lab/tailwind/react/overview/notus?ref=nr-index-navbar"
-                >
-                  <i className="text-blueGray-400 far fa-file-alt text-lg leading-lg mr-2" />{" "}
-                  Docs
-                </a>
-              </li>
-            </ul>*/}
             <ul className="flex flex-col lg:flex-row list-none lg:ml-auto">
               <li className="flex items-center">
                 <IndexDropdown />
               </li>
               <li className="flex items-center">
-                <a
-                  className="hover:text-blueGray-500 text-blueGray-700 px-3 py-4 lg:py-2 flex items-center text-xs uppercase font-bold"
-                  href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fdemos.creative-tim.com%2Fnotus-react%2F%23%2F"
-                  target="_blank"
-                >
-                  <i className="text-blueGray-400 fab fa-facebook text-lg leading-lg " />
-                  <span className="lg:hidden inline-block ml-2">Share</span>
-                </a>
-              </li>
-
-              <li className="flex items-center">
-                <a
-                  className="hover:text-blueGray-500 text-blueGray-700 px-3 py-4 lg:py-2 flex items-center text-xs uppercase font-bold"
-                  href="https://twitter.com/intent/tweet?url=https%3A%2F%2Fdemos.creative-tim.com%2Fnotus-react%2F%23%2F&text=Start%20your%20development%20with%20a%20Free%20Tailwind%20CSS%20and%20React%20UI%20Kit%20and%20Admin.%20Let%20Notus%20React%20amaze%20you%20with%20its%20cool%20features%20and%20build%20tools%20and%20get%20your%20project%20to%20a%20whole%20new%20level.%20"
-                  target="_blank"
-                >
-                  <i className="text-blueGray-400 fab fa-twitter text-lg leading-lg " />
-                  <span className="lg:hidden inline-block ml-2">Tweet</span>
-                </a>
-              </li>
-
-              <li className="flex items-center">
-                <a
-                  className="hover:text-blueGray-500 text-blueGray-700 px-3 py-4 lg:py-2 flex items-center text-xs uppercase font-bold"
-                  href="https://github.com/creativetimofficial/notus-react?ref=nr-index-navbar"
-                  target="_blank"
-                >
-                  <i className="text-blueGray-400 fab fa-github text-lg leading-lg " />
-                  <span className="lg:hidden inline-block ml-2">Star</span>
-                </a>
-              </li>
-
-              <li className="flex items-center">
-                <button
+                <Link
+                  to="auth/login"
                   className="bg-lightBlue-500 text-white active:bg-lightBlue-600 text-xs font-bold uppercase px-4 py-2 rounded shadow hover:shadow-lg outline-none focus:outline-none lg:mr-1 lg:mb-0 ml-3 mb-3 ease-linear transition-all duration-150"
-                  type="button"
                 >
-                  <i className="fas fa-arrow-alt-circle-down"></i> Download
-                </button>
+                  <i className="fas fa-sign-in-alt"></i> Login
+                </Link>
+              </li>
+              <li className="flex items-center">
+                <Link
+                  to="auth/register"
+                  className="bg-lightBlue-500 text-white active:bg-lightBlue-600 text-xs font-bold uppercase px-4 py-2 rounded shadow hover:shadow-lg outline-none focus:outline-none lg:mr-1 lg:mb-0 ml-3 mb-3 ease-linear transition-all duration-150"
+                >
+                  <i className="fas fa-user-plus"></i> Register
+                </Link>
               </li>
             </ul>
           </div>
