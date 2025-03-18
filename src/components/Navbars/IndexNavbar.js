@@ -36,10 +36,30 @@ export default function Navbar(props) {
             }
             id="example-navbar-warning"
           >
-            <ul className="flex flex-col lg:flex-row list-none lg:ml-auto">
+            <ul className="flex flex-col lg:flex-row list-none lg:ml-auto items-center">
+              {/* Lien "Home" */}
               <li className="flex items-center">
-                <IndexDropdown />
+                <Link
+                  to="/"
+                  className="text-blueGray-700 text-sm font-bold leading-relaxed inline-block py-2 whitespace-nowrap uppercase hover:text-lightBlue-500"
+                >
+                  Home
+                </Link>
               </li>
+              {/* Espace entre "Home" et "Recrutement" */}
+              <li className="flex items-center mx-4">
+                {/* Espace ajouté ici */}
+              </li>
+              {/* Lien "Recrutement" */}
+              <li className="flex items-center">
+                <Link
+                  to="/recrutement"
+                  className="text-blueGray-700 text-sm font-bold leading-relaxed inline-block py-2 whitespace-nowrap uppercase hover:text-lightBlue-500"
+                >
+                  Recrutement
+                </Link>
+              </li>
+              {/* Bouton "Login" */}
               <li className="flex items-center">
                 <Link
                   to="auth/login"
@@ -48,6 +68,7 @@ export default function Navbar(props) {
                   <i className="fas fa-sign-in-alt"></i> Login
                 </Link>
               </li>
+              {/* Bouton "Register" */}
               <li className="flex items-center">
                 <Link
                   to="auth/register"

@@ -133,7 +133,7 @@ export default function Sidebar() {
                     }
                     to="/admin/personnels"
                   ></i>{" "}
-                  Employées
+                  personnels
                 </Link>
               </li>
 

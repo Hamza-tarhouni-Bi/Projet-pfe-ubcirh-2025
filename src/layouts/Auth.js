@@ -2,14 +2,12 @@ import React from "react";
 import { Switch, Route, Redirect } from "react-router-dom";
 
 // components
-
-import Navbar from "components/Navbars/AuthNavbar.js";
+import Navbar from "components/Navbars/IndexNavbar";
 import FooterSmall from "components/Footers/FooterSmall.js";
 
 // views
-
 import Login from "views/auth/Login.js";
-import forget from "views/auth/forget";
+import Forget from "views/auth/forget";
 import Register from "views/auth/Register.js";
 
 export default function Auth() {
@@ -18,19 +16,14 @@ export default function Auth() {
       <Navbar transparent />
       <main>
         <section className="relative w-full h-full py-40 min-h-screen">
-          <div
-            className="absolute top-0 w-full h-full bg-blueGray-800 bg-no-repeat bg-full"
-            style={{
-              backgroundColor:"cadetblue",
-              backgroundImage:
-                "url(" + require("assets/img/test.png").default + ")",
-            }}
-          ></div>
+          <div className="absolute top-0 w-full h-full bg-blueGray-800 bg-no-repeat bg-full"></div>
           <Switch>
-          <Route path="/auth/login" exact component={Login} />
-          <Route path="/auth/forget" exact component={forget} />
-          <Route path="/auth/register" exact component={Register} />
-            <Redirect from="/auth" to="/auth/login" />
+            <Route path="/auth/login" exact component={Login} />
+            <Route path="/auth/forget" exact component={Forget} />
+            <Route path="/auth/register" exact component={Register} />
+            
+          
+            <Route path="/auth" render={() => <Redirect to="/auth/login" />} />
           </Switch>
           <FooterSmall absolute />
         </section>

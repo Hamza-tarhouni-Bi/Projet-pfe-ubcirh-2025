@@ -14,16 +14,15 @@ export default function Index() {
           <div className="w-full md:w-8/12 lg:w-6/12 xl:w-6/12 px-4">
             <div className="pt-32 sm:pt-0">
               <h2 className="font-semibold text-4xl text-blueGray-600">
-               Bienvenue sur Ubci HR
+               BIENVENUE SUR UBCI HR MANAGER
               </h2>
               <p className="mt-4 text-lg leading-relaxed text-blueGray-500">
-              UBCI RH est un site web dédié à la gestion des ressources humaines de la banque UBCI, facilitant le suivi du personnel, la gestion des congés et l'automatisation des tâches administratives.                <a
-                  href="https://tailwindcss.com/?ref=creativetim"
-                  className="text-blueGray-600"
-                  target="_blank"
-                >
-                  Tailwind CSS
-                </a>
+              UBCI RH est un site web dédié à la gestion des ressources humaines de la banque UBCI, facilitant le suivi du personnel, la gestion des congés et l'automatisation des tâches administratives.                
+                  
+                  
+                
+                
+                
                 
               </p>
               <div className="mt-12">
@@ -47,14 +46,14 @@ export default function Index() {
         </div>
 
         <img
-  className="absolute top-0 right-0 pt-16 sm:w-6/12 sm:max-h-full -mt-48 sm:mt-0 w-full h-auto max-h-[860px] object-cover"
+  className="absolute top-0 right-0 pt-1 sm:w-6/12 sm:max-h-full -mt-48 sm:mt-0 w-full h-full object-cover"
  
-  src={require("assets/img/pattern_react.png").default}
+  src={require("assets/img/ubci.jpg").default}
   alt="..."
 />
       </section>
 
-      <section className="mt-48 md:mt-40 pb-40 relative bg-blueGray-100">
+     <section className="mt-48 md:mt-40 pb-40 relative bg-blueGray-100">
         <div
           className="-mt-20 top-0 bottom-auto left-0 right-0 w-full absolute h-20"
           style={{ transform: "translateZ(0)" }}
