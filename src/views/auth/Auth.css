@@ -1,0 +1,735 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Inter', 'Helvetica Neue', sans-serif;
+}
+
+body {
+  background-color: #f7f9fc;
+  height: 100vh;
+  margin: 0;
+}
+
+/* Login page container */
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top:7rem;
+  background-color: #f7f9fc;
+}
+
+.login-content {
+  width: 100%;
+  max-width: 1000px;
+  min-height: 600px;
+  display: flex;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+}
+
+/* Left panel - Background image */
+.login-left-panel {
+  flex: 1;
+  background-image: url('https://www.ubci.tn/wp-content/blogs.dir/2021/12/UBCI-Rebranding-2021-2.jpg'); /* Remplacez par le chemin de votre image */
+  background-size: cover;
+  background-position: center;
+  
+}
+
+/* Right panel - Login form */
+.login-right-panel {
+  flex: 1;
+  background-color: white;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+}
+
+.login-form-wrapper {
+  max-width: 400px;
+  width: 100%;
+  margin: 0 auto;
+  flex: 1;
+}
+
+.login-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #2a2a2a;
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+/* Error alert */
+.error-alert {
+  background-color: #fee2e2;
+  color: #b91c1c;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+}
+
+.error-alert::before {
+  content: '!';
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: #b91c1c;
+  color: white;
+  font-weight: bold;
+  margin-right: 12px;
+  font-size: 12px;
+}
+
+/* Social login buttons */
+.social-login {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.social-btn {
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background-color: white;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.social-btn:hover {
+  background-color: #f9fafb;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.social-btn .icon {
+  margin-right: 8px;
+  width: 18px;
+  height: 18px;
+}
+
+.social-btn.linkedin {
+  color: #0077b5;
+  border-color: #0077b5;
+}
+
+.social-btn.linkedin:hover {
+  background-color: rgba(0, 119, 181, 0.05);
+}
+
+.social-btn.google {
+  color: #ea4335;
+  border-color: #ea4335;
+}
+
+.social-btn.google:hover {
+  background-color: rgba(234, 67, 53, 0.05);
+}
+
+/* Divider */
+.divider {
+  display: flex;
+  align-items: center;
+  margin: 24px 0;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background-color: #e5e7eb;
+}
+
+.divider span {
+  padding: 0 16px;
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Form inputs */
+.input-group {
+  margin-bottom: 20px;
+}
+
+.label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.input-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: #4b5563;
+  font-weight: 500;
+}
+
+.forgot-link {
+  font-size: 14px;
+  color: #173F7E;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.forgot-link:hover {
+  text-decoration: underline;
+}
+
+.input-container {
+  position: relative;
+}
+
+.input-container input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.input-container input:focus {
+  outline: none;
+  border-color: #173F7E;
+  box-shadow: 0 0 0 3px rgba(23, 63, 126, 0.1);
+}
+
+.input-container input::placeholder {
+  color: #9ca3af;
+}
+
+/* Remember me checkbox */
+.remember-option {
+  margin-bottom: 24px;
+}
+
+.checkbox-container {
+  display: flex;
+  align-items: center;
+  position: relative;
+  padding-left: 28px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #4b5563;
+}
+
+.checkbox-container input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+.checkmark {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 18px;
+  width: 18px;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+}
+
+.checkbox-container:hover input ~ .checkmark {
+  background-color: #f9fafb;
+}
+
+.checkbox-container input:checked ~ .checkmark {
+  background-color: #173F7E;
+  border-color: #173F7E;
+}
+
+.checkmark:after {
+  content: "";
+  position: absolute;
+  display: none;
+}
+
+.checkbox-container input:checked ~ .checkmark:after {
+  display: block;
+}
+
+.checkbox-container .checkmark:after {
+  left: 6px;
+  top: 2px;
+  width: 4px;
+  height: 9px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+/* Sign in button */
+.sign-in-btn {
+  width: 100%;
+  padding: 14px;
+  background-color: #173F7E;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 24px;
+}
+
+.sign-in-btn:hover {
+  background-color: #13346B;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(23, 63, 126, 0.2);
+}
+
+.sign-in-btn:active {
+  transform: translateY(0);
+}
+
+.sign-in-btn:disabled {
+  background-color: #93A8C7;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.sign-in-btn.loading {
+  position: relative;
+}
+
+/* Help link */
+.help-link {
+  text-align: center;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.help-link a {
+  color: #173F7E;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.help-link a:hover {
+  text-decoration: underline;
+}
+
+/* Footer */
+.footer {
+  text-align: center;
+  font-size: 12px;
+  color: #9ca3af;
+  margin-top: auto;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .login-content {
+    flex-direction: column;
+    max-width: 500px;
+  }
+  
+  .login-left-panel {
+    min-height: 250px;
+  }
+  
+  .login-right-panel {
+    padding: 30px;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-left-panel {
+    min-height: 200px;
+  }
+  
+  .social-login {
+    grid-template-columns: 1fr;
+  }
+  
+  .login-title {
+    font-size: 20px;
+    margin-bottom: 20px;
+  }
+  
+  .login-right-panel {
+    padding: 20px;
+  }
+}
+
+/*Sign up */
+.signup-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 7rem;
+  background-color: #f7f9fc;
+}
+
+.signup-content {
+  width: 100%;
+  max-width: 1000px;
+  min-height: 600px;
+  display: flex;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+}
+
+/* Left panel - Background image */
+.signup-left-panel {
+  flex: 1;
+  background-image: url('https://www.ubci.tn/wp-content/blogs.dir/2021/12/UBCI-Rebranding-2021-2.jpg');
+  background-size: cover;
+  background-position:center ;
+}
+
+/* Right panel - Signup form */
+.signup-right-panel {
+  flex: 1;
+  background-color: white;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+}
+
+.signup-form-wrapper {
+  max-width: 400px;
+  width: 100%;
+  margin: 0 auto;
+  flex: 1;
+}
+
+.signup-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #2a2a2a;
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+/* Error alert */
+.error-alert {
+  background-color: #fee2e2;
+  color: #b91c1c;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+}
+
+.error-alert::before {
+  content: '!';
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: #b91c1c;
+  color: white;
+  font-weight: bold;
+  margin-right: 12px;
+  font-size: 12px;
+}
+
+/* Social signup buttons */
+.social-signup {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.social-btn {
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background-color: white;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.social-btn:hover {
+  background-color: #f9fafb;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.social-btn .icon {
+  margin-right: 8px;
+  width: 18px;
+  height: 18px;
+}
+
+.social-btn.linkedin {
+  color: #0077b5;
+  border-color: #0077b5;
+}
+
+.social-btn.linkedin:hover {
+  background-color: rgba(0, 119, 181, 0.05);
+}
+
+.social-btn.google {
+  color: #ea4335;
+  border-color: #ea4335;
+}
+
+.social-btn.google:hover {
+  background-color: rgba(234, 67, 53, 0.05);
+}
+
+/* Divider */
+.divider {
+  display: flex;
+  align-items: center;
+  margin: 24px 0;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background-color: #e5e7eb;
+}
+
+.divider span {
+  padding: 0 16px;
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Form inputs */
+.input-group {
+  margin-bottom: 20px;
+}
+
+.input-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: #4b5563;
+  font-weight: 500;
+}
+
+.input-container {
+  position: relative;
+}
+
+.input-container input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.input-container input:focus {
+  outline: none;
+  border-color: #173F7E;
+  box-shadow: 0 0 0 3px rgba(23, 63, 126, 0.1);
+}
+
+.input-container input::placeholder {
+  color: #9ca3af;
+}
+
+/* Terms checkbox */
+.terms-option {
+  margin-bottom: 24px;
+}
+
+.checkbox-container {
+  display: flex;
+  align-items: center;
+  position: relative;
+  padding-left: 28px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #4b5563;
+  line-height: 1.4;
+}
+
+.checkbox-container input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+.checkmark {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 18px;
+  width: 18px;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+}
+
+.checkbox-container:hover input ~ .checkmark {
+  background-color: #f9fafb;
+}
+
+.checkbox-container input:checked ~ .checkmark {
+  background-color: #173F7E;
+  border-color: #173F7E;
+}
+
+.checkmark:after {
+  content: "";
+  position: absolute;
+  display: none;
+}
+
+.checkbox-container input:checked ~ .checkmark:after {
+  display: block;
+}
+
+.checkbox-container .checkmark:after {
+  left: 6px;
+  top: 2px;
+  width: 4px;
+  height: 9px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.terms-link {
+  color: #173F7E;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.terms-link:hover {
+  text-decoration: underline;
+}
+
+/* Sign up button */
+.signup-btn {
+  width: 100%;
+  padding: 14px;
+  background-color: cadetblue !important;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 24px;
+}
+
+.signup-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(23, 63, 126, 0.2);
+}
+
+.signup-btn:active {
+  transform: translateY(0);
+}
+
+.signup-btn:disabled {
+  background-color: #93A8C7;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.signup-btn.loading {
+  position: relative;
+}
+
+/* Help link */
+.help-link {
+  text-align: center;
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.help-link a {
+  color: #173F7E;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.help-link a:hover {
+  text-decoration: underline;
+}
+
+/* Footer */
+.footer {
+  text-align: center;
+  font-size: 12px;
+  color: #9ca3af;
+  margin-top: auto;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .signup-content {
+    flex-direction: column;
+    max-width: 500px;
+  }
+  
+  .signup-left-panel {
+    min-height: 250px; /* Aligné avec login-left-panel */
+  }
+  
+  .signup-right-panel {
+    padding: 30px;
+  }
+}
+
+@media (max-width: 480px) {
+  .signup-left-panel {
+    min-height: 200px; /* Aligné avec login-left-panel */
+  }
+  
+  .social-signup {
+    grid-template-columns: 1fr;
+  }
+  
+  .signup-title {
+    font-size: 20px;
+    margin-bottom: 20px;
+  }
+  
+  .signup-right-panel {
+    padding: 20px;
+  }
+}

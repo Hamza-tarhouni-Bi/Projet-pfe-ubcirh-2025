@@ -53,7 +53,7 @@ export default function Navbar(props) {
               {/* Lien "Recrutement" */}
               <li className="flex items-center">
                 <Link
-                  to="/recrutement"
+                  to="/postule"
                   className="text-blueGray-700 text-sm font-bold leading-relaxed inline-block py-2 whitespace-nowrap uppercase hover:text-lightBlue-500"
                 >
                   Recrutement
@@ -62,7 +62,7 @@ export default function Navbar(props) {
               {/* Bouton "Login" */}
               <li className="flex items-center">
                 <Link
-                  to="auth/login"
+                  to="auth/signin"
                   className="bg-lightBlue-500 text-white active:bg-lightBlue-600 text-xs font-bold uppercase px-4 py-2 rounded shadow hover:shadow-lg outline-none focus:outline-none lg:mr-1 lg:mb-0 ml-3 mb-3 ease-linear transition-all duration-150"
                 >
                   <i className="fas fa-sign-in-alt"></i> Login
@@ -71,7 +71,7 @@ export default function Navbar(props) {
               {/* Bouton "Register" */}
               <li className="flex items-center">
                 <Link
-                  to="auth/register"
+                  to="auth/signup"
                   className="bg-lightBlue-500 text-white active:bg-lightBlue-600 text-xs font-bold uppercase px-4 py-2 rounded shadow hover:shadow-lg outline-none focus:outline-none lg:mr-1 lg:mb-0 ml-3 mb-3 ease-linear transition-all duration-150"
                 >
                   <i className="fas fa-user-plus"></i> Register

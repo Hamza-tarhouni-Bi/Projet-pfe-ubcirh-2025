@@ -4,6 +4,13 @@ import { MdDelete, MdVisibility, MdEdit } from "react-icons/md";
 
 // Styles CSS pour les dialogs et modals
 const styles = `
+  .titre{
+  text-align: center;
+  text-transform: uppercase;
+  color:darkblue;
+   font-size: 2em;
+  }
+
   .fixed-dialog-container {
     position: fixed;
     top: 0;
@@ -429,7 +436,7 @@ export default function CardPersonnels({ color = "light" }) {
             </div>
           </div>
         )}
-
+<div className="titre"><h1>Gestion des personnels</h1></div>
         <div className="rounded-t mb-0 px-4 py-3 border-0">
           <div className="flex flex-wrap items-center justify-between">
             <h3 className={"font-semibold text-lg " + (color === "light" ? "text-blueGray-700" : "text-white")}>

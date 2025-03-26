@@ -11,6 +11,7 @@ Document
 Use a better box model (opinionated).
 */
 
+
 *,
 *::before,
 *::after {
@@ -1297,6 +1298,7 @@ select {
 
 .bg-no-repeat {
   background-repeat: no-repeat;
+ 
 }
 
 .bg-cover {
@@ -1305,6 +1307,7 @@ select {
 
 .bg-full {
   background-size: 100%;
+  
 }
 
 .border-collapse {
@@ -2066,11 +2069,16 @@ background-color: currentColor;}
   padding-left: 1.5rem;
   padding-right: 1.5rem;
   
+  
 }
 
 .py-10 {
   padding-top: 2.5rem;
   padding-bottom: 2.5rem;
+
+
+
+
 }
 
 .px-12 {
@@ -2424,9 +2432,15 @@ background-color: currentColor;}
   color: crimson;
   --tw-text-opacity: 1;
 }
+.hamza{
+padding-left:15rem;
+
+
+}
+
 .text-btn-ajouterp{
   --tw-text-opacity: 1;
-  background-color: blueviolet;
+  background-color: darkcyan;
   color: antiquewhite;
 }
 
@@ -2638,7 +2652,7 @@ background-color: currentColor;}
 
 .z-50 {
   z-index: 50;
-  background-color: yellowgreen;
+  background-color: aliceblue;
 
 }
 

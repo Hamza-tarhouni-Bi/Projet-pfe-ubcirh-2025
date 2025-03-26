@@ -3,30 +3,32 @@ import { Switch, Route, Redirect } from "react-router-dom";
 
 // components
 import Navbar from "components/Navbars/IndexNavbar";
-import FooterSmall from "components/Footers/FooterSmall.js";
+
 
 // views
-import Login from "views/auth/Login.js";
+import Signin from "views/auth/Signin";
+import Signup from "views/auth/Signup";
 import Forget from "views/auth/forget";
-import Register from "views/auth/Register.js";
 
 export default function Auth() {
   return (
     <>
       <Navbar transparent />
       <main>
-        <section className="relative w-full h-full py-40 min-h-screen">
-          <div className="absolute top-0 w-full h-full bg-blueGray-800 bg-no-repeat bg-full"></div>
+      
+          
           <Switch>
-            <Route path="/auth/login" exact component={Login} />
+            <Route path="/auth/signin" exact component={Signin} />
             <Route path="/auth/forget" exact component={Forget} />
-            <Route path="/auth/register" exact component={Register} />
+            <Route path="/auth/signup" exact component={Signup} />
             
           
-            <Route path="/auth" render={() => <Redirect to="/auth/login" />} />
+            <Route path="/auth" render={() => <Redirect to="/signin" />} />
+            
+           
           </Switch>
-          <FooterSmall absolute />
-        </section>
+       
+        
       </main>
     </>
   );

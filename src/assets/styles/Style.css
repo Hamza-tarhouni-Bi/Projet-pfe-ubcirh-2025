@@ -1,0 +1,168 @@
+
+/*Partie du recrutement */
+.home-container {
+  font-family: 'Arial, sans-serif';
+  padding-top:6rem;
+  margin: 0 auto;
+}
+
+.heading {
+  color: #333;
+  text-align: center;
+}
+
+.job-listing {
+  background-color: #f9f9f9;
+  border-left: 5px solid #007bff;
+  margin: 10px 0;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+.job-title {
+  color: #007bff;
+  margin-top: 0;
+}
+
+.job-detail {
+  color: #666;
+  line-height: 1.6;
+}
+
+.add-button {
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-bottom: 15px;
+  font-size: 14px;
+}
+
+.add-button:hover {
+  background-color: #0056b3;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 5px;
+  width: 300px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.modal-content h2 {
+  margin-top: 0;
+  font-size: 1.5rem;
+  color: #333;
+}
+
+.modal-input {
+  width: 100%;
+  padding: 8px;
+  margin: 8px 0;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+
+
+select.modal-input {
+  appearance: none; 
+  background-color: #fff;
+  cursor: pointer;
+}
+
+
+select.modal-input option {
+  padding: 8px;
+}
+
+.modal-button {
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-right: 10px;
+  font-size: 14px;
+}
+
+.modal-button:hover {
+  background-color: #0056b3;
+}
+
+
+@media (max-width: 768px) {
+  .home-container {
+    padding: 1rem;
+  }
+
+  .modal-content {
+    width: 90%;
+    padding: 15px;
+  }
+
+  .add-button {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+
+  .job-listing {
+    margin: 8px 0;
+    padding: 8px;
+  font-size: 14px;
+  }
+
+  .modal-input {
+    padding: 6px;
+    margin: 6px 0;
+  }
+
+  .modal-button {
+    padding: 6px 12px;
+    margin-right: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .home-container {
+    padding: 0.5rem;
+  }
+
+  .modal-content {
+    width: 95%;
+    padding: 10px;
+  }
+
+  .job-listing {
+    margin: 5px 0;
+    padding: 5px;
+  }
+
+  .modal-input {
+    padding: 4px;
+    margin: 4px 0;
+  }
+
+  .modal-button {
+    padding: 4px 8px;
+    margin-right: 5px;
+  }
+}
+/*Fin du partie recrutement  */
