@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Navbar from "components/Navbars/IndexNavbar";
 
 const Postule = () => {
-  // Données d'exemple pour les offres d'emploi
+  // Existing state for job listings and search
   const [jobListings, setJobListings] = useState([
     {
       id: 1,
@@ -24,19 +24,23 @@ const Postule = () => {
     },
   ]);
 
-  // État pour les filtres et la recherche
+  // New state for modal and selected job
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedJob, setSelectedJob] = useState(null);
+  const [fileName, setFileName] = useState("Aucun fichier sélectionné");
+
+  // Existing search and filter states and functions...
   const [dateFilter, setDateFilter] = useState("N'importe quand");
   const [isDateExpanded, setIsDateExpanded] = useState(true);
   const [searchKeyword, setSearchKeyword] = useState("");
   const [filteredJobs, setFilteredJobs] = useState([]);
   const [hasSearched, setHasSearched] = useState(false);
 
-  // Fonction pour toggler la section de date
+  // Existing functions from previous implementation...
   const toggleDateSection = () => {
     setIsDateExpanded(!isDateExpanded);
   };
 
-  // Reset filter function
   const resetFilters = () => {
     setDateFilter("N'importe quand");
     setSearchKeyword("");
@@ -44,7 +48,6 @@ const Postule = () => {
     setHasSearched(false);
   };
 
-  // Fonction pour une recherche précise
   const exactMatch = (text, query) => {
     if (!query || query.trim() === "") return true;
 
@@ -59,29 +62,22 @@ const Postule = () => {
     });
   };
 
-  // Fonction de recherche
-  const handleSearch = (e) => {
-    e.preventDefault();
-
+  // Apply filters function (separate from handleSearch)
+  const applyFilters = () => {
     let results = [...jobListings];
     
-
-    // Filtrer par mot-clé avec correspondance exacte
     if (searchKeyword && searchKeyword.trim() !== "") {
       results = results.filter((job) => exactMatch(job.title, searchKeyword));
     }
 
-    // Filtrage par date
     if (dateFilter === "Sous 30 jours") {
-      const today = new Date(); // Date actuelle
+      const today = new Date();
       const thirtyDaysAgo = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 30);
 
       results = results.filter((job) => {
-        // Convertir la date du job en format correct
         const [day, month, year] = job.date.split("/");
-        const jobDate = new Date(year, month - 1, day); // Mois est 0-indexé
+        const jobDate = new Date(year, month - 1, day);
 
-        // Vérifier si la date du job est comprise entre il y a 30 jours et aujourd'hui
         return jobDate >= thirtyDaysAgo && jobDate <= today;
       });
     }
@@ -90,14 +86,71 @@ const Postule = () => {
     setHasSearched(true);
   };
 
-  // Déterminer quelles offres afficher
+  // Handle search form submission
+  const handleSearch = (e) => {
+    e.preventDefault();
+    applyFilters();
+  };
+
+  // Handle date filter change
+  const handleDateFilterChange = (newDateFilter) => {
+    setDateFilter(newDateFilter);
+    // This will trigger the useEffect to apply filters
+  };
+
+  // UseEffect to apply filters whenever dateFilter changes
+  useEffect(() => {
+    applyFilters();
+  }, [dateFilter]); // This will run applyFilters whenever dateFilter changes
+
+  // New functions for modal
+  const openApplicationModal = (job) => {
+    setSelectedJob(job);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedJob(null);
+    setFileName("Aucun fichier sélectionné");
+  };
+
+  // Handle file upload
+  const handleFileChange = (e) => {
+    if (e.target.files.length > 0) {
+      const fileNames = Array.from(e.target.files).map(file => file.name).join(", ");
+      setFileName(fileNames);
+    } else {
+      setFileName("Aucun fichier sélectionné");
+    }
+  };
+
+  // Trigger the file input when clicking on the upload area
+  const triggerFileInput = () => {
+    document.getElementById("file-upload-input").click();
+  };
+
   const displayedJobs = hasSearched ? filteredJobs : jobListings;
+
+  // Count jobs that are within 30 days
+  const countJobsWithin30Days = () => {
+    const today = new Date();
+    const thirtyDaysAgo = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 30);
+
+    return jobListings.filter((job) => {
+      const [day, month, year] = job.date.split("/");
+      const jobDate = new Date(year, month - 1, day);
+      return jobDate >= thirtyDaysAgo && jobDate <= today;
+    }).length;
+  };
+
+  const jobsWithin30DaysCount = countJobsWithin30Days();
 
   return (
     <div className="careers-page">
       <Navbar />
       
-      {/* Bannière avec barre de recherche */}
+      {/* Existing banner and search code */}
       <div className="banner">
         <div className="search-container">
           <form onSubmit={handleSearch}>
@@ -121,9 +174,9 @@ const Postule = () => {
         </div>
       </div>
 
-      {/* Contenu principal */}
       <div className="content-container">
         <div className="filters-container">
+          {/* Existing filters code */}
           <div className="filters-header">
             <h2>Filtres</h2>
             <button className="reset-button" onClick={resetFilters}>
@@ -146,18 +199,18 @@ const Postule = () => {
                     type="radio"
                     name="dateFilter"
                     checked={dateFilter === "Sous 30 jours"}
-                    onChange={() => setDateFilter("Sous 30 jours")}
+                    onChange={() => handleDateFilterChange("Sous 30 jours")}
                   />
-                  Sous 30 jours (1)
+                  Sous 30 jours ({jobsWithin30DaysCount})
                 </label>
                 <label className="filter-radio">
                   <input
                     type="radio"
                     name="dateFilter"
                     checked={dateFilter === "N'importe quand"}
-                    onChange={() => setDateFilter("N'importe quand")}
+                    onChange={() => handleDateFilterChange("N'importe quand")}
                   />
-                  N'importe quand (19)
+                  N'importe quand ({jobListings.length})
                 </label>
               </div>
             )}
@@ -172,6 +225,7 @@ const Postule = () => {
               <p>
                 {filteredJobs.length} offre(s) d'emploi trouvée(s){" "}
                 {searchKeyword && `pour "${searchKeyword}"`}
+                {dateFilter === "Sous 30 jours" && " des 30 derniers jours"}
               </p>
               {filteredJobs.length === 0 && (
                 <p className="no-results">
@@ -185,16 +239,101 @@ const Postule = () => {
           <div className="job-cards">
             {displayedJobs.map((job) => (
               <div className="job-card" key={job.id}>
-                <h3 className="job-title">{job.title}</h3>
-                <div className="job-details">
-                  <p className="job-location">{job.location}</p>
-                  <p className="job-date">{job.date}</p>
+                <div className="job-card-content">
+                  <h3 className="job-title">{job.title}</h3>
+                  <div className="job-details">
+                    <p className="job-location">{job.location}</p>
+                    <p className="job-date">{job.date}</p>
+                  </div>
                 </div>
+                <button 
+                  className="postuler-button"
+                  onClick={() => openApplicationModal(job)}
+                >
+                  Postuler
+                </button>
               </div>
             ))}
           </div>
         </div>
       </div>
+
+      {/* Modal for job application with improved design */}
+      {isModalOpen && (
+        <div className="modal-overlay" onClick={closeModal}>
+          <div 
+            className="modal-content" 
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button className="modal-close" onClick={closeModal}>×</button>
+            <div className="modal-title">
+              <h2>Candidature pour {selectedJob.title}</h2>
+            </div>
+            <form>
+              <div className="form-section">
+                <label>Nom complet</label> 
+                <div className="name-inputs">
+                  <input type="text" placeholder="Prénom" />
+                  <input type="text" placeholder="Nom de famille" />
+                </div>
+              </div>
+
+              <div className="form-section">
+                <label>Adresse actuelle</label>
+                <input type="text" placeholder="Adresse" className="mb-3" />
+                
+                <div className="address-details">
+                  <input type="text" placeholder="Ville" />
+                  <input type="text" placeholder="Code postal" />
+                </div>
+              </div>
+
+              <div className="form-section">
+                <label>Adresse E-mail</label>
+                <input type="email" placeholder="Prénom@gmail.com" />
+              </div>
+
+              <div className="form-section">
+                <label>Numéro de téléphone</label>
+                <div className="phone-input">
+                  <select className="country-code">
+                    <option value="+216">Tunisie (+216)</option>
+                    <option value="+33">France (+33)</option>
+                    <option value="+212">Maroc (+212)</option>
+                    <option value="+213">Algérie (+213)</option>
+                    <option value="+32">Belgique (+32)</option>
+                    <option value="+1">Canada/USA (+1)</option>
+                    <option value="+41">Suisse (+41)</option>
+                    <option value="">Autre</option>
+                  </select>
+                  <input type="text" placeholder="Numéro de téléphone" />
+                </div>
+              </div>
+
+              <div className="form-section">
+                <label>Déposez votre CV et lettre de motivation</label>
+                <div className="file-upload" onClick={triggerFileInput}>
+                  <input 
+                    type="file" 
+                    id="file-upload-input" 
+                    multiple 
+                    onChange={handleFileChange}
+                  />
+                  <div className="file-upload-content">
+                    <span className="upload-icon">📁</span>
+                    <span className="browse-text">Parcourir les fichiers</span>
+                    <p className="selected-files">{fileName}</p>
+                  </div>
+                </div>
+              </div>
+
+              <button type="submit" className="submit-application">
+                Postuler
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
 
       <style jsx>{`
         * {
@@ -403,6 +542,9 @@ const Postule = () => {
           margin-bottom: 10px;
           cursor: pointer;
           transition: transform 0.2s;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
         }
         
         .job-card:hover {
@@ -427,7 +569,180 @@ const Postule = () => {
           color: #555;
           margin-bottom: 3px;
         }
-        
+
+        .postuler-button {
+          background-color: #4CAF50;
+          color: white;
+          border: none;
+          padding: 10px 20px;
+          border-radius: 4px;
+          cursor: pointer;
+          transition: background-color 0.3s;
+        }
+
+        .postuler-button:hover {
+          background-color: #45a049;
+        }
+
+        .modal-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(0, 0, 0, 0.5);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          z-index: 1000;
+        }
+
+        .modal-content {
+          background: white;
+          padding: 30px;
+          border-radius: 8px;
+          width: 100%;
+          max-width: 600px;
+          max-height: 80vh;
+          overflow-y: auto;
+          position: relative;
+        }
+
+        .modal-close {
+          position: absolute;
+          top: 10px;
+          right: 10px;
+          font-size: 24px;
+          background: none;
+          border: none;
+          cursor: pointer;
+          z-index: 1001;
+        }
+
+        .modal-title {
+          text-align: center;
+          margin-bottom: 25px;
+          padding-bottom: 15px;
+          
+        }
+
+        .modal-title h2 {
+          font-size: 22px;
+          color: #1a73e8;
+          font-weight: bold;
+        }
+
+        .form-section {
+          margin-bottom: 25px;
+        }
+
+        .form-section label {
+          display: block;
+          margin-bottom: 10px;
+          font-weight: bold;
+          color: #333;
+        }
+
+        .form-section input,
+        .form-section select {
+          width: 100%;
+          padding: 12px;
+          border: 1px solid #ddd;
+          border-radius: 4px;
+          font-size: 14px;
+        }
+
+        .form-section input:focus,
+        .form-section select:focus {
+          outline: none;
+          border-color: #1a73e8;
+          box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
+        }
+
+        .name-inputs,
+        .address-details,
+        .phone-input {
+          display: flex;
+          gap: 15px;
+        }
+
+        .name-inputs input,
+        .address-details input,
+        .phone-input input,
+        .phone-input select {
+          flex: 1;
+        }
+
+    
+
+      
+
+        .country-code {
+          width: 40%;
+          flex: 0.4;
+        }
+
+        .file-upload {
+          border: 2px dashed #1a73e8;
+          padding: 20px;
+          text-align: center;
+          cursor: pointer;
+          border-radius: 4px;
+          background-color: #f5f9ff;
+          transition: all 0.3s ease;
+        }
+
+        .file-upload:hover {
+          background-color: #e8f1fe;
+          border-color: #0d47a1;
+        }
+
+        .file-upload input[type="file"] {
+          display: none;
+        }
+
+        .file-upload-content {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 10px;
+        }
+
+        .upload-icon {
+          font-size: 24px;
+          color: #1a73e8;
+        }
+
+        .browse-text {
+          color: #1a73e8;
+          font-weight: bold;
+          font-size: 16px;
+        }
+
+        .selected-files {
+          font-size: 14px;
+          color: #555;
+          margin-top: 5px;
+          word-break: break-word;
+        }
+
+        .submit-application {
+          width: 100%;
+          padding: 15px;
+          background-color: #1a73e8;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+          transition: background-color 0.3s;
+          font-size: 16px;
+          font-weight: bold;
+        }
+
+        .submit-application:hover {
+          background-color: #0d47a1;
+        }
+
         @media (max-width: 768px) {
           .search-bar {
             flex-direction: column;
@@ -449,6 +764,18 @@ const Postule = () => {
           
           .job-listings-container {
             width: 100%;
+          }
+
+          .name-inputs,
+          .address-details,
+          .phone-input {
+            flex-direction: column;
+            gap: 10px;
+          }
+
+          .modal-content {
+            padding: 20px;
+            max-height: 90vh;
           }
         }
       `}</style>

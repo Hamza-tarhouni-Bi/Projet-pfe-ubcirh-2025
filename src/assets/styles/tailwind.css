@@ -709,6 +709,9 @@ select {
 .container {
   width: 100%;
 }
+.formationadmin{
+  padding-top:7rem
+}
 
 @media (min-width: 640px) {
   .container {

@@ -1,459 +1,880 @@
-import React, { useState } from "react";
-import Navbar from "components/Navbars/IndexNavbar";
+// import React, { useState } from 'react';
+
+// const Test = () => {
+//   const [formData, setFormData] = useState({
+//     startDate: '',
+//     endDate: '',
+//     reason: '',
+//     type: 'congé payé',
+//     notes: ''
+//   });
+  
+//   const [submitted, setSubmitted] = useState(false);
+  
+//   // Styles CSS intégrés
+//   const styles = {
+//     container: {
+//       backgroundColor: '#40BFC1', // Couleur turquoise comme dans l'image
+//       minHeight: '100vh',
+//       padding: '20px',
+//       fontFamily: 'Arial, sans-serif'
+//     },
+//     card: {
+//       maxWidth: '800px',
+//       margin: '0 auto',
+//       backgroundColor: '#FFFFFF',
+//       borderRadius: '8px',
+//       boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+//       overflow: 'hidden'
+//     },
+//     header: {
+//       backgroundColor: '#2A8D99', // Couleur bleu-vert plus foncée pour l'en-tête
+//       padding: '20px',
+//       color: '#FFFFFF'
+//     },
+//     title: {
+//       fontSize: '24px',
+//       fontWeight: 'bold',
+//       margin: '0'
+//     },
+//     subtitle: {
+//       color: '#E0F7FA',
+//       marginTop: '5px',
+//       fontSize: '14px'
+//     },
+//     formContainer: {
+//       padding: '24px'
+//     },
+//     formGrid: {
+//       display: 'grid',
+//       gridTemplateColumns: 'repeat(2, 1fr)',
+//       gap: '20px',
+//       marginBottom: '24px'
+//     },
+//     formGroup: {
+//       marginBottom: '16px'
+//     },
+//     label: {
+//       display: 'block',
+//       marginBottom: '6px',
+//       fontSize: '14px',
+//       fontWeight: '500',
+//       color: '#333333'
+//     },
+//     input: {
+//       width: '100%',
+//       padding: '10px',
+//       border: '1px solid #DDDDDD',
+//       borderRadius: '4px',
+//       fontSize: '14px'
+//     },
+//     select: {
+//       width: '100%',
+//       padding: '10px',
+//       border: '1px solid #DDDDDD',
+//       borderRadius: '4px',
+//       fontSize: '14px',
+//       backgroundColor: '#FFFFFF'
+//     },
+//     textarea: {
+//       width: '100%',
+//       padding: '10px',
+//       border: '1px solid #DDDDDD',
+//       borderRadius: '4px',
+//       fontSize: '14px',
+//       minHeight: '100px',
+//       resize: 'vertical'
+//     },
+//     alert: {
+//       backgroundColor: '#E1F5FE',
+//       borderLeft: '4px solid #039BE5',
+//       padding: '12px',
+//       marginBottom: '20px'
+//     },
+//     alertText: {
+//       color: '#0277BD',
+//       fontSize: '14px',
+//       margin: '0'
+//     },
+//     buttonContainer: {
+//       display: 'flex',
+//       justifyContent: 'flex-end',
+//       gap: '12px'
+//     },
+//     cancelButton: {
+//       padding: '10px 16px',
+//       backgroundColor: '#FFFFFF',
+//       color: '#333333',
+//       border: '1px solid #DDDDDD',
+//       borderRadius: '4px',
+//       cursor: 'pointer',
+//       fontSize: '14px',
+//       fontWeight: '500'
+//     },
+//     submitButton: {
+//       padding: '10px 16px',
+//       backgroundColor: '#00838F', // Couleur assortie au thème
+//       color: '#FFFFFF',
+//       border: 'none',
+//       borderRadius: '4px',
+//       cursor: 'pointer',
+//       fontSize: '14px',
+//       fontWeight: '500'
+//     },
+//     successAlert: {
+//       backgroundColor: '#E8F5E9',
+//       borderLeft: '4px solid #43A047',
+//       padding: '12px',
+//       marginBottom: '20px',
+//       display: 'flex',
+//       alignItems: 'center'
+//     },
+//     successIcon: {
+//       color: '#43A047',
+//       marginRight: '8px'
+//     },
+//     successText: {
+//       color: '#2E7D32',
+//       fontSize: '14px',
+//       margin: '0'
+//     },
+//     summaryTitle: {
+//       fontSize: '18px',
+//       fontWeight: '600',
+//       color: '#333333',
+//       marginBottom: '16px'
+//     },
+//     summaryCard: {
+//       backgroundColor: '#F5F5F5',
+//       padding: '16px',
+//       borderRadius: '4px',
+//       marginBottom: '24px'
+//     },
+//     summaryGrid: {
+//       display: 'grid',
+//       gridTemplateColumns: 'repeat(2, 1fr)',
+//       gap: '16px'
+//     },
+//     summaryLabel: {
+//       fontSize: '12px',
+//       color: '#757575',
+//       marginBottom: '4px'
+//     },
+//     summaryValue: {
+//       fontSize: '14px',
+//       fontWeight: '500',
+//       color: '#333333'
+//     },
+//     colSpan2: {
+//       gridColumn: 'span 2'
+//     }
+//   };
+  
+//   const handleChange = (e) => {
+//     const { name, value } = e.target;
+//     setFormData(prevData => ({
+//       ...prevData,
+//       [name]: value
+//     }));
+//   };
+  
+//   const handleSubmit = (e) => {
+//     e.preventDefault();
+//     setSubmitted(true);
+//   };
+  
+//   const calculateDays = () => {
+//     if (!formData.startDate || !formData.endDate) return 0;
+    
+//     const start = new Date(formData.startDate);
+//     const end = new Date(formData.endDate);
+//     const diffTime = Math.abs(end - start);
+//     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    
+//     return diffDays;
+//   };
+  
+//   return (
+//     <div style={styles.container}>
+//       <div style={styles.card}>
+//         <div style={styles.header}>
+//           <h1 style={styles.title}>Demande de Congé</h1>
+//           <p style={styles.subtitle}>Remplissez le formulaire ci-dessous pour soumettre votre demande</p>
+//         </div>
+        
+//         {submitted ? (
+//           <div style={styles.formContainer}>
+//             <div style={styles.successAlert}>
+//               <span style={styles.successIcon}>✓</span>
+//               <p style={styles.successText}>
+//                 Votre demande de congé a été soumise avec succès!
+//               </p>
+//             </div>
+            
+//             <h2 style={styles.summaryTitle}>Récapitulatif de votre demande</h2>
+            
+//             <div style={styles.summaryCard}>
+//               <div style={styles.summaryGrid}>
+//                 <div>
+//                   <p style={styles.summaryLabel}>Type de congé</p>
+//                   <p style={styles.summaryValue}>{formData.type}</p>
+//                 </div>
+//                 <div>
+//                   <p style={styles.summaryLabel}>Nombre de jours</p>
+//                   <p style={styles.summaryValue}>{calculateDays()} jours</p>
+//                 </div>
+//                 <div>
+//                   <p style={styles.summaryLabel}>Date de début</p>
+//                   <p style={styles.summaryValue}>{new Date(formData.startDate).toLocaleDateString('fr-FR')}</p>
+//                 </div>
+//                 <div>
+//                   <p style={styles.summaryLabel}>Date de fin</p>
+//                   <p style={styles.summaryValue}>{new Date(formData.endDate).toLocaleDateString('fr-FR')}</p>
+//                 </div>
+//                 <div style={styles.colSpan2}>
+//                   <p style={styles.summaryLabel}>Motif</p>
+//                   <p style={styles.summaryValue}>{formData.reason}</p>
+//                 </div>
+//                 {formData.notes && (
+//                   <div style={styles.colSpan2}>
+//                     <p style={styles.summaryLabel}>Notes complémentaires</p>
+//                     <p style={styles.summaryValue}>{formData.notes}</p>
+//                   </div>
+//                 )}
+//               </div>
+//             </div>
+            
+//             <button 
+//               onClick={() => setSubmitted(false)} 
+//               style={styles.submitButton}
+//             >
+//               Nouvelle demande
+//             </button>
+//           </div>
+//         ) : (
+//           <form onSubmit={handleSubmit} style={styles.formContainer}>
+//             <div style={styles.formGrid}>
+//               <div style={styles.formGroup}>
+//                 <label style={styles.label} htmlFor="type">
+//                   Type de congé
+//                 </label>
+//                 <select
+//                   id="type"
+//                   name="type"
+//                   value={formData.type}
+//                   onChange={handleChange}
+//                   style={styles.select}
+//                   required
+//                 >
+//                   <option value="congé payé">Congé payé</option>
+//                   <option value="congé sans solde">Congé sans solde</option>
+//                   <option value="congé maladie">Congé maladie</option>
+//                   <option value="congé maternité">Congé maternité/paternité</option>
+//                   <option value="autre">Autre</option>
+//                 </select>
+//               </div>
+              
+//               <div style={styles.formGroup}>
+//                 <label style={styles.label} htmlFor="reason">
+//                   Motif
+//                 </label>
+//                 <input
+//                   type="text"
+//                   id="reason"
+//                   name="reason"
+//                   value={formData.reason}
+//                   onChange={handleChange}
+//                   style={styles.input}
+//                   required
+//                 />
+//               </div>
+              
+//               <div style={styles.formGroup}>
+//                 <label style={styles.label} htmlFor="startDate">
+//                   Date de début
+//                 </label>
+//                 <input
+//                   type="date"
+//                   id="startDate"
+//                   name="startDate"
+//                   value={formData.startDate}
+//                   onChange={handleChange}
+//                   style={styles.input}
+//                   required
+//                 />
+//               </div>
+              
+//               <div style={styles.formGroup}>
+//                 <label style={styles.label} htmlFor="endDate">
+//                   Date de fin
+//                 </label>
+//                 <input
+//                   type="date"
+//                   id="endDate"
+//                   name="endDate"
+//                   value={formData.endDate}
+//                   onChange={handleChange}
+//                   style={styles.input}
+//                   required
+//                 />
+//               </div>
+//             </div>
+            
+//             {formData.startDate && formData.endDate && (
+//               <div style={styles.alert}>
+//                 <p style={styles.alertText}>
+//                   Durée du congé: <strong>{calculateDays()} jours</strong>
+//                 </p>
+//               </div>
+//             )}
+            
+//             <div style={styles.formGroup}>
+//               <label style={styles.label} htmlFor="notes">
+//                 Notes complémentaires (optionnel)
+//               </label>
+//               <textarea
+//                 id="notes"
+//                 name="notes"
+//                 value={formData.notes}
+//                 onChange={handleChange}
+//                 style={styles.textarea}
+//               ></textarea>
+//             </div>
+            
+//             <div style={styles.buttonContainer}>
+//               <button
+//                 type="button"
+//                 style={styles.cancelButton}
+//               >
+//                 Annuler
+//               </button>
+//               <button
+//                 type="submit"
+//                 style={styles.submitButton}
+//               >
+//                 Soumettre la demande
+//               </button>
+//             </div>
+//           </form>
+//         )}
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default Test;
+//partie precedente  c  est la demande d un congé 
+
+//partie precedente demande d avance sur salaire
+import React, { useState } from 'react';
 
 const Test = () => {
-  // Données d'exemple pour les offres d'emploi
-  const [jobListings, setJobListings] = useState([
-    {
-      id: 1,
-      title: "Chef de Produit Marketing Junior",
-      location: "Tunisie",
-      date: "05/03/2025",
+  const [formData, setFormData] = useState({
+    amount: '',
+    reason: '',
+    repaymentMonths: '1',
+    repaymentDate: '',
+    urgencyLevel: 'normal',
+    additionalInfo: ''
+  });
+  
+  const [submitted, setSubmitted] = useState(false);
+  
+  const styles = {
+    container: {
+      padding: '20px',
+      fontFamily: 'Arial, sans-serif'
     },
-    {
-      id: 2,
-      title: "IT Business Analyst (AMOA)",
-      location: "Tunisie",
-      date: "17/02/2025",
+    card: {
+      maxWidth: '800px',
+      margin: '0 auto',
+      backgroundColor: '#FFFFFF',
+      borderRadius: '8px',
+      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+      overflow: 'hidden'
     },
-    {
-      id: 3,
-      title: "Chef de Produit Marketing Junior",
-      location: "Tunisie",
-      date: "05/03/2022",
+    header: {
+      backgroundColor: '#4a4a4a',
+      padding: '20px',
+      color: '#FFFFFF'
     },
-  ]);
-
-  // État pour les filtres et la recherche
-  const [dateFilter, setDateFilter] = useState("N'importe quand");
-  const [isDateExpanded, setIsDateExpanded] = useState(true);
-  const [searchKeyword, setSearchKeyword] = useState("");
-  const [filteredJobs, setFilteredJobs] = useState([]);
-  const [hasSearched, setHasSearched] = useState(false);
-
-  // Fonction pour toggler la section de date
-  const toggleDateSection = () => {
-    setIsDateExpanded(!isDateExpanded);
+    title: {
+      fontSize: '24px',
+      fontWeight: 'bold',
+      margin: '0'
+    },
+    subtitle: {
+      color: '#f0f0f0',
+      marginTop: '5px',
+      fontSize: '14px'
+    },
+    formContainer: {
+      padding: '24px'
+    },
+    formGrid: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(2, 1fr)',
+      gap: '20px',
+      marginBottom: '24px'
+    },
+    formGroup: {
+      marginBottom: '16px'
+    },
+    label: {
+      display: 'block',
+      marginBottom: '6px',
+      fontSize: '14px',
+      fontWeight: '500',
+      color: '#333333'
+    },
+    input: {
+      width: '100%',
+      padding: '10px',
+      border: '1px solid #DDDDDD',
+      borderRadius: '4px',
+      fontSize: '14px'
+    },
+    select: {
+      width: '100%',
+      padding: '10px',
+      border: '1px solid #DDDDDD',
+      borderRadius: '4px',
+      fontSize: '14px',
+      backgroundColor: '#FFFFFF'
+    },
+    textarea: {
+      width: '100%',
+      padding: '10px',
+      border: '1px solid #DDDDDD',
+      borderRadius: '4px',
+      fontSize: '14px',
+      minHeight: '100px',
+      resize: 'vertical'
+    },
+    radioGroup: {
+      display: 'flex',
+      gap: '16px',
+      marginTop: '8px'
+    },
+    radioLabel: {
+      display: 'flex',
+      alignItems: 'center',
+      fontSize: '14px',
+      cursor: 'pointer'
+    },
+    radio: {
+      marginRight: '6px'
+    },
+    infoBox: {
+      backgroundColor: '#f5f5f5',
+      borderLeft: '4px solid #666666',
+      padding: '12px',
+      marginBottom: '20px'
+    },
+    infoText: {
+      color: '#333333',
+      fontSize: '14px',
+      margin: '0'
+    },
+    buttonContainer: {
+      display: 'flex',
+      justifyContent: 'flex-end',
+      gap: '12px',
+      marginTop: '16px'
+    },
+    cancelButton: {
+      padding: '10px 16px',
+      backgroundColor: '#FFFFFF',
+      color: '#333333',
+      border: '1px solid #DDDDDD',
+      borderRadius: '4px',
+      cursor: 'pointer',
+      fontSize: '14px',
+      fontWeight: '500'
+    },
+    submitButton: {
+      padding: '10px 16px',
+      backgroundColor: '#555555',
+      color: '#FFFFFF',
+      border: 'none',
+      borderRadius: '4px',
+      cursor: 'pointer',
+      fontSize: '14px',
+      fontWeight: '500'
+    },
+    successAlert: {
+      backgroundColor: '#f5f5f5',
+      borderLeft: '4px solid #666666',
+      padding: '12px',
+      marginBottom: '20px',
+      display: 'flex',
+      alignItems: 'center'
+    },
+    successIcon: {
+      color: '#666666',
+      marginRight: '8px'
+    },
+    successText: {
+      color: '#333333',
+      fontSize: '14px',
+      margin: '0'
+    },
+    summaryTitle: {
+      fontSize: '18px',
+      fontWeight: '600',
+      color: '#333333',
+      marginBottom: '16px'
+    },
+    summaryCard: {
+      backgroundColor: '#F5F5F5',
+      padding: '16px',
+      borderRadius: '4px',
+      marginBottom: '24px'
+    },
+    summaryGrid: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(2, 1fr)',
+      gap: '16px'
+    },
+    summaryLabel: {
+      fontSize: '12px',
+      color: '#757575',
+      marginBottom: '4px'
+    },
+    summaryValue: {
+      fontSize: '14px',
+      fontWeight: '500',
+      color: '#333333'
+    },
+    colSpan2: {
+      gridColumn: 'span 2'
+    },
+    progressBar: {
+      height: '4px',
+      backgroundColor: '#E0E0E0',
+      borderRadius: '2px',
+      marginTop: '6px',
+      overflow: 'hidden'
+    },
+    progressFill: {
+      height: '100%',
+      backgroundColor: '#555555',
+      width: '0%',
+      transition: 'width 0.3s ease'
+    },
+    amountContainer: {
+      position: 'relative'
+    },
+    currencySymbol: {
+      position: 'absolute',
+      left: '10px',
+      top: '50%',
+      transform: 'translateY(-50%)',
+      color: '#757575'
+    },
+    amountInput: {
+      width: '100%',
+      padding: '10px 10px 10px 30px',
+      border: '1px solid #DDDDDD',
+      borderRadius: '4px',
+      fontSize: '14px'
+    },
+    divider: {
+      margin: '24px 0',
+      height: '1px',
+      backgroundColor: '#EEEEEE'
+    },
+    formSection: {
+      marginBottom: '24px'
+    },
+    sectionTitle: {
+      fontSize: '16px',
+      fontWeight: '600',
+      color: '#333333',
+      marginBottom: '16px'
+    }
   };
-
-  // Reset filter function
-  const resetFilters = () => {
-    setDateFilter("N'importe quand");
-    setSearchKeyword("");
-    setFilteredJobs([]);
-    setHasSearched(false);
+  
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prevData => ({
+      ...prevData,
+      [name]: value
+    }));
   };
-
-  // Fonction pour une recherche précise
-  const exactMatch = (text, query) => {
-    if (!query || query.trim() === "") return true;
-
-    const formattedText = text.toLowerCase();
-    const formattedQuery = query.toLowerCase().trim();
-
-    const queryWords = formattedQuery.split(/\s+/);
-
-    return queryWords.every((word) => {
-      const regex = new RegExp(`\\b${word}\\b`, "i");
-      return regex.test(formattedText);
-    });
-  };
-
-  // Fonction de recherche
-  const handleSearch = (e) => {
+  
+  const handleSubmit = (e) => {
     e.preventDefault();
-
-    let results = [...jobListings];
-    
-
-    // Filtrer par mot-clé avec correspondance exacte
-    if (searchKeyword && searchKeyword.trim() !== "") {
-      results = results.filter((job) => exactMatch(job.title, searchKeyword));
-    }
-
-    // Filtrage par date
-    if (dateFilter === "Sous 30 jours") {
-      const today = new Date(); // Date actuelle
-      const thirtyDaysAgo = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 30);
-
-      results = results.filter((job) => {
-        // Convertir la date du job en format correct
-        const [day, month, year] = job.date.split("/");
-        const jobDate = new Date(year, month - 1, day); // Mois est 0-indexé
-
-        // Vérifier si la date du job est comprise entre il y a 30 jours et aujourd'hui
-        return jobDate >= thirtyDaysAgo && jobDate <= today;
-      });
-    }
-
-    setFilteredJobs(results);
-    setHasSearched(true);
+    setSubmitted(true);
   };
-
-  // Déterminer quelles offres afficher
-  const displayedJobs = hasSearched ? filteredJobs : jobListings;
-
+  
+  const calculateRepaymentAmount = () => {
+    if (!formData.amount) return 0;
+    
+    const amount = parseFloat(formData.amount);
+    const months = parseInt(formData.repaymentMonths);
+    
+    if (isNaN(amount) || isNaN(months) || months === 0) return 0;
+    
+    return (amount / months).toFixed(2);
+  };
+  
   return (
-    <div className="careers-page">
-      <Navbar />
-      
-      {/* Bannière avec barre de recherche */}
-      <div className="banner">
-        <div className="search-container">
-          <form onSubmit={handleSearch}>
-            <div className="search-bar">
-              <div className="search-input-container">
-                <span className="search-icon">🔍</span>
-                <input
-                  type="text"
-                  className="search-input"
-                  placeholder="Saisissez un titre de poste ou un mot-clé"
-                  value={searchKeyword}
-                  onChange={(e) => setSearchKeyword(e.target.value)}
-                />
+    <div style={styles.container}>
+      <div style={styles.card}>
+        <div style={styles.header}>
+          <h1 style={styles.title}>Demande d'Avance sur Salaire</h1>
+          <p style={styles.subtitle}>Remplissez ce formulaire pour demander une avance sur votre salaire</p>
+        </div>
+        
+        {submitted ? (
+          <div style={styles.formContainer}>
+            <div style={styles.successAlert}>
+              <span style={styles.successIcon}>✓</span>
+              <p style={styles.successText}>
+                Votre demande d'avance sur salaire a été soumise avec succès!
+              </p>
+            </div>
+            
+            <h2 style={styles.summaryTitle}>Récapitulatif de votre demande</h2>
+            
+            <div style={styles.summaryCard}>
+              <div style={styles.summaryGrid}>
+                <div>
+                  <p style={styles.summaryLabel}>Montant demandé</p>
+                  <p style={styles.summaryValue}>{parseFloat(formData.amount).toLocaleString('fr-FR')} DT</p>
+                </div>
+                <div>
+                  <p style={styles.summaryLabel}>Durée de remboursement</p>
+                  <p style={styles.summaryValue}>{formData.repaymentMonths} mois</p>
+                </div>
+                <div>
+                  <p style={styles.summaryLabel}>Mensualité</p>
+                  <p style={styles.summaryValue}>{calculateRepaymentAmount()} DT/mois</p>
+                </div>
+                <div>
+                  <p style={styles.summaryLabel}>Niveau d'urgence</p>
+                  <p style={styles.summaryValue}>{
+                    formData.urgencyLevel === 'high' ? 'Urgent' : 
+                    formData.urgencyLevel === 'medium' ? 'Modéré' : 'Normal'
+                  }</p>
+                </div>
+                <div style={styles.colSpan2}>
+                  <p style={styles.summaryLabel}>Motif de la demande</p>
+                  <p style={styles.summaryValue}>{formData.reason}</p>
+                </div>
+                {formData.additionalInfo && (
+                  <div style={styles.colSpan2}>
+                    <p style={styles.summaryLabel}>Informations complémentaires</p>
+                    <p style={styles.summaryValue}>{formData.additionalInfo}</p>
+                  </div>
+                )}
               </div>
-
-              <button type="submit" className="search-button">
-                Rechercher
+            </div>
+            
+            <div style={styles.infoBox}>
+              <p style={styles.infoText}>
+                Votre demande sera examinée par le service des ressources humaines dans les plus brefs délais. 
+                Vous recevrez une notification lorsque celle-ci sera traitée.
+              </p>
+            </div>
+            
+            <button 
+              onClick={() => setSubmitted(false)} 
+              style={styles.submitButton}
+            >
+              Nouvelle demande
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} style={styles.formContainer}>
+            <div style={styles.formSection}>
+              <h3 style={styles.sectionTitle}>Informations de la demande</h3>
+              
+              <div style={styles.formGrid}>
+                <div style={styles.formGroup}>
+                  <label style={styles.label} htmlFor="amount">
+                    Montant demandé (DT)
+                  </label>
+                  <div style={styles.amountContainer}>
+                    <span style={styles.currencySymbol}>DT</span>
+                    <input
+                      type="number"
+                      id="amount"
+                      name="amount"
+                      value={formData.amount}
+                      onChange={handleChange}
+                      style={styles.amountInput}
+                      min="100"
+                      step="50"
+                      required
+                    />
+                  </div>
+                </div>
+                
+                <div style={styles.formGroup}>
+                  <label style={styles.label} htmlFor="reason">
+                    Motif de la demande
+                  </label>
+                  <input
+                    type="text"
+                    id="reason"
+                    name="reason"
+                    value={formData.reason}
+                    onChange={handleChange}
+                    style={styles.input}
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+            
+            <div style={styles.divider}></div>
+            
+            <div style={styles.formSection}>
+              <h3 style={styles.sectionTitle}>Modalités de remboursement</h3>
+              
+              <div style={styles.formGrid}>
+                <div style={styles.formGroup}>
+                  <label style={styles.label} htmlFor="repaymentMonths">
+                    Durée de remboursement
+                  </label>
+                  <select
+                    id="repaymentMonths"
+                    name="repaymentMonths"
+                    value={formData.repaymentMonths}
+                    onChange={handleChange}
+                    style={styles.select}
+                    required
+                  >
+                    <option value="1">1 mois</option>
+                    <option value="2">2 mois</option>
+                    <option value="3">3 mois</option>
+                    <option value="4">4 mois</option>
+                    <option value="5">5 mois</option>
+                    <option value="6">6 mois</option>
+                  </select>
+                </div>
+                
+                <div style={styles.formGroup}>
+                  <label style={styles.label} htmlFor="repaymentDate">
+                    Date du premier remboursement
+                  </label>
+                  <input
+                    type="date"
+                    id="repaymentDate"
+                    name="repaymentDate"
+                    value={formData.repaymentDate}
+                    onChange={handleChange}
+                    style={styles.input}
+                    required
+                  />
+                </div>
+              </div>
+              
+              {formData.amount && formData.repaymentMonths && (
+                <div style={styles.infoBox}>
+                  <p style={styles.infoText}>
+                    Montant mensuel à rembourser: <strong>{calculateRepaymentAmount()} DT</strong>
+                  </p>
+                </div>
+              )}
+            </div>
+            
+            <div style={styles.divider}></div>
+            
+            <div style={styles.formSection}>
+              <h3 style={styles.sectionTitle}>Informations complémentaires</h3>
+              
+              <div style={styles.formGroup}>
+                <label style={styles.label}>
+                  Niveau d'urgence
+                </label>
+                <div style={styles.radioGroup}>
+                  <label style={styles.radioLabel}>
+                    <input
+                      type="radio"
+                      name="urgencyLevel"
+                      value="normal"
+                      checked={formData.urgencyLevel === 'normal'}
+                      onChange={handleChange}
+                      style={styles.radio}
+                    />
+                    Normal
+                  </label>
+                  <label style={styles.radioLabel}>
+                    <input
+                      type="radio"
+                      name="urgencyLevel"
+                      value="medium"
+                      checked={formData.urgencyLevel === 'medium'}
+                      onChange={handleChange}
+                      style={styles.radio}
+                    />
+                    Modéré
+                  </label>
+                  <label style={styles.radioLabel}>
+                    <input
+                      type="radio"
+                      name="urgencyLevel"
+                      value="high"
+                      checked={formData.urgencyLevel === 'high'}
+                      onChange={handleChange}
+                      style={styles.radio}
+                    />
+                    Urgent
+                  </label>
+                </div>
+              </div>
+              
+              <div style={styles.formGroup}>
+                <label style={styles.label} htmlFor="additionalInfo">
+                  Informations complémentaires (optionnel)
+                </label>
+                <textarea
+                  id="additionalInfo"
+                  name="additionalInfo"
+                  value={formData.additionalInfo}
+                  onChange={handleChange}
+                  style={styles.textarea}
+                  placeholder="Précisez ici toute information que vous jugez utile pour le traitement de votre demande..."
+                ></textarea>
+              </div>
+            </div>
+            
+            <div style={styles.infoBox}>
+              <p style={styles.infoText}>
+                <strong>Note:</strong> Conformément à la politique de l'entreprise, le montant maximum d'une avance sur salaire 
+                est limité à 50% de votre salaire mensuel net. Le remboursement sera effectué par prélèvement 
+                automatique sur vos prochains salaires.
+              </p>
+            </div>
+            
+            <div style={styles.buttonContainer}>
+              <button
+                type="button"
+                style={styles.cancelButton}
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                style={styles.submitButton}
+              >
+                Soumettre la demande
               </button>
             </div>
           </form>
-        </div>
+        )}
       </div>
-
-      {/* Contenu principal */}
-      <div className="content-container">
-        <div className="filters-container">
-          <div className="filters-header">
-            <h2>Filtres</h2>
-            <button className="reset-button" onClick={resetFilters}>
-              Réinitialiser
-            </button>
-          </div>
-
-          <div className="filter-section">
-            <div className="filter-header" onClick={toggleDateSection}>
-              <h3>Date de publication</h3>
-              <span className={`arrow ${isDateExpanded ? "expanded" : ""}`}>
-                ▼
-              </span>
-            </div>
-
-            {isDateExpanded && (
-              <div className="filter-options">
-                <label className="filter-radio">
-                  <input
-                    type="radio"
-                    name="dateFilter"
-                    checked={dateFilter === "Sous 30 jours"}
-                    onChange={() => setDateFilter("Sous 30 jours")}
-                  />
-                  Sous 30 jours (1)
-                </label>
-                <label className="filter-radio">
-                  <input
-                    type="radio"
-                    name="dateFilter"
-                    checked={dateFilter === "N'importe quand"}
-                    onChange={() => setDateFilter("N'importe quand")}
-                  />
-                  N'importe quand (19)
-                </label>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="job-listings-container">
-          <h1>Postes à pourvoir actuellement</h1>
-
-          {hasSearched && (
-            <div className="search-results-info">
-              <p>
-                {filteredJobs.length} offre(s) d'emploi trouvée(s){" "}
-                {searchKeyword && `pour "${searchKeyword}"`}
-              </p>
-              {filteredJobs.length === 0 && (
-                <p className="no-results">
-                  Aucun résultat trouvé. Veuillez essayer d'autres critères de
-                  recherche.
-                </p>
-              )}
-            </div>
-          )}
-
-          <div className="job-cards">
-            {displayedJobs.map((job) => (
-              <div className="job-card" key={job.id}>
-                <h3 className="job-title">{job.title}</h3>
-                <div className="job-details">
-                  <p className="job-location">{job.location}</p>
-                  <p className="job-date">{job.date}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <style jsx>{`
-        * {
-          margin: 0;
-          padding: 0;
-          box-sizing: border-box;
-          font-family: Arial, sans-serif;
-        }
-        
-        .careers-page {
-          width: 100%;
-          background-color: #f5f5f5;
-          min-height: 100vh;
-        }
-        
-        .banner {
-          width: 100%;
-          height: 380px;
-          background-image: url('https://ubci.csod.com/clientimg/ubci/careersite/banner/Backgroundpicture_6372a143-698a-40dd-99a1-fcbf9c1d104e.jpg');
-          background-size: cover;
-          background-position: center;
-          position: relative;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        
-        .banner::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          background: rgba(0, 0, 0, 0.3);
-        }
-        
-        .search-container {
-          width: 100%;
-          max-width: 800px;
-          padding: 0 20px;
-          z-index: 10;
-        }
-        
-        .search-bar {
-          display: flex;
-          background: white;
-          border-radius: 4px;
-          overflow: hidden;
-          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-        
-        .search-input-container {
-          flex: 1;
-          display: flex;
-          align-items: center;
-          padding: 0 15px;
-        }
-        
-        .search-icon {
-          margin-right: 10px;
-          color: #777;
-        }
-        
-        .search-input {
-          flex: 1;
-          padding: 15px 0;
-          border: none;
-          font-size: 16px;
-          outline: none;
-        }
-        
-        .search-input:focus {
-          outline: none;
-          box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
-        }
-        
-        .search-button {
-          padding: 0 30px;
-          background-color: #0052cc;
-          color: white;
-          border: none;
-          font-size: 16px;
-          cursor: pointer;
-          transition: background-color 0.3s;
-        }
-        
-        .search-button:hover {
-          background-color: #003d99;
-        }
-        
-        .content-container {
-          display: flex;
-          max-width: 1200px;
-          margin: 30px auto;
-          padding: 0 20px;
-        }
-        
-        .filters-container {
-          width: 300px;
-          background-color: white;
-          border-radius: 4px;
-          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-          padding: 15px;
-          margin-right: 20px;
-          height: fit-content;
-        }
-        
-        .filters-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 20px;
-        }
-        
-        .filters-header h2 {
-          font-size: 18px;
-          font-weight: bold;
-          color: #333;
-        }
-        
-        .reset-button {
-          color: #1a73e8;
-          background: none;
-          border: none;
-          cursor: pointer;
-          font-size: 14px;
-        }
-        
-        .filter-section {
-          margin-bottom: 15px;
-          border-bottom: 1px solid #e0e0e0;
-          padding-bottom: 15px;
-        }
-        
-        .filter-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          cursor: pointer;
-        }
-        
-        .filter-header h3 {
-          font-size: 16px;
-          font-weight: normal;
-          color: #333;
-        }
-        
-        .arrow {
-          font-size: 12px;
-          transition: transform 0.3s;
-        }
-        
-        .arrow.expanded {
-          transform: rotate(180deg);
-        }
-        
-        .filter-options {
-          margin-top: 10px;
-        }
-        
-        .filter-radio {
-          display: flex;
-          align-items: center;
-          margin-bottom: 8px;
-          font-size: 14px;
-          color: #555;
-        }
-        
-        .filter-radio input {
-          margin-right: 8px;
-        }
-        
-        .job-listings-container {
-          flex: 1;
-        }
-        
-        .job-listings-container h1 {
-          font-size: 22px;
-          color: #333;
-          margin-bottom: 20px;
-          font-weight: normal;
-        }
-        
-        .search-results-info {
-          margin-bottom: 15px;
-          font-size: 14px;
-          color: #555;
-        }
-        
-        .no-results {
-          color: #d32f2f;
-          margin-top: 5px;
-        }
-        
-        .job-cards {
-          display: flex;
-          flex-direction: column;
-        }
-        
-        .job-card {
-          background-color: white;
-          border-radius: 4px;
-          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-          padding: 15px;
-          margin-bottom: 10px;
-          cursor: pointer;
-          transition: transform 0.2s;
-        }
-        
-        .job-card:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
-        }
-        
-        .job-title {
-          color: #1a73e8;
-          font-size: 16px;
-          margin-bottom: 8px;
-          font-weight: normal;
-        }
-        
-        .job-details {
-          display: flex;
-          flex-direction: column;
-        }
-        
-        .job-location, .job-date {
-          font-size: 14px;
-          color: #555;
-          margin-bottom: 3px;
-        }
-        
-        @media (max-width: 768px) {
-          .search-bar {
-            flex-direction: column;
-          }
-          
-          .search-button {
-            padding: 15px 0;
-          }
-          
-          .content-container {
-            flex-direction: column;
-          }
-          
-          .filters-container {
-            width: 100%;
-            margin-right: 0;
-            margin-bottom: 20px;
-          }
-          
-          .job-listings-container {
-            width: 100%;
-          }
-        }
-      `}</style>
     </div>
   );
 };
 
 export default Test;
+
+
+
+
+
+

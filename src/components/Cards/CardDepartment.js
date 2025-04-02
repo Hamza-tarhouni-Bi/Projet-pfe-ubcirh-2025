@@ -8,7 +8,7 @@ const styles = `
     text-align: center;
     text-transform: uppercase;
     color: darkblue;
-    font-size: 2em;
+    font-size: 2em; 
   }
 
   .fixed-dialog-container {
@@ -278,7 +278,7 @@ export default function CardDepartment({ color = "light" }) {
           </div>
         )}
 
-        <div className="titre"><h1>Gestion des départements</h1></div>
+        {/* <div className="titre"><h1>Gestion des départements</h1></div> */}
         <div className="rounded-t mb-0 px-4 py-3 border-0">
           <div className="flex flex-wrap items-center justify-between">
             <h3 className={"font-semibold text-lg " + (color === "light" ? "text-blueGray-700" : "text-white")}>

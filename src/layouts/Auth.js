@@ -19,11 +19,11 @@ export default function Auth() {
           
           <Switch>
             <Route path="/auth/signin" exact component={Signin} />
-            <Route path="/auth/forget" exact component={Forget} />
+           
             <Route path="/auth/signup" exact component={Signup} />
             
           
-            <Route path="/auth" render={() => <Redirect to="/signin" />} />
+         
             
            
           </Switch>

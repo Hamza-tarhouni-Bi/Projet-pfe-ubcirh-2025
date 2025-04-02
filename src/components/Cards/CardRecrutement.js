@@ -34,9 +34,9 @@ const CardRecrutement = () => {
   const styles = {
     homeContainer: {
       fontFamily: 'Arial, sans-serif',
-      padding: '6rem',  
+      paddingTop: '7rem',  
       
-      margin: '0 auto',
+   
     },
     heading: {
       color: '#333',
