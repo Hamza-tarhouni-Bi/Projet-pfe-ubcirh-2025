@@ -1,4 +1,4 @@
-import type { Swiper } from './index.d.ts';
+import type { Swiper } from 'swiper/types';
 
 export interface CSSSelector extends String {}
 
