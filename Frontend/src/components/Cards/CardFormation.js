@@ -118,6 +118,7 @@ function CardFormation() {
   };
 
   return (
+    
     <div className="container">
         
       <div className="card">
@@ -413,6 +414,7 @@ function CardFormation() {
             </div>
           </div>
         </div>
+      
       )}
 
       {/* CSS intégré */}
@@ -928,7 +930,8 @@ function CardFormation() {
           }
         }
       `}</style>
-    </div>
+    </div> 
+    
   );
 }
 

@@ -28,6 +28,7 @@ const Postule = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
   const [fileName, setFileName] = useState("Aucun fichier sélectionné");
+  const [fileError, setFileError] = useState(""); // New state to track file upload errors
 
   // Existing search and filter states and functions...
   const [dateFilter, setDateFilter] = useState("N'importe quand");
@@ -107,22 +108,55 @@ const Postule = () => {
   const openApplicationModal = (job) => {
     setSelectedJob(job);
     setIsModalOpen(true);
+    setFileError(""); // Reset file error when opening modal
   };
 
   const closeModal = () => {
     setIsModalOpen(false);
     setSelectedJob(null);
     setFileName("Aucun fichier sélectionné");
+    setFileError(""); // Reset file error when closing modal
   };
 
-  // Handle file upload
+  // Handle file upload with PDF validation
   const handleFileChange = (e) => {
+    setFileError(""); // Reset error message
+    
     if (e.target.files.length > 0) {
-      const fileNames = Array.from(e.target.files).map(file => file.name).join(", ");
+      const files = Array.from(e.target.files);
+      
+      // Check if all files are PDFs
+      const nonPdfFiles = files.filter(file => file.type !== 'application/pdf');
+      
+      if (nonPdfFiles.length > 0) {
+        setFileError("Erreur: Veuillez ne sélectionner que des fichiers PDF.");
+        e.target.value = ''; // Clear the file input
+        setFileName("Aucun fichier sélectionné");
+        return;
+      }
+      
+      const fileNames = files.map(file => file.name).join(", ");
       setFileName(fileNames);
     } else {
       setFileName("Aucun fichier sélectionné");
     }
+  };
+
+  // Handle form submission
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    // Add your form submission logic here
+    // For example, you could check if all required fields are filled
+    
+    if (fileName === "Aucun fichier sélectionné") {
+      setFileError("Erreur: Veuillez télécharger votre CV et lettre de motivation.");
+      return;
+    }
+    
+    // If validation passes, you would typically submit the form data
+    alert("Candidature soumise avec succès!");
+    closeModal();
   };
 
   // Trigger the file input when clicking on the upload area
@@ -258,7 +292,7 @@ const Postule = () => {
         </div>
       </div>
 
-      {/* Modal for job application with improved design */}
+      {/* Modal for job application with improved design and PDF-only validation */}
       {isModalOpen && (
         <div className="modal-overlay" onClick={closeModal}>
           <div 
@@ -269,34 +303,34 @@ const Postule = () => {
             <div className="modal-title">
               <h2>Candidature pour {selectedJob.title}</h2>
             </div>
-            <form>
+            <form onSubmit={handleSubmit}>
               <div className="form-section">
                 <label>Nom complet</label> 
                 <div className="name-inputs">
-                  <input type="text" placeholder="Prénom" />
-                  <input type="text" placeholder="Nom de famille" />
+                  <input type="text" placeholder="Prénom" required />
+                  <input type="text" placeholder="Nom de famille" required />
                 </div>
               </div>
 
               <div className="form-section">
                 <label>Adresse actuelle</label>
-                <input type="text" placeholder="Adresse" className="mb-3" />
+                <input type="text" placeholder="Adresse" className="mb-3" required />
                 
                 <div className="address-details">
-                  <input type="text" placeholder="Ville" />
-                  <input type="text" placeholder="Code postal" />
+                  <input type="text" placeholder="Ville" required />
+                  <input type="text" placeholder="Code postal" required />
                 </div>
               </div>
 
               <div className="form-section">
                 <label>Adresse E-mail</label>
-                <input type="email" placeholder="Prénom@gmail.com" />
+                <input type="email" placeholder="Prénom@gmail.com" required />
               </div>
 
               <div className="form-section">
                 <label>Numéro de téléphone</label>
                 <div className="phone-input">
-                  <select className="country-code">
+                  <select className="country-code" required>
                     <option value="+216">Tunisie (+216)</option>
                     <option value="+33">France (+33)</option>
                     <option value="+212">Maroc (+212)</option>
@@ -306,23 +340,25 @@ const Postule = () => {
                     <option value="+41">Suisse (+41)</option>
                     <option value="">Autre</option>
                   </select>
-                  <input type="text" placeholder="Numéro de téléphone" />
+                  <input type="text" placeholder="Numéro de téléphone" required />
                 </div>
               </div>
 
               <div className="form-section">
-                <label>Déposez votre CV et lettre de motivation</label>
-                <div className="file-upload" onClick={triggerFileInput}>
+                <label>Déposez votre CV et lettre de motivation (format PDF uniquement)</label>
+                <div className={`file-upload ${fileError ? "file-error" : ""}`} onClick={triggerFileInput}>
                   <input 
                     type="file" 
                     id="file-upload-input" 
                     multiple 
+                    accept=".pdf,application/pdf" 
                     onChange={handleFileChange}
                   />
                   <div className="file-upload-content">
                     <span className="upload-icon">📁</span>
-                    <span className="browse-text">Parcourir les fichiers</span>
+                    <span className="browse-text">Parcourir les fichiers PDF</span>
                     <p className="selected-files">{fileName}</p>
+                    {fileError && <p className="error-message">{fileError}</p>}
                   </div>
                 </div>
               </div>
@@ -571,7 +607,7 @@ const Postule = () => {
         }
 
         .postuler-button {
-          background-color: #4CAF50;
+          background-color:#2563eb;
           color: white;
           border: none;
           padding: 10px 20px;
@@ -581,7 +617,7 @@ const Postule = () => {
         }
 
         .postuler-button:hover {
-          background-color: #45a049;
+          background-color: #2563eb;
         }
 
         .modal-overlay {
@@ -673,10 +709,6 @@ const Postule = () => {
           flex: 1;
         }
 
-    
-
-      
-
         .country-code {
           width: 40%;
           flex: 0.4;
@@ -695,6 +727,11 @@ const Postule = () => {
         .file-upload:hover {
           background-color: #e8f1fe;
           border-color: #0d47a1;
+        }
+
+        .file-upload.file-error {
+          border-color: #d32f2f;
+          background-color: #fff5f5;
         }
 
         .file-upload input[type="file"] {
@@ -724,6 +761,12 @@ const Postule = () => {
           color: #555;
           margin-top: 5px;
           word-break: break-word;
+        }
+
+        .error-message {
+          color: #d32f2f;
+          font-size: 14px;
+          margin-top: 5px;
         }
 
         .submit-application {

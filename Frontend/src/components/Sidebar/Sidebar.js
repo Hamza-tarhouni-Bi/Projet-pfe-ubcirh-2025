@@ -88,7 +88,7 @@ export default function Sidebar() {
 
             {/* Heading */}
             <h6 className="md:min-w-full text-blueGray-500 text-xs uppercase font-bold block pt-1 pb-4 no-underline">
-              Espace Administrateur
+              Espace Drh
             </h6>
 
             {/* Navigation */}
@@ -138,6 +138,21 @@ export default function Sidebar() {
                 >
                   <i className="fas fa-building mr-3 text-lg"></i>
                   <span>Départements</span>
+                </Link>
+              </li>
+                  {/* Demande*/}
+              <li className="items-center">
+                <Link
+                  className={
+                    "text-sm py-3 font-medium flex items-center " +
+                    (window.location.href.indexOf("/admin/tables") !== -1
+                      ? "text-blue-600 hover:text-blue-700"
+                      : "text-gray-700 hover:text-gray-500")
+                  }
+                  to="/admin/tables"
+                >
+                  <i className="fas fa-clipboard-list mr-3 text-lg"></i>
+                  <span>Demandes</span>
                 </Link>
               </li>
 
@@ -221,21 +236,8 @@ export default function Sidebar() {
                 </Link>
               </li>
 
-              {/* Demande */}
-              <li className="items-center">
-                <Link
-                  className={
-                    "text-sm py-3 font-medium flex items-center " +
-                    (window.location.href.indexOf("/admin/tables") !== -1
-                      ? "text-blue-600 hover:text-blue-700"
-                      : "text-gray-700 hover:text-gray-500")
-                  }
-                  to="/admin/tables"
-                >
-                  <i className="fas fa-clipboard-list mr-3 text-lg"></i>
-                  <span>Demandes</span>
-                </Link>
-              </li>
+            
+             
             </ul>
 
             <hr className="my-4 md:min-w-full" />
