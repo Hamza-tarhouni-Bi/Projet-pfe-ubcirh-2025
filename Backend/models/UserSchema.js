@@ -4,11 +4,11 @@ const bcrypt = require('bcrypt');
 const userSchema = new mongoose.Schema({
     nom: {
         type: String,
-        required: true
+        
     },
     prenom: {
         type: String,
-        required: true,
+      
         minLength: 3,
         maxLength: 15
     },
@@ -19,17 +19,17 @@ const userSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        required: true
+        
     },
     role: {
         type: String,
         enum: ['drh', 'personnel'],
-        required: true
+        
     },
     age: {
         type: Number
     },
-    user_image: {
+    image: {
         type: String
     }
 }, { timestamps: true });

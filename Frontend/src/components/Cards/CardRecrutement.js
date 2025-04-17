@@ -224,7 +224,7 @@ const encapsulatedStyles = `
   }
   
   .cr-form-select {
-    width: 100%;
+    width: 1000%;
     padding: 0.5rem;
     border: 1px solid #d1d5db;
     border-radius: 0.375rem;

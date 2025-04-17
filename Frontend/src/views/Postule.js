@@ -316,10 +316,7 @@ const Postule = () => {
                 <label>Adresse actuelle</label>
                 <input type="text" placeholder="Adresse" className="mb-3" required />
                 
-                <div className="address-details">
-                  <input type="text" placeholder="Ville" required />
-                  <input type="text" placeholder="Code postal" required />
-                </div>
+                
               </div>
 
               <div className="form-section">

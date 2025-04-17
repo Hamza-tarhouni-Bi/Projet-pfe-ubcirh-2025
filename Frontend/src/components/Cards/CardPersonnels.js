@@ -197,15 +197,15 @@ const encapsulatedStyles = `
   }
   
   .gp-modal-container {
-   max-height: 90vh; /* Utilise 90% de la hauteur de l'écran */
-  overflow-y: auto; 
-  background-color: white;
-  border-radius: 0.5rem;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  padding: 1.5rem;
-  width: 100%;
-  max-width: 50rem; 
-}
+    max-height: 90vh;
+    overflow-y: auto; 
+    background-color: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    padding: 1.5rem;
+    width: 100%;
+    max-width: 35rem;
+  }
   
   .gp-modal-header {
     display: flex;
@@ -261,7 +261,7 @@ const encapsulatedStyles = `
   
   .gp-form-select {
     width: 100%;
-    padding: 0.5rem;
+   
     border: 1px solid #d1d5db;
     border-radius: 0.375rem;
     transition: all 0.2s ease;
@@ -420,6 +420,29 @@ const encapsulatedStyles = `
     font-size: 0.75rem;
     font-weight: 500;
   }
+  
+  .gp-salary-badge {
+    background-color: #f0fdf4;
+    color: #15803d;
+    padding: 0.25rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+
+  .gp-image-upload-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .gp-image-preview {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px dashed #ccc;
+  }
 `;
 
 // Fonction pour générer un mot de passe aléatoire
@@ -431,6 +454,14 @@ const generatePassword = () => {
     password += charset.charAt(Math.floor(Math.random() * charset.length));
   }
   return password;
+};
+
+// Fonction pour générer un ID auto-incrémenté
+const generateId = (employes) => {
+  const maxId = employes.length > 0 
+    ? Math.max(...employes.map(e => e.id)) 
+    : 0;
+  return maxId + 1;
 };
 
 // Composant Modal pour les détails
@@ -448,7 +479,7 @@ const DetailsModal = ({ employe, onClose }) => {
         </div>
         
         <div className="gp-details-container">
-          <img src={employe.image} alt="Employé" className="gp-details-image" />
+          <img src={employe.image || "/placeholder-user.png"} alt="Employé" className="gp-details-image" />
           <h3 className="gp-details-name">{employe.nom} {employe.prenom}</h3>
           <p className="gp-details-department">{employe.departement}</p>
         </div>
@@ -471,19 +502,28 @@ const DetailsModal = ({ employe, onClose }) => {
             <span className="gp-details-value">{employe.email}</span>
           </div>
           <div className="gp-details-row">
+            <span className="gp-details-label">Téléphone:</span>
+            <span className="gp-details-value">{employe.telephone}</span>
+          </div>
+          <div className="gp-details-row">
             <span className="gp-details-label">Département:</span>
             <span className="gp-details-value">{employe.departement}</span>
           </div>
+          
           <div className="gp-details-row">
-            <span className="gp-details-label">Date d'embauche:</span>
-            <span className="gp-details-value">{employe.dateEmbauche || "01/01/2023"}</span>
+            <span className="gp-details-label">Salaire:</span>
+            <span className="gp-salary-badge">
+              {employe.salaire ? `${employe.salaire} TND` : "Non défini"}
+            </span>
           </div>
+          
           <div className="gp-details-row">
             <span className="gp-details-label">Solde de congé:</span>
             <span className="gp-conge-badge">
               {employe.soldeConge || 30} jours restants
             </span>
           </div>
+
           <div className="gp-details-row">
             <span className="gp-details-label">Statut:</span>
             <span className="gp-status-badge">
@@ -533,50 +573,54 @@ export default function GestionPersonnel() {
   // Données des employés
   const [employes, setEmployes] = useState([
     { 
-      id: 1, 
+      id: 1,
       image: "", 
       nom: "Dupont", 
       prenom: "Jean",
-      email: "jean.dupont@example.com", 
+      email: "jean.dupont@example.com",
+      telephone: "+216 12 34 56 78",
       departement: "Marketing", 
-      sexe: "Homme", 
-      dateEmbauche: "15/02/2022",
+      sexe: "Homme",
+      salaire: 2800,
       soldeConge: 25,
       password: generatePassword()
     },
     { 
-      id: 2, 
+      id: 2,
       image: "", 
       nom: "Lambert", 
       prenom: "Marie",
-      email: "marie.lambert@example.com", 
+      email: "marie.lambert@example.com",
+      telephone: "+216 23 45 67 89", 
       departement: "RH", 
-      sexe: "Femme", 
-      dateEmbauche: "03/05/2023",
+      sexe: "Femme",
+      salaire: 3200,
       soldeConge: 30,
       password: generatePassword()
     },
     { 
-      id: 3, 
+      id: 3,
       image: "", 
       nom: "Martin", 
       prenom: "Paul",
-      email: "paul.martin@example.com", 
+      email: "paul.martin@example.com",
+      telephone: "+216 34 56 78 90", 
       departement: "Technique", 
-      sexe: "Homme", 
-      dateEmbauche: "10/12/2021",
+      sexe: "Homme",
+      salaire: 3500,
       soldeConge: 18,
       password: generatePassword()
     },
     { 
-      id: 4, 
+      id: 4,
       image: "", 
       nom: "Bernard", 
       prenom: "Sophie",
-      email: "sophie.bernard@example.com", 
+      email: "sophie.bernard@example.com",
+      telephone: "+216 45 67 89 01", 
       departement: "Finance", 
-      sexe: "Femme", 
-      dateEmbauche: "22/08/2023",
+      sexe: "Femme",
+      salaire: 3800,
       soldeConge: 30,
       password: generatePassword()
     }
@@ -593,17 +637,19 @@ export default function GestionPersonnel() {
   const [employeDetails, setEmployeDetails] = useState(null);
   const [employeASupprimer, setEmployeASupprimer] = useState(null);
   const [toast, setToast] = useState({ affiche: false, message: "", type: "" });
+  const [imagePreview, setImagePreview] = useState(null);
 
   // Nouvel employé vide pour le formulaire d'ajout
   const employeVide = { 
-    id: "", 
+    id: generateId(employes),
     image: "", 
     nom: "", 
     prenom: "",
-    email: "", 
+    email: "",
+    telephone: "", 
     departement: "", 
     sexe: "",
-    dateEmbauche: new Date().toLocaleDateString('fr-FR'),
+    salaire: "",
     soldeConge: 30,
     password: generatePassword()
   };
@@ -623,7 +669,9 @@ export default function GestionPersonnel() {
         if (filtreType === "nom") {
           return employe.nom.toLowerCase().includes(recherche.toLowerCase()) || 
                  employe.prenom.toLowerCase().includes(recherche.toLowerCase());
-        } else {
+        } else if (filtreType === "telephone") {
+          return employe.telephone.includes(recherche);
+        } else if (filtreType === "id") {
           return employe.id.toString().includes(recherche);
         }
       });
@@ -644,19 +692,33 @@ export default function GestionPersonnel() {
 
   // Ouvrir le modal pour ajouter/modifier un employé
   const ouvrirModal = (employe = null) => {
-    const nouvelId = employes.length > 0 ? Math.max(...employes.map(e => e.id)) + 1 : 1;
     setEmployeActuel(employe || { 
-      ...employeVide, 
-      id: nouvelId,
+      ...employeVide,
+      id: generateId(employes),
       password: generatePassword()
     });
+    setImagePreview(employe?.image || null);
     setModalOuvert(true);
+  };
+  
+  // Gérer l'upload d'image
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+        setEmployeActuel(prev => ({ ...prev, image: reader.result }));
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   // Fermer le modal
   const fermerModal = () => {
     setModalOuvert(false);
     setEmployeActuel(null);
+    setImagePreview(null);
   };
   
   // Ouvrir le modal de détails
@@ -702,19 +764,26 @@ export default function GestionPersonnel() {
 
   // Sauvegarder l'employé (ajout ou modification)
   const sauvegarderEmploye = () => {
-    // Vérifier si tous les champs sont remplis
-    if (!employeActuel.nom || !employeActuel.prenom || !employeActuel.email || !employeActuel.departement || !employeActuel.sexe) {
-      afficherToast("Veuillez remplir tous les champs", "error");
+    // Vérifier si tous les champs obligatoires sont remplis
+    if (!employeActuel.nom || !employeActuel.prenom || !employeActuel.email || 
+        !employeActuel.telephone || !employeActuel.departement || !employeActuel.sexe) {
+      afficherToast("Veuillez remplir tous les champs obligatoires", "error");
+      return;
+    }
+
+    if (employeActuel.salaire && isNaN(employeActuel.salaire)) {
+      afficherToast("Le salaire doit être un nombre valide", "error");
       return;
     }
 
     // Vérifier si c'est une modification ou un ajout
-    const index = employes.findIndex(e => e.id === employeActuel.id);
-    
-    if (index !== -1) {
+    const existant = employes.find(e => e.id === employeActuel.id);
+
+    if (existant) {
       // Modification
-      const nouveauxEmployes = [...employes];
-      nouveauxEmployes[index] = employeActuel;
+      const nouveauxEmployes = employes.map(e => 
+        e.id === employeActuel.id ? employeActuel : e
+      );
       setEmployes(nouveauxEmployes);
       afficherToast("Employé modifié avec succès", "success");
     } else {
@@ -740,7 +809,7 @@ export default function GestionPersonnel() {
       {/* Injection du CSS */}
       <style>{encapsulatedStyles}</style>
       
-      <div className={"relative flex flex-col min-w-0 break-words w-full mb-6 shadow-lg rounded"}>
+      <div className="relative flex flex-col min-w-0 break-words w-full mb-6 shadow-lg rounded">
         <div className="gp-personnel-container">
           <div className="gp-header-section">
             <h1 className="gp-modal-title" style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>Gestion du Personnel</h1>
@@ -753,7 +822,7 @@ export default function GestionPersonnel() {
                 </div>
                 <input
                   type="text"
-                  placeholder={`Rechercher par ${filtreType === 'nom' ? 'nom' : 'ID'}`}
+                  placeholder={`Rechercher par ${filtreType === 'nom' ? 'nom' : filtreType === 'telephone' ? 'téléphone' : 'ID'}`}
                   value={recherche}
                   onChange={(e) => setRecherche(e.target.value)}
                   className="gp-form-input"
@@ -769,6 +838,7 @@ export default function GestionPersonnel() {
                   className="gp-form-select"
                 >
                   <option value="nom">Filtrer par Nom</option>
+                 
                   <option value="id">Filtrer par ID</option>
                 </select>
               </div>
@@ -826,60 +896,54 @@ export default function GestionPersonnel() {
                     <th className="gp-th">Nom</th>
                     <th className="gp-th">Prénom</th>
                     <th className="gp-th">Email</th>
+                    <th className="gp-th">Téléphone</th>
                     <th className="gp-th">Département</th>
-                    <th className="gp-th">Solde Congé</th>
-                    <th className="gp-th" style={{ textAlign: 'center' }}>Statut</th>
-                    <th className="gp-th" style={{ textAlign: 'center' }}>Actions</th>
+                    <th className="gp-th">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {employesAffiches.length > 0 ? (
-                    employesAffiches.map((employe) => (
-                      <tr className="gp-tr" key={employe.id}>
+                    employesAffiches.map((employe, index) => (
+                      <tr key={index} className="gp-tr">
                         <td className="gp-td">{employe.id}</td>
                         <td className="gp-td">
-                          <img src={employe.image} alt="" className="gp-employee-image" />
+                          <img 
+                            src={employe.image || "/placeholder-user.png"} 
+                            alt={`${employe.prenom} ${employe.nom}`} 
+                            className="gp-employee-image" 
+                          />
                         </td>
-                        <td className="gp-td" style={{ fontWeight: 500 }}>{employe.nom}</td>
-                        <td className="gp-td" style={{ fontWeight: 500 }}>{employe.prenom}</td>
+                        <td className="gp-td">{employe.nom}</td>
+                        <td className="gp-td">{employe.prenom}</td>
                         <td className="gp-td">{employe.email}</td>
+                        <td className="gp-td">{employe.telephone}</td>
                         <td className="gp-td">
                           <span className="gp-department-badge">
                             {employe.departement}
                           </span>
                         </td>
                         <td className="gp-td">
-                          <span className="gp-conge-badge">
-                            {employe.soldeConge} jours
-                          </span>
-                        </td>
-                        <td className="gp-td" style={{ textAlign: 'center' }}>
-                          <span className="gp-status-badge">
-                            Actif
-                          </span>
-                        </td>
-                        <td className="gp-td">
-                          <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
+                          <div style={{ display: 'flex', gap: '0.5rem' }}>
                             <button 
-                              onClick={() => ouvrirDetailsModal(employe)} 
+                              onClick={() => ouvrirDetailsModal(employe)}
                               className="gp-action-button gp-view-button"
                               title="Voir détails"
                             >
-                              <Eye size={16} />
+                              <Eye size={18} />
                             </button>
                             <button 
-                              onClick={() => ouvrirModal(employe)} 
+                              onClick={() => ouvrirModal(employe)}
                               className="gp-action-button gp-edit-button"
                               title="Modifier"
                             >
-                              <Edit size={16} />
+                              <Edit size={18} />
                             </button>
                             <button 
-                              onClick={() => ouvrirSuppressionModal(employe)} 
+                              onClick={() => ouvrirSuppressionModal(employe)}
                               className="gp-action-button gp-delete-button"
                               title="Supprimer"
                             >
-                              <Trash size={16} />
+                              <Trash size={18} />
                             </button>
                           </div>
                         </td>
@@ -887,7 +951,7 @@ export default function GestionPersonnel() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="9" className="gp-td" style={{ textAlign: 'center', color: '#6b7280', padding: '1.5rem 0' }}>
+                      <td className="gp-td" colSpan="8" style={{ textAlign: 'center' }}>
                         Aucun employé trouvé
                       </td>
                     </tr>
@@ -919,16 +983,13 @@ export default function GestionPersonnel() {
           </div>
         </div>
         
-        {/* Modal pour ajouter/modifier un employé */}
-        {modalOuvert && (
+        {/* Modal d'ajout/modification d'employé */}
+        {modalOuvert && employeActuel && (
           <div className="gp-modal-overlay">
             <div className="gp-modal-container">
               <div className="gp-modal-header">
                 <h2 className="gp-modal-title">
-                  {employeActuel && employes.some(e => e.id === employeActuel.id) 
-                    ? "Modifier un employé" 
-                    : "Ajouter un employé"
-                  }
+                  {employeActuel.nom ? `Modifier ${employeActuel.prenom} ${employeActuel.nom}` : "Ajouter un employé"}
                 </h2>
                 <button onClick={fermerModal} className="gp-modal-close">
                   <X size={24} />
@@ -938,85 +999,93 @@ export default function GestionPersonnel() {
               <div>
                 <div className="gp-form-group">
                   <label className="gp-form-label">ID</label>
-                  <input 
-                    type="number" 
-                    name="id" 
-                    value={employeActuel?.id || ""} 
-                    disabled 
+                  <input
+                    type="text"
+                    name="id"
+                    value={employeActuel.id}
+                    onChange={handleChange}
                     className="gp-form-input"
-                    style={{ backgroundColor: '#f3f4f6' }}
+                    disabled
                   />
                 </div>
-                
+
                 <div className="gp-form-group">
-                  <label className="gp-form-label">Nom</label>
-                  <input 
-                    type="text" 
-                    name="nom" 
-                    value={employeActuel?.nom || ""} 
-                    onChange={handleChange} 
-                    className="gp-form-input"
-                  />
-                </div>
-                
-                <div className="gp-form-group">
-                  <label className="gp-form-label">Prénom</label>
-                  <input 
-                    type="text" 
-                    name="prenom" 
-                    value={employeActuel?.prenom || ""} 
-                    onChange={handleChange} 
-                    className="gp-form-input"
-                  />
-                </div>
-                
-                <div className="gp-form-group">
-                  <label className="gp-form-label">Email</label>
-                  <input 
-                    type="email" 
-                    name="email" 
-                    value={employeActuel?.email || ""} 
-                    onChange={handleChange} 
-                    className="gp-form-input"
-                  />
-                </div>
-                
-                <div className="gp-form-group">
-                  <label className="gp-form-label">Mot de passe</label>
-                  <div className="gp-password-container">
-                    <input 
-                      type="text" 
-                      name="password" 
-                      value={employeActuel?.password || ""} 
-                      onChange={handleChange} 
-                      className="gp-form-input gp-password-input"
-                      readOnly
+                  <label className="gp-form-label">Image</label>
+                  <div className="gp-image-upload-container">
+                    {imagePreview && (
+                      <img 
+                        src={imagePreview} 
+                        alt="Preview" 
+                        className="gp-image-preview" 
+                      />
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="gp-form-input"
                     />
-                    <button 
-                      onClick={copierMotDePasse}
-                      className="gp-copy-button"
-                      title="Copier le mot de passe"
-                    >
-                      <Copy size={16} />
-                    </button>
+                  
                   </div>
-                  <button 
-                    onClick={genererNouveauMotDePasse}
-                    className="gp-generate-button"
-                  >
-                    Générer un nouveau mot de passe
-                  </button>
                 </div>
                 
                 <div className="gp-form-group">
-                  <label className="gp-form-label">Département</label>
-                  <select 
-                    name="departement" 
-                    value={employeActuel?.departement || ""} 
-                    onChange={handleChange} 
+                  <label className="gp-form-label">Nom *</label>
+                  <input
+                    type="text"
+                    name="nom"
+                    value={employeActuel.nom}
+                    onChange={handleChange}
+                    className="gp-form-input"
+                    required
+                  />
+                </div>
+                
+                <div className="gp-form-group">
+                  <label className="gp-form-label">Prénom *</label>
+                  <input
+                    type="text"
+                    name="prenom"
+                    value={employeActuel.prenom}
+                    onChange={handleChange}
+                    className="gp-form-input"
+                    required
+                  />
+                </div>
+                
+                <div className="gp-form-group">
+                  <label className="gp-form-label">Email *</label>
+                  <input type="email"
+                    name="email"
+                    value={employeActuel.email}
+                    onChange={handleChange}
+                    className="gp-form-input"
+                    required
+                  />
+                </div>
+                
+                <div className="gp-form-group">
+                  <label className="gp-form-label">Téléphone *</label>
+                  <input
+                    type="tel"
+                    name="telephone"
+                    value={employeActuel.telephone}
+                    onChange={handleChange}
+                    className="gp-form-input"
+                    required
+                  />
+                </div>
+                
+                <div className="gp-form-group">
+                  <label className="gp-form-label">Département *</label>
+                  <select
+                    name="departement"
+                    value={employeActuel.departement}
+                    onChange={handleChange}
                     className="gp-form-select"
+                    required
                   >
-                    <option value="">Sélectionner</option>
+                    <option value="">Sélectionnez un département</option>
                     <option value="Marketing">Marketing</option>
                     <option value="RH">RH</option>
                     <option value="Technique">Technique</option>
@@ -1025,110 +1094,141 @@ export default function GestionPersonnel() {
                 </div>
                 
                 <div className="gp-form-group">
-                  <label className="gp-form-label">Sexe</label>
-                  <select 
-                    name="sexe" 
-                    value={employeActuel?.sexe || ""} 
-                    onChange={handleChange} 
+                  <label className="gp-form-label">Sexe *</label>
+                  <select
+                    name="sexe"
+                    value={employeActuel.sexe}
+                    onChange={handleChange}
                     className="gp-form-select"
+                    required
                   >
-                    <option value="">Sélectionner</option>
+                    <option value="">Sélectionnez le sexe</option>
                     <option value="Homme">Homme</option>
                     <option value="Femme">Femme</option>
                   </select>
                 </div>
                 
                 <div className="gp-form-group">
-                  <label className="gp-form-label">Solde de congé (jours)</label>
-                  <input 
-                    type="number" 
-                    name="soldeConge" 
-                    min="0"
-                    max="30"
-                    value={employeActuel?.soldeConge || 30} 
-                    onChange={handleChange} 
+                  <label className="gp-form-label">Salaire (TND) *</label>
+                  <input
+                    type="number"
+                    name="salaire"
+                    value={employeActuel.salaire}
+                    onChange={handleChange}
                     className="gp-form-input"
+                    placeholder="Salaire mensuel en TND"
+                    required
+                  />
+                </div>
+
+                <div className="gp-form-group">
+                  <label className="gp-form-label">Solde de congé *</label>
+                  <input
+                    type="number"
+                    name="soldeConge"
+                    value={employeActuel.soldeConge}
+                    onChange={handleChange}
+                    className="gp-form-input"
+                    placeholder="Jours de congés restants"
+                    required
                   />
                 </div>
                 
                 <div className="gp-form-group">
-                  <label className="gp-form-label">Date d'embauche</label>
-                  <input 
-                    type="text" 
-                    name="dateEmbauche" 
-                    value={employeActuel?.dateEmbauche || ""} 
-                    onChange={handleChange} 
-                    className="gp-form-input"
-                    placeholder="JJ/MM/AAAA"
-                  />
-                </div>
-                
-                <div className="gp-modal-footer">
+                  <label className="gp-form-label">Mot de passe</label>
+                  <div className="gp-password-container">
+                    <input
+                      type="text"
+                      name="password"
+                      value={employeActuel.password}
+                      onChange={handleChange}
+                      className="gp-form-input gp-password-input"
+                      readOnly
+                    />
+                    <button 
+                      onClick={copierMotDePasse} 
+                      className="gp-copy-button"
+                      title="Copier le mot de passe"
+                    >
+                      <Copy size={18} />
+                    </button>
+                  </div>
                   <button 
-                    onClick={fermerModal} 
-                    className="gp-btn gp-btn-cancel"
+                    onClick={genererNouveauMotDePasse} 
+                    className="gp-generate-button"
                   >
-                    Annuler
-                  </button>
-                  <button 
-                    onClick={sauvegarderEmploye} 
-                    className="gp-btn gp-btn-save"
-                  >
-                    Sauvegarder
+                    Générer un nouveau mot de passe
                   </button>
                 </div>
+              </div>
+              
+              <div className="gp-modal-footer">
+                <button 
+                  onClick={fermerModal}
+                  className="gp-btn gp-btn-cancel"
+                >
+                  Annuler
+                </button>
+                <button 
+                  onClick={sauvegarderEmploye}
+                  className="gp-btn gp-btn-save"
+                >
+                  Sauvegarder
+                </button>
               </div>
             </div>
           </div>
         )}
         
-        {/* Modal pour afficher les détails */}
+        {/* Modal de détails d'employé */}
         {detailsModalOuvert && (
-          <DetailsModal employe={employeDetails} onClose={fermerDetailsModal} />
+          <DetailsModal
+            employe={employeDetails}
+            onClose={fermerDetailsModal}
+          />
         )}
         
         {/* Modal de confirmation de suppression */}
-        {suppressionModalOuvert && employeASupprimer && (
+        {suppressionModalOuvert && (
           <div className="gp-modal-overlay">
-            <div className="gp-modal-container">
+            <div className="gp-modal-container" style={{ maxWidth: '28rem' }}>
               <div className="gp-modal-header">
-                <h2 className="gp-modal-title">Confirmation de suppression</h2>
+                <h2 className="gp-modal-title">Confirmer la suppression</h2>
                 <button onClick={fermerSuppressionModal} className="gp-modal-close">
                   <X size={24} />
                 </button>
               </div>
               
-              <div>
-                <p style={{ marginBottom: '1.5rem', color: '#4b5563' }}>
-                  Êtes-vous sûr de vouloir supprimer l'employé <strong>{employeASupprimer.nom} {employeASupprimer.prenom}</strong> ?
-                </p>
-                
-                <div className="gp-modal-footer">
-                  <button 
-                    onClick={fermerSuppressionModal} 
-                    className="gp-btn gp-btn-cancel"
-                  >
-                    Annuler
-                  </button>
-                  <button 
-                    onClick={confirmerSuppression} 
-                    className="gp-btn gp-btn-save"
-                    style={{ backgroundColor: '#ef4444', borderColor: '#ef4444' }}
-                  >
-                    Supprimer
-                  </button>
-                </div>
+              <div style={{ marginBottom: '1.5rem', color: '#4b5563' }}>
+                Êtes-vous sûr de vouloir supprimer l'employé <strong>{employeASupprimer?.prenom} {employeASupprimer?.nom}</strong> ?
+                Cette action est irréversible.
+              </div>
+              
+              <div className="gp-modal-footer">
+                <button 
+                  onClick={fermerSuppressionModal}
+                  className="gp-btn gp-btn-cancel"
+                >
+                  Annuler
+                </button>
+                <button 
+                  onClick={confirmerSuppression}
+                  className="gp-btn gp-btn-save"
+                  style={{ backgroundColor: '#ef4444', borderColor: '#ef4444' }}
+                >
+                  Supprimer
+                </button>
               </div>
             </div>
           </div>
         )}
         
-        {/* Toast notifications */}
+        {/* Toast pour les notifications */}
         {toast.affiche && (
-          <Toast 
-            message={toast.message} 
-            type={toast.type} 
-            onClose={fermerToast} 
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            onClose={fermerToast}
           />
         )}
       </div>

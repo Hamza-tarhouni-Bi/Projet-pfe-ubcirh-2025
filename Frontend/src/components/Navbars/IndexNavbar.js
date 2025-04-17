@@ -12,7 +12,7 @@ export default function Navbar(props) {
         <div className="container px-4 mx-auto flex flex-wrap items-center justify-between">
           <div className="w-full relative flex justify-between lg:w-auto lg:static lg:block lg:justify-start">
             <Link
-              to="/"
+              to="/home"
               className="text-blueGray-700 text-sm font-bold leading-relaxed inline-block mr-4 py-2 whitespace-nowrap uppercase"
             >
               <img
@@ -65,7 +65,7 @@ export default function Navbar(props) {
                   to="/signin"
                   className="bg-lightBlue-500 text-white active:bg-lightBlue-600 text-xs font-bold uppercase px-4 py-2 rounded shadow hover:shadow-lg outline-none focus:outline-none lg:mr-1 lg:mb-0 ml-3 mb-3 ease-linear transition-all duration-150"
                 >
-                  <i className="fas fa-sign-in-alt"></i> Se connecter
+                  <i className="fas fa-arrow-right"></i> Se connecter
                 </Link>
               </li>
             
