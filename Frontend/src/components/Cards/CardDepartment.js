@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
-import { Search, Edit, Trash, Plus, X, Check, Filter } from 'lucide-react';
+import { Search, Edit, Trash, Plus, X, Check, Filter } from "lucide-react";
+import axios from "axios";
 
 // CSS encapsulé avec préfixe "gp-" (cohérent avec Gestion Personnel)
 const encapsulatedStyles = `
@@ -278,24 +279,27 @@ const encapsulatedStyles = `
     background-color: #ef4444;
   }
 `;
-
-// Composant de toast pour les notifications
+// Toast component for notifications
 const Toast = ({ message, type, onClose }) => {
-  const toastClass = type === 'success' ? 'gp-toast-success' : 
-                  type === 'error' ? 'gp-toast-error' : 'gp-toast-info';
-  
+  const toastClass =
+    type === "success"
+      ? "gp-toast-success"
+      : type === "error"
+      ? "gp-toast-error"
+      : "gp-toast-info";
+
   React.useEffect(() => {
     const timer = setTimeout(() => {
       onClose();
     }, 3000);
-    
+
     return () => clearTimeout(timer);
   }, [onClose]);
-  
+
   return (
     <div className={`gp-toast ${toastClass}`}>
-      {type === 'success' && <Check size={20} />}
-      {type === 'error' && <X size={20} />}
+      {type === "success" && <Check size={20} />}
+      {type === "error" && <X size={20} />}
       <p>{message}</p>
     </div>
   );
@@ -304,57 +308,77 @@ const Toast = ({ message, type, onClose }) => {
 export default function CardDepartment({ color = "light" }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOption, setSortOption] = useState("");
-  const [departments, setDepartments] = useState([
-    { id: 1, departement: "Informatique" },
-    { id: 2, departement: "Ressources Humaines" },
-    { id: 3, departement: "Finance" },
-  ]);
+  const [departments, setDepartments] = useState([]);
   const [modalOuvert, setModalOuvert] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedDepartmentId, setSelectedDepartmentId] = useState(null);
   const [selectedDepartmentName, setSelectedDepartmentName] = useState("");
   const [newDepartment, setNewDepartment] = useState({
-    departement: "",
+    nom: "",
   });
   const [selectedDepartment, setSelectedDepartment] = useState(null);
   const [errors, setErrors] = useState({});
   const [toast, setToast] = useState({ affiche: false, message: "", type: "" });
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch departments on component mount
+  useEffect(() => {
+    fetchDepartments();
+  }, []);
+
+
+
+  // Fetch all departments
+  const fetchDepartments = async () => {
+    try {
+      setIsLoading(true);
+      const response = await axios.get(`/alldepartment`);
+      setDepartments(response.data);
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Error fetching departments:", error);
+      afficherToast("Erreur lors du chargement des départements", "error");
+      setIsLoading(false);
+    }
+  };
 
   const filteredDepartments = departments
     .filter((department) => {
       if (!isNaN(searchTerm) && searchTerm !== "") {
-        return department.id.toString().includes(searchTerm);
+        return department._id.toString().includes(searchTerm);
       }
-      return department.departement.toLowerCase().includes(searchTerm.toLowerCase());
+      return department.nom.toLowerCase().includes(searchTerm.toLowerCase());
     })
     .sort((a, b) => {
       if (!sortOption) return 0;
-      if (sortOption === "id-asc") return a.id - b.id;
-      if (sortOption === "id-desc") return b.id - a.id;
-      if (sortOption === "departement") return a.departement.localeCompare(b.departement);
+      if (sortOption === "id-asc") return a._id.localeCompare(b._id);
+      if (sortOption === "id-desc") return b._id.localeCompare(a._id);
+      if (sortOption === "departement") return a.nom.localeCompare(b.nom);
       return 0;
     });
 
-  // Afficher un toast
+  // Display a toast notification
   const afficherToast = (message, type) => {
     setToast({ affiche: true, message, type });
   };
 
-  // Fermer le toast
+  // Close toast
   const fermerToast = () => {
     setToast({ ...toast, affiche: false });
   };
 
-  const handleAction = (action, id, departement) => {
+  const handleAction = (action, id, nom) => {
     switch (action) {
       case "modifier":
-        const departmentToEdit = departments.find((department) => department.id === id);
+        const departmentToEdit = departments.find(
+          (department) => department._id === id
+        );
         setSelectedDepartment(departmentToEdit);
         setIsEditModalOpen(true);
         break;
       case "supprimer":
         setSelectedDepartmentId(id);
-        setSelectedDepartmentName(departement);
+        setSelectedDepartmentName(nom);
         setModalOuvert(true);
         break;
       default:
@@ -362,11 +386,23 @@ export default function CardDepartment({ color = "light" }) {
     }
   };
 
-  const handleConfirmDelete = () => {
-    setDepartments(departments.filter((department) => department.id !== selectedDepartmentId));
-    setModalOuvert(false);
-    setSelectedDepartmentName("");
-    afficherToast("Département supprimé avec succès", "error");
+  const handleConfirmDelete = async () => {
+    try {
+      await axios.delete(
+        `/deletedepartment/${selectedDepartmentId}`
+      );
+      setDepartments(
+        departments.filter(
+          (department) => department._id !== selectedDepartmentId
+        )
+      );
+      setModalOuvert(false);
+      setSelectedDepartmentName("");
+      afficherToast("Département supprimé avec succès", "success");
+    } catch (error) {
+      console.error("Error deleting department:", error);
+      afficherToast("Erreur lors de la suppression du département", "error");
+    }
   };
 
   const handleCancelDelete = () => {
@@ -375,52 +411,73 @@ export default function CardDepartment({ color = "light" }) {
   };
 
   const handleAddDepartment = () => {
-    setNewDepartment({ departement: "" });
+    setNewDepartment({ nom: "" });
+    setSelectedDepartmentId(null);
     setIsEditModalOpen(false);
     setModalOuvert(true);
   };
 
   const validateForm = (department) => {
     const newErrors = {};
-    if (!department.departement) newErrors.departement = "Le département est obligatoire.";
+    if (!department.nom)
+      newErrors.nom = "Le nom du département est obligatoire.";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleModalSubmit = () => {
+  const handleModalSubmit = async () => {
     if (!validateForm(newDepartment)) return;
 
-    const newDepartmentEntry = {
-      id: departments.length > 0 ? Math.max(...departments.map(d => d.id)) + 1 : 1,
-      departement: newDepartment.departement,
-    };
-    setDepartments([...departments, newDepartmentEntry]);
-    setModalOuvert(false);
-    setNewDepartment({
-      departement: "",
-    });
-    setErrors({});
-    afficherToast("Département ajouté avec succès", "success");
+    try {
+      const response = await axios.post(`/adddepartment`, {
+        nom: newDepartment.nom,
+      });
+
+      setDepartments([...departments, response.data]);
+      setModalOuvert(false);
+      setNewDepartment({
+        nom: "",
+      });
+      setErrors({});
+      afficherToast("Département ajouté avec succès", "success");
+    } catch (error) {
+      console.error("Error adding department:", error);
+      afficherToast("Erreur lors de l'ajout du département", "error");
+    }
   };
 
   const handleModalCancel = () => {
     setModalOuvert(false);
     setNewDepartment({
-      departement: "",
+      nom: "",
     });
     setErrors({});
   };
 
-  const handleEditSubmit = () => {
+  const handleEditSubmit = async () => {
     if (!validateForm(selectedDepartment)) return;
 
-    const updatedDepartments = departments.map((department) =>
-      department.id === selectedDepartment.id ? { ...selectedDepartment } : department
-    );
+    try {
+      await axios.put(
+        `/updatedepartment/${selectedDepartment._id}`,
+        {
+          nom: selectedDepartment.nom,
+        }
+      );
 
-    setDepartments(updatedDepartments);
-    setIsEditModalOpen(false);
-    afficherToast("Département modifié avec succès", "success");
+      const updatedDepartments = departments.map((department) =>
+        department._id === selectedDepartment._id
+          ? { ...selectedDepartment }
+          : department
+      );
+
+      setDepartments(updatedDepartments);
+      setIsEditModalOpen(false);
+      afficherToast("Département modifié avec succès", "success");
+    } catch (error) {
+      console.error("Error updating department:", error);
+      afficherToast("Erreur lors de la modification du département", "error");
+    }
   };
 
   const handleEditCancel = () => {
@@ -430,23 +487,30 @@ export default function CardDepartment({ color = "light" }) {
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (isEditModalOpen) {
-      setSelectedDepartment(prev => ({ ...prev, [name]: value }));
+      setSelectedDepartment((prev) => ({ ...prev, [name]: value }));
     } else {
-      setNewDepartment(prev => ({ ...prev, [name]: value }));
+      setNewDepartment((prev) => ({ ...prev, [name]: value }));
     }
   };
 
   return (
     <>
-      {/* Injection des styles CSS */}
       <style>{encapsulatedStyles}</style>
-
-      <div className={"relative flex flex-col min-w-0 break-words w-full mb-6 shadow-lg rounded"}>
+      <div
+        className={
+          "relative flex flex-col min-w-0 break-words w-full mb-6 shadow-lg rounded"
+        }
+      >
         <div className="gp-department-container">
           <div className="gp-header-section">
-            <h1 className="gp-modal-title" style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>Gestion des Départements</h1>
-            
-            {/* Partie recherche et filtration */}
+            <h1
+              className="gp-modal-title"
+              style={{ fontSize: "1.5rem", marginBottom: "1.5rem" }}
+            >
+              Gestion des Départements
+            </h1>
+
+            {/* Search and filter section */}
             <div className="gp-search-container">
               <div className="gp-search-input">
                 <div className="gp-search-icon">
@@ -458,14 +522,16 @@ export default function CardDepartment({ color = "light" }) {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="gp-form-input"
-                  style={{ paddingLeft: '2.5rem' }}
+                  style={{ paddingLeft: "2.5rem" }}
                 />
               </div>
-              
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Filter size={20} style={{ color: '#9ca3af' }} />
-                <select 
-                  value={sortOption} 
+
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
+              >
+                <Filter size={20} style={{ color: "#9ca3af" }} />
+                <select
+                  value={sortOption}
                   onChange={(e) => setSortOption(e.target.value)}
                   className="gp-form-select"
                 >
@@ -475,47 +541,80 @@ export default function CardDepartment({ color = "light" }) {
                   <option value="departement">Par Département</option>
                 </select>
               </div>
-              
-              <button 
-                onClick={handleAddDepartment}
-                className="gp-add-button"
-              >
+
+              <button onClick={handleAddDepartment} className="gp-add-button">
                 <Plus size={20} />
                 Ajouter
               </button>
             </div>
-            
-            {/* Tableau des départements */}
+
+            {/* Departments table */}
             <div className="gp-table-container">
               <table className="gp-table">
                 <thead>
                   <tr>
                     <th className="gp-th">ID</th>
                     <th className="gp-th">Département</th>
-                    <th className="gp-th" style={{ textAlign: 'center' }}>Actions</th>
+                    <th className="gp-th" style={{ textAlign: "center" }}>
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredDepartments.length > 0 ? (
+                  {isLoading ? (
+                    <tr>
+                      <td
+                        colSpan="3"
+                        className="gp-td"
+                        style={{
+                          textAlign: "center",
+                          color: "#6b7280",
+                          padding: "1.5rem 0",
+                        }}
+                      >
+                        Chargement des départements...
+                      </td>
+                    </tr>
+                  ) : filteredDepartments.length > 0 ? (
                     filteredDepartments.map((department) => (
                       <tr className="gp-tr" key={department._id}>
-                        <td className="gp-td">{department._id}</td>
+                        <td className="gp-td">
+                          {department._id.substring(0, 8)}...
+                        </td>
                         <td className="gp-td">
                           <span className="gp-department-badge">
-                            {department.departement}
+                            {department.nom}
                           </span>
                         </td>
                         <td className="gp-td">
-                          <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
-                            <button 
-                              onClick={() => handleAction("modifier", department._id, department.departement)} 
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "center",
+                              gap: "0.5rem",
+                            }}
+                          >
+                            <button
+                              onClick={() =>
+                                handleAction(
+                                  "modifier",
+                                  department._id,
+                                  department.nom
+                                )
+                              }
                               className="gp-action-button gp-edit-button"
                               title="Modifier"
                             >
                               <Edit size={16} />
                             </button>
-                            <button 
-                              onClick={() => handleAction("supprimer", department.id, department.departement)} 
+                            <button
+                              onClick={() =>
+                                handleAction(
+                                  "supprimer",
+                                  department._id,
+                                  department.nom
+                                )
+                              }
                               className="gp-action-button gp-delete-button"
                               title="Supprimer"
                             >
@@ -527,7 +626,15 @@ export default function CardDepartment({ color = "light" }) {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="3" className="gp-td" style={{ textAlign: 'center', color: '#6b7280', padding: '1.5rem 0' }}>
+                      <td
+                        colSpan="3"
+                        className="gp-td"
+                        style={{
+                          textAlign: "center",
+                          color: "#6b7280",
+                          padding: "1.5rem 0",
+                        }}
+                      >
                         Aucun département trouvé
                       </td>
                     </tr>
@@ -535,17 +642,18 @@ export default function CardDepartment({ color = "light" }) {
                 </tbody>
               </table>
             </div>
-            
+
             {/* Pagination */}
             <div className="gp-pagination">
-              <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-                Affichage de {filteredDepartments.length} sur {departments.length} départements
+              <div style={{ fontSize: "0.875rem", color: "#6b7280" }}>
+                Affichage de {filteredDepartments.length} sur{" "}
+                {departments.length} départements
               </div>
             </div>
           </div>
         </div>
-        
-        {/* Modal pour supprimer un département */}
+
+        {/* Delete department modal */}
         {modalOuvert && selectedDepartmentId && (
           <div className="gp-modal-overlay">
             <div className="gp-modal-container">
@@ -555,23 +663,27 @@ export default function CardDepartment({ color = "light" }) {
                   <X size={24} />
                 </button>
               </div>
-              
+
               <div>
-                <p style={{ marginBottom: '1.5rem', color: '#4b5563' }}>
-                  Êtes-vous sûr de vouloir supprimer le département <strong>{selectedDepartmentName}</strong> ?
+                <p style={{ marginBottom: "1.5rem", color: "#4b5563" }}>
+                  Êtes-vous sûr de vouloir supprimer le département{" "}
+                  <strong>{selectedDepartmentName}</strong> ?
                 </p>
-                
+
                 <div className="gp-modal-footer">
-                  <button 
-                    onClick={handleCancelDelete} 
+                  <button
+                    onClick={handleCancelDelete}
                     className="gp-btn gp-btn-cancel"
                   >
                     Annuler
                   </button>
-                  <button 
-                    onClick={handleConfirmDelete} 
+                  <button
+                    onClick={handleConfirmDelete}
                     className="gp-btn gp-btn-save"
-                    style={{ backgroundColor: '#ef4444', borderColor: '#ef4444' }}
+                    style={{
+                      backgroundColor: "#ef4444",
+                      borderColor: "#ef4444",
+                    }}
                   >
                     Supprimer
                   </button>
@@ -580,8 +692,8 @@ export default function CardDepartment({ color = "light" }) {
             </div>
           </div>
         )}
-        
-        {/* Modal pour ajouter un département */}
+
+        {/* Add department modal */}
         {modalOuvert && !selectedDepartmentId && (
           <div className="gp-modal-overlay">
             <div className="gp-modal-container">
@@ -591,33 +703,39 @@ export default function CardDepartment({ color = "light" }) {
                   <X size={24} />
                 </button>
               </div>
-              
+
               <div>
                 <div className="gp-form-group">
                   <label className="gp-form-label">Nom du département</label>
-                  <input 
-                    type="text" 
-                    name="departement" 
-                    value={newDepartment.departement} 
-                    onChange={handleChange} 
+                  <input
+                    type="text"
+                    name="nom"
+                    value={newDepartment.nom}
+                    onChange={handleChange}
                     className="gp-form-input"
                   />
-                  {errors.departement && (
-                    <p style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.25rem' }}>
-                      {errors.departement}
+                  {errors.nom && (
+                    <p
+                      style={{
+                        color: "#ef4444",
+                        fontSize: "0.75rem",
+                        marginTop: "0.25rem",
+                      }}
+                    >
+                      {errors.nom}
                     </p>
                   )}
                 </div>
-                
+
                 <div className="gp-modal-footer">
-                  <button 
-                    onClick={handleModalCancel} 
+                  <button
+                    onClick={handleModalCancel}
                     className="gp-btn gp-btn-cancel"
                   >
                     Annuler
                   </button>
-                  <button 
-                    onClick={handleModalSubmit} 
+                  <button
+                    onClick={handleModalSubmit}
                     className="gp-btn gp-btn-save"
                   >
                     Ajouter
@@ -627,8 +745,8 @@ export default function CardDepartment({ color = "light" }) {
             </div>
           </div>
         )}
-        
-        {/* Modal pour modifier un département */}
+
+        {/* Edit department modal */}
         {isEditModalOpen && selectedDepartment && (
           <div className="gp-modal-overlay">
             <div className="gp-modal-container">
@@ -638,44 +756,50 @@ export default function CardDepartment({ color = "light" }) {
                   <X size={24} />
                 </button>
               </div>
-              
+
               <div>
                 <div className="gp-form-group">
                   <label className="gp-form-label">ID</label>
-                  <input 
-                    type="text" 
-                    value={selectedDepartment.id} 
-                    disabled 
+                  <input
+                    type="text"
+                    value={selectedDepartment._id}
+                    disabled
                     className="gp-form-input"
-                    style={{ backgroundColor: '#f3f4f6' }}
+                    style={{ backgroundColor: "#f3f4f6" }}
                   />
                 </div>
-                
+
                 <div className="gp-form-group">
                   <label className="gp-form-label">Nom du département</label>
-                  <input 
-                    type="text" 
-                    name="departement" 
-                    value={selectedDepartment.departement} 
-                    onChange={handleChange} 
+                  <input
+                    type="text"
+                    name="nom"
+                    value={selectedDepartment.nom}
+                    onChange={handleChange}
                     className="gp-form-input"
                   />
-                  {errors.departement && (
-                    <p style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.25rem' }}>
-                      {errors.departement}
+                  {errors.nom && (
+                    <p
+                      style={{
+                        color: "#ef4444",
+                        fontSize: "0.75rem",
+                        marginTop: "0.25rem",
+                      }}
+                    >
+                      {errors.nom}
                     </p>
                   )}
                 </div>
-                
+
                 <div className="gp-modal-footer">
-                  <button 
-                    onClick={handleEditCancel} 
+                  <button
+                    onClick={handleEditCancel}
                     className="gp-btn gp-btn-cancel"
                   >
                     Annuler
                   </button>
-                  <button 
-                    onClick={handleEditSubmit} 
+                  <button
+                    onClick={handleEditSubmit}
                     className="gp-btn gp-btn-save"
                   >
                     Enregistrer
@@ -685,13 +809,13 @@ export default function CardDepartment({ color = "light" }) {
             </div>
           </div>
         )}
-        
+
         {/* Toast notifications */}
         {toast.affiche && (
-          <Toast 
-            message={toast.message} 
-            type={toast.type} 
-            onClose={fermerToast} 
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            onClose={fermerToast}
           />
         )}
       </div>

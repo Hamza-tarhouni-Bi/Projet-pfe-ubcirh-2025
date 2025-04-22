@@ -1,12 +1,12 @@
 const personnelModal = require('../models/PersonnelSchema');
-const bcrypt=require("bcrypt");
-
+const bcrypt = require("bcrypt");
+const { sendWelcomeEmail } = require('../utiles/emailService');
 
 //Liste des personnels
 module.exports.getAllPersonnel = async (req, res) => {
   try {
     const personnellist = await personnelModal.find();
-    if (!personnellist  ) {
+    if (!personnellist) {
       throw new Error("Personnel not found");
     }
     res.status(200).json(personnellist);
@@ -15,51 +15,59 @@ module.exports.getAllPersonnel = async (req, res) => {
   }
 };
 
-
-
 //Suppression d un personnel 
-
 module.exports.deletePersonnel = async (req, res) => {
-    try {
-        const{ id   }=req.params;
-       const deleted= await personnelModal.findByIdAndDelete(id);
-      
-      res.status(200).json(deleted);
-    } catch (error) {
-      res.status(500).json({ error: error.message });
-    }
-  };
+  try {
+    const { id } = req.params;
+    const deleted = await personnelModal.findByIdAndDelete(id);
+    
+    res.status(200).json(deleted);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
 
-
-  module.exports.addPersonnelWithimage = async (req, res) => {
-    try {
-      const personnelData = { ...req.body };
-  
-      // Si une image est uploadée
-      if (req.file) {
-        personnelData.image = req.file.filename;
-      } else {
-        // Sinon, utiliser l'image par défaut
-        personnelData.image = 'defaultuser.jpg';
-      }
-  
-      const personnel = new personnelModal(personnelData);
-      const personneladded = await personnel.save();
-  
-      res.status(201).json(personneladded);
-    } catch (error) {
-      res.status(500).json({ error: error.message });
+module.exports.addPersonnelWithimage = async (req, res) => {
+  try {
+    const personnelData = { ...req.body };
+    const rawPassword = personnelData.password; // Sauvegarder le mot de passe non crypté pour l'email
+    
+    // Si une image est uploadée
+    if (req.file) {
+      personnelData.image = req.file.filename;
+    } else {
+      // Sinon, utiliser l'image par défaut
+      personnelData.image = 'defaultuser.jpg';
     }
-  };
+    
+    const personnel = new personnelModal(personnelData);
+    const personneladded = await personnel.save();
+    
+    // Envoyer un email de bienvenue avec le mot de passe
+    try {
+      await sendWelcomeEmail(
+        personneladded.email,
+        personneladded.nom,
+        personneladded.prenom,
+        rawPassword
+      );
+      console.log('Email de bienvenue envoyé à', personneladded.email);
+    } catch (emailError) {
+      console.error('Erreur lors de l\'envoi de l\'email:', emailError);
+      // On ne fait pas échouer la requête si l'envoi d'email échoue
+    }
+    
+    res.status(201).json(personneladded);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
 
 //update personnel 
-
 module.exports.updatePersonnel = async (req, res) => {
   try {
     const { id } = req.params;
     const updateData = { ...req.body };
-    
-    
     
     const updated = await personnelModal.findByIdAndUpdate(
       id,
@@ -76,4 +84,3 @@ module.exports.updatePersonnel = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
-
