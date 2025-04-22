@@ -8,6 +8,7 @@ import {
   Filter,
   Check
 } from 'lucide-react';
+import axios from 'axios'; // Importation d'axios pour les requêtes HTTP
 
 // CSS encapsulé avec préfixe "cr-" (Card Recrutement)
 const encapsulatedStyles = `
@@ -224,7 +225,7 @@ const encapsulatedStyles = `
   }
   
   .cr-form-select {
-    width: 1000%;
+    width: 100%;
     padding: 0.5rem;
     border: 1px solid #d1d5db;
     border-radius: 0.375rem;
@@ -316,6 +317,9 @@ const encapsulatedStyles = `
   }
 `;
 
+// Configuration de base pour les appels API
+const API_URL = 'http://localhost:5000'; // Ajustez selon votre configuration
+
 // Composant de toast pour les notifications
 const Toast = ({ message, type, onClose }) => {
   const toastClass = type === 'success' ? 'cr-toast-success' : 'cr-toast-error';
@@ -337,12 +341,7 @@ const Toast = ({ message, type, onClose }) => {
 };
 
 const CardRecrutement = () => {
-  const [offers, setOffers] = useState([
-    { id: 1, title: 'Chef de Produit Marketing Junior', location: 'Tunisie', date: '2023-05-06' },
-    { id: 2, title: 'Développeur Frontend React', location: 'Remote', date: '2023-04-15' },
-    { id: 3, title: 'UX/UI Designer', location: 'Paris', date: '2023-06-10' }
-  ]);
-  
+  const [offers, setOffers] = useState([]);
   const [filteredOffers, setFilteredOffers] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -351,6 +350,37 @@ const CardRecrutement = () => {
   const [currentOffer, setCurrentOffer] = useState(null);
   const [offerToDelete, setOfferToDelete] = useState(null);
   const [toast, setToast] = useState({ show: false, message: '', type: '' });
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Charger les offres depuis le backend au chargement du composant
+  useEffect(() => {
+    fetchOffers();
+  }, []);
+
+  // Fonction pour récupérer les offres depuis l'API
+  const fetchOffers = async () => {
+    try {
+      setIsLoading(true);
+      const response = await axios.get(`/alloffre`);
+      
+      // Transformer les données pour correspondre à notre structure
+      const formattedOffers = response.data.map(offer => ({
+        id: offer._id,
+        title: offer.titre,
+        location: offer.lieu,
+        date: new Date(offer.date).toISOString().split('T')[0]
+      }));
+      
+      setOffers(formattedOffers);
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Erreur lors du chargement des offres:', error);
+      setError('Impossible de charger les offres.');
+      setIsLoading(false);
+      showToast('Erreur lors du chargement des offres', 'error');
+    }
+  };
 
   // Effet pour filtrer les offres basé sur les critères de recherche et filtre
   useEffect(() => {
@@ -383,8 +413,7 @@ const CardRecrutement = () => {
 
   // Ouvrir le modal pour ajouter une offre
   const handleAddOffer = () => {
-    const newId = offers.length > 0 ? Math.max(...offers.map(o => o.id)) + 1 : 1;
-    setCurrentOffer({ id: newId, title: '', location: '', date: new Date().toISOString().split('T')[0] });
+    setCurrentOffer({ title: '', location: '', date: new Date().toISOString().split('T')[0] });
     setIsModalOpen(true);
   };
 
@@ -418,7 +447,7 @@ const CardRecrutement = () => {
   };
 
   // Sauvegarder une offre (ajout ou modification)
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!currentOffer.title || !currentOffer.location || !currentOffer.date) {
@@ -426,32 +455,50 @@ const CardRecrutement = () => {
       return;
     }
     
-    // Vérifier si c'est une modification ou un ajout
-    const index = offers.findIndex(o => o.id === currentOffer.id);
-    
-    if (index !== -1) {
-      // Modification
-      const updatedOffers = [...offers];
-      updatedOffers[index] = currentOffer;
-      setOffers(updatedOffers);
-      showToast("Offre modifiée avec succès", "success");
-    } else {
-      // Ajout
-      setOffers([...offers, currentOffer]);
-      showToast("Offre ajoutée avec succès", "success");
+    try {
+      // Adapter le format des données pour correspondre au backend
+      const offerData = {
+        titre: currentOffer.title,
+        lieu: currentOffer.location,
+        date: currentOffer.date
+      };
+      
+      // Vérifier si c'est une modification ou un ajout
+      if (currentOffer.id) {
+        // Modification
+        await axios.put(`/updateoffre/${currentOffer.id}`, offerData);
+        showToast("Offre modifiée avec succès", "success");
+      } else {
+        // Ajout
+        await axios.post(`/addoffre`, offerData);
+        showToast("Offre ajoutée avec succès", "success");
+      }
+      
+      // Recharger les offres
+      fetchOffers();
+      setIsModalOpen(false);
+      setCurrentOffer(null);
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde de l\'offre:', error);
+      showToast(error.response?.data?.error || "Une erreur est survenue", "error");
     }
-    
-    setIsModalOpen(false);
-    setCurrentOffer(null);
   };
 
   // Confirmer la suppression d'une offre
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (offerToDelete) {
-      setOffers(offers.filter(o => o.id !== offerToDelete.id));
-      showToast("Offre supprimée avec succès", "error");
-      setIsDeleteModalOpen(false);
-      setOfferToDelete(null);
+      try {
+        await axios.delete(`/deleteoffre/${offerToDelete.id}`);
+        showToast("Offre supprimée avec succès", "success");
+        
+        // Recharger les offres
+        fetchOffers();
+        setIsDeleteModalOpen(false);
+        setOfferToDelete(null);
+      } catch (error) {
+        console.error('Erreur lors de la suppression de l\'offre:', error);
+        showToast(error.response?.data?.error || "Une erreur est survenue lors de la suppression", "error");
+      }
     }
   };
 
@@ -512,45 +559,56 @@ const CardRecrutement = () => {
             </button>
           </div>
           
-          {/* Liste des offres */}
-          {filteredOffers.length > 0 ? (
-            filteredOffers.map((offer) => (
-              <div key={offer.id} className="cr-job-listing">
-                <h2 className="cr-job-title">{offer.title}</h2>
-                <div className="cr-job-detail">
-                  <strong>Lieu:</strong>
-                  <span className="cr-job-badge">{offer.location}</span>
-                </div>
-                <div className="cr-job-detail">
-                  <strong>Date:</strong> {formatDate(offer.date)}
-                </div>
-                
-                <div className="cr-action-buttons">
-                  <button 
-                    className="cr-action-button cr-edit-button" 
-                    onClick={() => handleEditOffer(offer)}
-                    title="Modifier l'offre"
-                  >
-                    <Edit size={16} />
-                  </button>
-                  <button 
-                    className="cr-action-button cr-delete-button" 
-                    onClick={() => handleDeleteOffer(offer)}
-                    title="Supprimer l'offre"
-                  >
-                    <Trash size={16} />
-                  </button>
-                </div>
-              </div>
-            ))
-          ) : (
+          {/* État de chargement */}
+          {isLoading ? (
             <div style={{ textAlign: 'center', padding: '2rem 0', color: '#6b7280' }}>
-              Aucune offre trouvée
+              Chargement des offres...
             </div>
+          ) : error ? (
+            <div style={{ textAlign: 'center', padding: '2rem 0', color: '#ef4444' }}>
+              {error}
+            </div>
+          ) : (
+            /* Liste des offres */
+            filteredOffers.length > 0 ? (
+              filteredOffers.map((offer) => (
+                <div key={offer.id} className="cr-job-listing">
+                  <h2 className="cr-job-title">{offer.title}</h2>
+                  <div className="cr-job-detail">
+                    <strong>Lieu:</strong>
+                    <span className="cr-job-badge">{offer.location}</span>
+                  </div>
+                  <div className="cr-job-detail">
+                    <strong>Date:</strong> {formatDate(offer.date)}
+                  </div>
+                  
+                  <div className="cr-action-buttons">
+                    <button 
+                      className="cr-action-button cr-edit-button" 
+                      onClick={() => handleEditOffer(offer)}
+                      title="Modifier l'offre"
+                    >
+                      <Edit size={16} />
+                    </button>
+                    <button 
+                      className="cr-action-button cr-delete-button" 
+                      onClick={() => handleDeleteOffer(offer)}
+                      title="Supprimer l'offre"
+                    >
+                      <Trash size={16} />
+                    </button>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div style={{ textAlign: 'center', padding: '2rem 0', color: '#6b7280' }}>
+                Aucune offre trouvée
+              </div>
+            )
           )}
           
           {/* Pagination */}
-          {filteredOffers.length > 0 && (
+          {!isLoading && !error && filteredOffers.length > 0 && (
             <div className="cr-pagination">
               <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
                 Affichage de {filteredOffers.length} sur {offers.length} offres
@@ -577,7 +635,7 @@ const CardRecrutement = () => {
           <div className="cr-modal-container">
             <div className="cr-modal-header">
               <h2 className="cr-modal-title">
-                {offers.some(o => o.id === currentOffer?.id) ? "Modifier une offre" : "Ajouter une offre"}
+                {currentOffer.id ? "Modifier une offre" : "Ajouter une offre"}
               </h2>
               <button className="cr-modal-close" onClick={handleCloseModal}>
                 <X size={24} />

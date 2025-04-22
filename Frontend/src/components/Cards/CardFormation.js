@@ -1,16 +1,9 @@
-//Partie admin formation
 import { useState, useEffect } from 'react';
+import axios from 'axios';
 
 // Composant principal
 function CardFormation() {
-  const [formations, setFormations] = useState([
-    { id: 1, titre: "Développement React Avancé", description: "Formation complète sur les concepts avancés de React", date: "2025-04-15", duree: 21, places: 12, inscrits: 8, statut: "Programmée" },
-    { id: 2, titre: "Leadership et Management d'Équipe", description: "Techniques de management pour les chefs d'équipe", date: "2025-05-10", duree: 14, places: 15, inscrits: 15, statut: "Complète" },
-    { id: 3, titre: "Excel pour RH", description: "Utilisation avancée d'Excel pour les professionnels RH", date: "2025-04-22", duree: 7, places: 20, inscrits: 5, statut: "Programmée" },
-    { id: 4, titre: "Communication Professionnelle", description: "Améliorer sa communication en milieu professionnel", date: "2025-06-05", duree: 14, places: 18, inscrits: 12, statut: "Programmée" },
-    { id: 5, titre: "RGPD et Conformité", description: "Les bases de la conformité RGPD pour les équipes RH", date: "2025-03-25", duree: 7, places: 25, inscrits: 20, statut: "Terminée" }
-  ]);
-
+  const [formations, setFormations] = useState([]);
   const [filteredFormations, setFilteredFormations] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState({ key: 'date', direction: 'asc' });
@@ -20,6 +13,39 @@ function CardFormation() {
   });
   const [activeTab, setActiveTab] = useState('toutes');
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Charger les formations depuis l'API
+  useEffect(() => {
+    const fetchFormations = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get('/getformation');
+        
+        // Transformer les données pour correspondre à notre structure frontend
+        const formattedData = response.data.map(formation => ({
+          id: formation._id,
+          titre: formation.titre,
+          description: formation.description,
+          date: new Date(formation.date).toISOString().split('T')[0],
+          duree: formation.durée,
+          places: formation.nbplaces,
+          inscrits: formation.nbinscrits,
+          statut: formation.statut
+        }));
+        
+        setFormations(formattedData);
+        setLoading(false);
+      } catch (err) {
+        console.error("Erreur lors du chargement des formations:", err);
+        setError("Impossible de charger les formations. Veuillez réessayer plus tard.");
+        setLoading(false);
+      }
+    };
+
+    fetchFormations();
+  }, []);
 
   // Filtrer les formations
   useEffect(() => {
@@ -84,23 +110,65 @@ function CardFormation() {
     setModalOpen(true);
   };
 
-  const handleDelete = (id) => {
-    setFormations(formations.filter(formation => formation.id !== id));
-    setConfirmDeleteId(null);
+  const handleDelete = async (id) => {
+    try {
+      await axios.delete(`/deleteformation/${id}`);
+      setFormations(formations.filter(formation => formation.id !== id));
+      setConfirmDeleteId(null);
+    } catch (err) {
+      console.error("Erreur lors de la suppression:", err);
+      alert("Impossible de supprimer la formation. Veuillez réessayer.");
+    }
   };
 
-  const handleSave = () => {
-    if (currentFormation.id) {
-      // Édition
-      setFormations(formations.map(formation => 
-        formation.id === currentFormation.id ? currentFormation : formation
-      ));
-    } else {
-      // Création
-      const newId = Math.max(...formations.map(f => f.id)) + 1;
-      setFormations([...formations, {...currentFormation, id: newId}]);
+  const handleSave = async () => {
+    try {
+      // Préparer les données pour l'API
+      const formationData = {
+        titre: currentFormation.titre,
+        description: currentFormation.description,
+        date: currentFormation.date,
+        durée: currentFormation.duree,
+        nbplaces: currentFormation.places,
+        nbinscrits: currentFormation.inscrits,
+        statut: currentFormation.statut
+      };
+
+      if (currentFormation.id) {
+        // Mise à jour
+        const response = await axios.put(`/updateformation/${currentFormation.id}`, formationData);
+        setFormations(formations.map(formation => 
+          formation.id === currentFormation.id ? {
+            ...formation,
+            titre: currentFormation.titre,
+            description: currentFormation.description,
+            date: currentFormation.date,
+            duree: currentFormation.duree,
+            places: currentFormation.places,
+            inscrits: currentFormation.inscrits,
+            statut: currentFormation.statut
+          } : formation
+        ));
+      } else {
+        // Création
+        const response = await axios.post('/addformation', formationData);
+        const newFormation = {
+          id: response.data._id,
+          titre: response.data.titre,
+          description: response.data.description,
+          date: new Date(response.data.date).toISOString().split('T')[0],
+          duree: response.data.durée,
+          places: response.data.nbplaces,
+          inscrits: response.data.nbinscrits,
+          statut: response.data.statut
+        };
+        setFormations([...formations, newFormation]);
+      }
+      setModalOpen(false);
+    } catch (err) {
+      console.error("Erreur lors de l'enregistrement:", err);
+      alert("Impossible d'enregistrer la formation. Veuillez vérifier les données et réessayer.");
     }
-    setModalOpen(false);
   };
 
   const getStatusColor = (statut) => {
@@ -117,314 +185,383 @@ function CardFormation() {
     return new Date(dateString).toLocaleDateString('fr-FR', options);
   };
 
-  return (
-    
-    <div className="container">
-        
-      <div className="card">
-        {/* Header */}
-        
-
-        {/* Toolbar */}
-        <div className="toolbar">
-          <div className="toolbar-left">
-            <div className="search-container">
-              <input
-                type="text"
-                placeholder="Rechercher une formation..."
-                className="search-input"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-              <div className="search-icon">&#128269;</div>
-            </div>
-            <div className="tabs">
-              <button 
-                className={`tab ${activeTab === 'toutes' ? 'active' : ''}`}
-                onClick={() => setActiveTab('toutes')}
-              >
-                Toutes
-              </button>
-              <button 
-                className={`tab ${activeTab === 'programmees' ? 'active' : ''}`}
-                onClick={() => setActiveTab('programmees')}
-              >
-                Programmées
-              </button>
-              <button 
-                className={`tab ${activeTab === 'completes' ? 'active' : ''}`}
-                onClick={() => setActiveTab('completes')}
-              >
-                Complètes
-              </button>
-              <button 
-                className={`tab ${activeTab === 'terminees' ? 'active' : ''}`}
-                onClick={() => setActiveTab('terminees')}
-              >
-                Terminées
-              </button>
-            </div>
-          </div>
-          <button 
-            className="btn-primary"
-            onClick={handleAddNew}
-          >
-            <span className="icon">+</span>
-            <span>Nouvelle formation</span>
-          </button>
-        </div>
-
-        {/* Table */}
-        <div className="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th className="sortable" onClick={() => requestSort('titre')}>
-                  <div className="th-content">
-                    Titre
-                    {sortConfig.key === 'titre' && (
-                      <span className="sort-icon">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
-                    )}
-                  </div>
-                </th>
-                <th className="sortable" onClick={() => requestSort('date')}>
-                  <div className="th-content">
-                    Date
-                    {sortConfig.key === 'date' && (
-                      <span className="sort-icon">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
-                    )}
-                  </div>
-                </th>
-                <th className="sortable" onClick={() => requestSort('duree')}>
-                  <div className="th-content">
-                    Durée
-                    {sortConfig.key === 'duree' && (
-                      <span className="sort-icon">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
-                    )}
-                  </div>
-                </th>
-                <th className="sortable" onClick={() => requestSort('places')}>
-                  <div className="th-content">
-                    Places
-                    {sortConfig.key === 'places' && (
-                      <span className="sort-icon">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
-                    )}
-                  </div>
-                </th>
-                <th>Statut</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredFormations.length > 0 ? (
-                filteredFormations.map((formation) => (
-                  <tr key={formation.id}>
-                    <td>
-                      <div className="formation-title">
-                        <span className="title">{formation.titre}</span>
-                        <span className="description">{formation.description}</span>
-                      </div>
-                    </td>
-                    <td>
-                      <div className="with-icon">
-                        <span className="icon">📅</span>
-                        <span>{formatDate(formation.date)}</span>
-                      </div>
-                    </td>
-                    <td>
-                      <div className="with-icon">
-                        <span className="icon">⏱️</span>
-                        <span>{formation.duree} heures</span>
-                      </div>
-                    </td>
-                    <td>
-                      <div className="with-icon">
-                        <span className="icon">👥</span>
-                        <span>{formation.inscrits}/{formation.places}</span>
-                        {formation.inscrits === formation.places && (
-                          <span className="dot yellow-dot"></span>
-                        )}
-                      </div>
-                    </td>
-                    <td>
-                      <span className={`status ${getStatusColor(formation.statut)}`}>
-                        {formation.statut}
-                      </span>
-                    </td>
-                    <td>
-                      {confirmDeleteId === formation.id ? (
-                        <div className="action-buttons">
-                          <button onClick={() => handleDelete(formation.id)} className="btn-confirm">
-                            ✓ Confirmer
-                          </button>
-                          <button onClick={() => setConfirmDeleteId(null)} className="btn-cancel">
-                            ✕ Annuler
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="action-buttons">
-                          <button onClick={() => handleEdit(formation)} className="btn-edit">
-                            ✎
-                          </button>
-                          <button onClick={() => setConfirmDeleteId(formation.id)} className="btn-delete">
-                            🗑️
-                          </button>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={6} className="empty-table">
-                    Aucune formation trouvée
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination */}
-        <div className="pagination">
-          <div className="pagination-info">
-            Affichage de <span className="bold">{filteredFormations.length}</span> formation(s)
-          </div>
-          <div className="pagination-buttons">
-            <button className="btn-page">
-              Précédent
-            </button>
-            <button className="btn-page">
-              Suivant
-            </button>
-          </div>
-        </div>
+  // Affichage de chargement
+  if (loading) {
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner"></div>
+        <p>Chargement des formations...</p>
+        <style jsx>{`
+          .loading-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 300px;
+          }
+          .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+          }
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
       </div>
+    );
+  }
 
-      {/* Modal */}
-      {modalOpen && (
-        <div className="modal-overlay">
-          <div className="modal">
-            <div className="modal-header">
-              <h2>
-                {currentFormation.id ? 'Modifier la formation' : 'Ajouter une formation'}
-              </h2>
-            </div>
-            <div className="modal-body">
-              <div className="form-grid">
-                <div className="form-group">
-                  <label>
-                    Titre de la formation
-                  </label>
-                  <input 
-                    type="text" 
-                    className="form-control"
-                    value={currentFormation.titre}
-                    onChange={(e) => setCurrentFormation({...currentFormation, titre: e.target.value})}
-                  />
-                </div>
-                <div className="form-group">
-                  <label>
-                    Description
-                  </label>
-                  <textarea 
-                    className="form-control"
-                    rows="3"
-                    value={currentFormation.description}
-                    onChange={(e) => setCurrentFormation({...currentFormation, description: e.target.value})}
-                  ></textarea>
-                </div>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>
-                      Date
-                    </label>
-                    <input 
-                      type="date" 
-                      className="form-control"
-                      value={currentFormation.date}
-                      onChange={(e) => setCurrentFormation({...currentFormation, date: e.target.value})}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>
-                      Durée (heures)
-                    </label>
-                    <input 
-                      type="number" 
-                      className="form-control"
-                      value={currentFormation.duree}
-                      onChange={(e) => setCurrentFormation({...currentFormation, duree: parseInt(e.target.value) || 0})}
-                    />
-                  </div>
-                </div>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>
-                      Nombre de places
-                    </label>
-                    <input 
-                      type="number" 
-                      className="form-control"
-                      value={currentFormation.places}
-                      onChange={(e) => setCurrentFormation({...currentFormation, places: parseInt(e.target.value) || 0})}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>
-                      Nombre d'inscrits
-                    </label>
-                    <input 
-                      type="number" 
-                      className="form-control"
-                      value={currentFormation.inscrits}
-                      onChange={(e) => setCurrentFormation({...currentFormation, inscrits: parseInt(e.target.value) || 0})}
-                    />
-                  </div>
-                </div>
-                <div className="form-group">
-                  <label>
-                    Statut
-                  </label>
-                  <select 
-                    className="form-control"
-                    value={currentFormation.statut}
-                    onChange={(e) => setCurrentFormation({...currentFormation, statut: e.target.value})}
-                  >
-                    <option value="Programmée">Programmée</option>
-                    <option value="Complète">Complète</option>
-                    <option value="Terminée">Terminée</option>
-                  </select>
-                </div>
+  // Affichage d'erreur
+  if (error) {
+    return (
+      <div className="error-container">
+        <p className="error-message">{error}</p>
+        <button className="retry-button" onClick={() => window.location.reload()}>
+          Réessayer
+        </button>
+        <style jsx>{`
+          .error-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 300px;
+            color: #ef4444;
+          }
+          .error-message {
+            margin-bottom: 20px;
+          }
+          .retry-button {
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+          }
+        `}</style>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="relative flex flex-col min-w-0 break-words w-full mb-6 shadow-lg rounded"
+    >
+      <div className="container">
+        <div className="gp-header-section">
+          <h1
+            className="gp-modal-title"
+            style={{ fontSize: "1.5rem", marginBottom: "" }}
+          >
+            Gestion des Formations
+          </h1>
+        </div>
+          
+        <div className="card">
+          <div className="toolbar">
+            <div className="toolbar-left">
+              <div className="search-container">
+                <input
+                  type="text"
+                  placeholder="Rechercher une formation..."
+                  className="search-input"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                <div className="search-icon">&#128269;</div>
+              </div>
+              <div className="tabs">
+                <button 
+                  className={`tab ${activeTab === 'toutes' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('toutes')}
+                >
+                  Toutes
+                </button>
+                <button 
+                  className={`tab ${activeTab === 'programmees' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('programmees')}
+                >
+                  Programmées
+                </button>
+                <button 
+                  className={`tab ${activeTab === 'completes' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('completes')}
+                >
+                  Complètes
+                </button>
+                <button 
+                  className={`tab ${activeTab === 'terminees' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('terminees')}
+                >
+                  Terminées
+                </button>
               </div>
             </div>
-            <div className="modal-footer">
-              <button 
-                className="btn-secondary"
-                onClick={() => setModalOpen(false)}
-              >
-                Annuler
+            <button 
+              className="btn-primary"
+              onClick={handleAddNew}
+            >
+              <span className="icon">+</span>
+              <span>Nouvelle formation</span>
+            </button>
+          </div>
+
+          {/* Table */}
+          <div className="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th className="sortable" onClick={() => requestSort('titre')}>
+                    <div className="th-content">
+                      Titre
+                      {sortConfig.key === 'titre' && (
+                        <span className="sort-icon">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
+                      )}
+                    </div>
+                  </th>
+                  <th className="sortable" onClick={() => requestSort('date')}>
+                    <div className="th-content">
+                      Date
+                      {sortConfig.key === 'date' && (
+                        <span className="sort-icon">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
+                      )}
+                    </div>
+                  </th>
+                  <th className="sortable" onClick={() => requestSort('duree')}>
+                    <div className="th-content">
+                      Durée
+                      {sortConfig.key === 'duree' && (
+                        <span className="sort-icon">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
+                      )}
+                    </div>
+                  </th>
+                  <th className="sortable" onClick={() => requestSort('places')}>
+                    <div className="th-content">
+                      Places
+                      {sortConfig.key === 'places' && (
+                        <span className="sort-icon">{sortConfig.direction === 'asc' ? '▲' : '▼'}</span>
+                      )}
+                    </div>
+                  </th>
+                  <th>Statut</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredFormations.length > 0 ? (
+                  filteredFormations.map((formation) => (
+                    <tr key={formation.id}>
+                      <td>
+                        <div className="formation-title">
+                          <span className="title">{formation.titre}</span>
+                          <span className="description">{formation.description}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <div className="with-icon">
+                          <span className="icon">📅</span>
+                          <span>{formatDate(formation.date)}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <div className="with-icon">
+                          <span className="icon">⏱️</span>
+                          <span>{formation.duree} heures</span>
+                        </div>
+                      </td>
+                      <td>
+                        <div className="with-icon">
+                          <span className="icon">👥</span>
+                          <span>{formation.inscrits}/{formation.places}</span>
+                          {formation.inscrits === formation.places && (
+                            <span className="dot yellow-dot"></span>
+                          )}
+                        </div>
+                      </td>
+                      <td>
+                        <span className={`status ${getStatusColor(formation.statut)}`}>
+                          {formation.statut}
+                        </span>
+                      </td>
+                      <td>
+                        {confirmDeleteId === formation.id ? (
+                          <div className="action-buttons">
+                            <button onClick={() => handleDelete(formation.id)} className="btn-confirm">
+                              ✓ Confirmer
+                            </button>
+                            <button onClick={() => setConfirmDeleteId(null)} className="btn-cancel">
+                              ✕ Annuler
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="action-buttons">
+                            <button onClick={() => handleEdit(formation)} className="btn-edit">
+                              ✎
+                            </button>
+                            <button onClick={() => setConfirmDeleteId(formation.id)} className="btn-delete">
+                              🗑️
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={6} className="empty-table">
+                      Aucune formation trouvée
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination */}
+          <div className="pagination">
+            <div className="pagination-info">
+              Affichage de <span className="bold">{filteredFormations.length}</span> formation(s)
+            </div>
+            <div className="pagination-buttons">
+              <button className="btn-page" disabled={true}>
+                Précédent
               </button>
-              <button 
-                className="btn-primary"
-                onClick={handleSave}
-              >
-                {currentFormation.id ? 'Mettre à jour' : 'Ajouter'}
+              <button className="btn-page" disabled={true}>
+                Suivant
               </button>
             </div>
           </div>
         </div>
-      
-      )}
 
+        {/* Modal */}
+        {modalOpen && (
+          <div className="modal-overlay">
+            <div className="modal">
+              <div className="modal-header">
+                <h2>
+                  {currentFormation.id ? 'Modifier la formation' : 'Ajouter une formation'}
+                </h2>
+              </div>
+              <div className="modal-body">
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label>
+                      Titre de la formation
+                    </label>
+                    <input 
+                      type="text" 
+                      className="form-control"
+                      value={currentFormation.titre}
+                      onChange={(e) => setCurrentFormation({...currentFormation, titre: e.target.value})}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>
+                      Description
+                    </label>
+                    <textarea 
+                      className="form-control"
+                      rows="3"
+                      value={currentFormation.description}
+                      onChange={(e) => setCurrentFormation({...currentFormation, description: e.target.value})}
+                    ></textarea>
+                  </div>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>
+                        Date
+                      </label>
+                      <input 
+                        type="date" 
+                        className="form-control"
+                        value={currentFormation.date}
+                        onChange={(e) => setCurrentFormation({...currentFormation, date: e.target.value})}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>
+                        Durée (heures)
+                      </label>
+                      <input 
+                        type="number" 
+                        className="form-control"
+                        value={currentFormation.duree}
+                        onChange={(e) => setCurrentFormation({...currentFormation, duree: parseInt(e.target.value) || 0})}
+                      />
+                    </div>
+                  </div>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>
+                        Nombre de places
+                      </label>
+                      <input 
+                        type="number" 
+                        className="form-control"
+                        value={currentFormation.places}
+                        onChange={(e) => setCurrentFormation({...currentFormation, places: parseInt(e.target.value) || 0})}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>
+                        Nombre d'inscrits
+                      </label>
+                      <input 
+                        type="number" 
+                        className="form-control"
+                        value={currentFormation.inscrits}
+                        onChange={(e) => setCurrentFormation({...currentFormation, inscrits: parseInt(e.target.value) || 0})}
+                      />
+                    </div>
+                  </div>
+                  <div className="form-group">
+                    <label>
+                      Statut
+                    </label>
+                    <select 
+                      className="form-control"
+                      value={currentFormation.statut}
+                      onChange={(e) => setCurrentFormation({...currentFormation, statut: e.target.value})}
+                    >
+                      <option value="Programmée">Programmée</option>
+                      <option value="Complète">Complète</option>
+                      <option value="Terminée">Terminée</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button 
+                  className="btn-secondary"
+                  onClick={() => setModalOpen(false)}
+                >
+                  Annuler
+                </button>
+                <button 
+                  className="btn-primary"
+                  onClick={handleSave}
+                >
+                  {currentFormation.id ? 'Mettre à jour' : 'Ajouter'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       {/* CSS intégré */}
       <style jsx>{`
         /* Styles généraux */
         .container {
-          background-color: #f5f7fa;
-          min-height: 100vh;
-          padding: 20px;
-          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
         }
 
         .card {
@@ -489,6 +626,12 @@ function CardFormation() {
           margin: 0;
         }
 
+        .gp-modal-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1f2937;
+  }
+  
         /* Toolbar */
         .toolbar {
           padding: 16px;
@@ -559,7 +702,12 @@ function CardFormation() {
           background-color: #3b82f6;
           color: white;
         }
-
+        
+  .gp-header-section {
+    padding: 1.5rem;
+      
+  
+  }
         .btn-primary {
           background-color: #3b82f6;
           color: white;
@@ -931,7 +1079,7 @@ function CardFormation() {
         }
       `}</style>
     </div> 
-    
+    </div>
   );
 }
 

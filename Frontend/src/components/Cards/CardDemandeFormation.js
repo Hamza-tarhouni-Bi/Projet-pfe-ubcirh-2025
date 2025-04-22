@@ -1,16 +1,11 @@
-
-
 import { useState, useEffect } from 'react';
+import axios from 'axios';
 
 function CardDemandeFormation() {
   // État pour stocker les formations
-  const [formations, setFormations] = useState([
-    { id: 1, titre: "Développement React Avancé", description: "Formation complète sur les concepts avancés de React", date: "2025-04-15", duree: 21, places: 12, inscrits: 8, statut: "Programmée" },
-    { id: 2, titre: "Leadership et Management d'Équipe", description: "Techniques de management pour les chefs d'équipe", date: "2025-05-10", duree: 14, places: 15, inscrits: 15, statut: "Complète" },
-    { id: 3, titre: "Excel pour RH", description: "Utilisation avancée d'Excel pour les professionnels RH", date: "2025-04-22", duree: 7, places: 20, inscrits: 5, statut: "Programmée" },
-    { id: 4, titre: "Communication Professionnelle", description: "Améliorer sa communication en milieu professionnel", date: "2025-06-05", duree: 14, places: 18, inscrits: 12, statut: "Programmée" },
-    { id: 5, titre: "RGPD et Conformité", description: "Les bases de la conformité RGPD pour les équipes RH", date: "2025-03-25", duree: 7, places: 25, inscrits: 20, statut: "Terminée" }
-  ]);
+  const [formations, setFormations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // États pour le filtrage et la pagination
   const [filteredFormations, setFilteredFormations] = useState([]);
@@ -34,6 +29,38 @@ function CardDemandeFormation() {
   // État pour afficher la confirmation
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [demandes, setDemandes] = useState([]);
+
+  // Récupérer les formations depuis l'API
+  useEffect(() => {
+    const fetchFormations = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get('/getformation');
+        
+        // Transformer les données pour correspondre à la structure attendue
+        const formattedFormations = response.data.map(formation => ({
+          id: formation._id,
+          titre: formation.titre,
+          description: formation.description,
+          date: new Date(formation.date).toISOString().split('T')[0],
+          duree: formation.durée,
+          places: formation.nbplaces,
+          inscrits: formation.nbinscrits,
+          statut: formation.statut,
+          placesRestantes: formation.nbplaces - formation.nbinscrits
+        }));
+        
+        setFormations(formattedFormations);
+        setLoading(false);
+      } catch (err) {
+        setError("Erreur lors du chargement des formations");
+        setLoading(false);
+        console.error("Erreur lors de la récupération des formations:", err);
+      }
+    };
+
+    fetchFormations();
+  }, []);
 
   // Effet pour filtrer les formations
   useEffect(() => {
@@ -136,6 +163,28 @@ function CardDemandeFormation() {
     }, 3000);
   };
 
+  // Afficher un message de chargement pendant la récupération des données
+  if (loading) {
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner"></div>
+        <p>Chargement des formations...</p>
+      </div>
+    );
+  }
+
+  // Afficher un message d'erreur si la récupération a échoué
+  if (error) {
+    return (
+      <div className="error-container">
+        <p className="error-message">{error}</p>
+        <button onClick={() => window.location.reload()} className="retry-btn">
+          Réessayer
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="container">
       {/* Header */}
@@ -157,35 +206,7 @@ function CardDemandeFormation() {
           <div className="search-icon">🔍</div>
         </div>
         
-        <div className="category-filter">
-          <span className="filter-label">Catégorie:</span>
-          <div className="filter-buttons">
-            <button 
-              className={`category-btn ${selectedCategory === 'all' ? 'active' : ''}`}
-              onClick={() => setSelectedCategory('all')}
-            >
-              Toutes
-            </button>
-            <button 
-              className={`category-btn ${selectedCategory === 'tech' ? 'active' : ''}`}
-              onClick={() => setSelectedCategory('tech')}
-            >
-              Techniques
-            </button>
-            <button 
-              className={`category-btn ${selectedCategory === 'management' ? 'active' : ''}`}
-              onClick={() => setSelectedCategory('management')}
-            >
-              Management
-            </button>
-            <button 
-              className={`category-btn ${selectedCategory === 'soft' ? 'active' : ''}`}
-              onClick={() => setSelectedCategory('soft')}
-            >
-              Soft skills
-            </button>
-          </div>
-        </div>
+        
       </div>
 
       {/* Liste des formations */}
@@ -195,7 +216,7 @@ function CardDemandeFormation() {
             <div key={formation.id} className="formation-card">
               <div className="formation-header">
                 <h3>{formation.titre}</h3>
-                <span className="places-badge">
+                <span className={`places-badge ${formation.places - formation.inscrits <= 3 ? 'low-places' : ''}`}>
                   {formation.places - formation.inscrits} places restantes
                 </span>
               </div>

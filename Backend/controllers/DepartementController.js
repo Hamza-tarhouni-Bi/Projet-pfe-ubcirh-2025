@@ -44,3 +44,25 @@ module.exports.deleteDepartment = async (req, res) => {
       res.status(500).json({ error: error.message });
     }
   };
+
+//Modifier un departement
+  module.exports.updateDepartment = async (req, res) => {
+    try {
+        const{ id   }=req.params;
+        const{nom}=req.body;
+
+       
+      const department =await departementModal.findByIdAndUpdate(id,{
+        $set:{nom}
+
+      })
+      
+      res.status(200).json(department);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  };
+
+
+
+  

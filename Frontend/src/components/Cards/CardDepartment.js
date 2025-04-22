@@ -498,8 +498,8 @@ export default function CardDepartment({ color = "light" }) {
                 <tbody>
                   {filteredDepartments.length > 0 ? (
                     filteredDepartments.map((department) => (
-                      <tr className="gp-tr" key={department.id}>
-                        <td className="gp-td">{department.id}</td>
+                      <tr className="gp-tr" key={department._id}>
+                        <td className="gp-td">{department._id}</td>
                         <td className="gp-td">
                           <span className="gp-department-badge">
                             {department.departement}
@@ -508,7 +508,7 @@ export default function CardDepartment({ color = "light" }) {
                         <td className="gp-td">
                           <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
                             <button 
-                              onClick={() => handleAction("modifier", department.id, department.departement)} 
+                              onClick={() => handleAction("modifier", department._id, department.departement)} 
                               className="gp-action-button gp-edit-button"
                               title="Modifier"
                             >

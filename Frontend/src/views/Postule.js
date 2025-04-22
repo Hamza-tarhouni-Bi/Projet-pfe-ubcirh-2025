@@ -1,47 +1,68 @@
 import React, { useState, useEffect } from "react";
 import Navbar from "components/Navbars/IndexNavbar";
+import axios from "axios"; // Make sure axios is installed
 
 const Postule = () => {
-  // Existing state for job listings and search
-  const [jobListings, setJobListings] = useState([
-    {
-      id: 1,
-      title: "Chef de Produit Marketing Junior",
-      location: "Tunisie",
-      date: "05/03/2025",
-    },
-    {
-      id: 2,
-      title: "IT Business Analyst (AMOA)",
-      location: "Tunisie",
-      date: "17/02/2025",
-    },
-    {
-      id: 3,
-      title: "Chef de Produit Marketing Junior",
-      location: "Tunisie",
-      date: "05/03/2022",
-    },
-  ]);
+  // State for job listings and search
+  const [jobListings, setJobListings] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // New state for modal and selected job
+  // State for modal and selected job
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedJob, setSelectedJob] = useState(null);
   const [fileName, setFileName] = useState("Aucun fichier sélectionné");
-  const [fileError, setFileError] = useState(""); // New state to track file upload errors
+  const [fileError, setFileError] = useState("");
 
-  // Existing search and filter states and functions...
+  // Search and filter states
   const [dateFilter, setDateFilter] = useState("N'importe quand");
   const [isDateExpanded, setIsDateExpanded] = useState(true);
   const [searchKeyword, setSearchKeyword] = useState("");
   const [filteredJobs, setFilteredJobs] = useState([]);
   const [hasSearched, setHasSearched] = useState(false);
 
-  // Existing functions from previous implementation...
+  // Fetch job listings from backend
+  useEffect(() => {
+    const fetchJobListings = async () => {
+      try {
+        setIsLoading(true);
+        const response = await axios.get('/alloffre');
+        
+        // Transform data to match our component's expected format
+        const formattedJobs = response.data.map(job => ({
+          id: job._id,
+          title: job.titre,
+          location: job.lieu,
+          date: formatDate(new Date(job.date))
+        }));
+        
+        setJobListings(formattedJobs);
+        setError(null);
+      } catch (err) {
+        console.error("Error fetching job listings:", err);
+        setError("Une erreur s'est produite lors du chargement des offres d'emploi.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchJobListings();
+  }, []);
+
+  // Helper function to format date as DD/MM/YYYY
+  const formatDate = (date) => {
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
+  // Function to toggle date filter section
   const toggleDateSection = () => {
     setIsDateExpanded(!isDateExpanded);
   };
 
+  // Reset all filters
   const resetFilters = () => {
     setDateFilter("N'importe quand");
     setSearchKeyword("");
@@ -49,6 +70,7 @@ const Postule = () => {
     setHasSearched(false);
   };
 
+  // Function for exact match search
   const exactMatch = (text, query) => {
     if (!query || query.trim() === "") return true;
 
@@ -63,7 +85,7 @@ const Postule = () => {
     });
   };
 
-  // Apply filters function (separate from handleSearch)
+  // Apply filters function
   const applyFilters = () => {
     let results = [...jobListings];
     
@@ -99,18 +121,21 @@ const Postule = () => {
     // This will trigger the useEffect to apply filters
   };
 
-  // UseEffect to apply filters whenever dateFilter changes
+  // Apply filters when dateFilter changes
   useEffect(() => {
-    applyFilters();
-  }, [dateFilter]); // This will run applyFilters whenever dateFilter changes
+    if (jobListings.length > 0) {
+      applyFilters();
+    }
+  }, [dateFilter, jobListings]);
 
-  // New functions for modal
+  // Open application modal
   const openApplicationModal = (job) => {
     setSelectedJob(job);
     setIsModalOpen(true);
     setFileError(""); // Reset file error when opening modal
   };
 
+  // Close modal
   const closeModal = () => {
     setIsModalOpen(false);
     setSelectedJob(null);
@@ -146,15 +171,12 @@ const Postule = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    // Add your form submission logic here
-    // For example, you could check if all required fields are filled
-    
     if (fileName === "Aucun fichier sélectionné") {
       setFileError("Erreur: Veuillez télécharger votre CV et lettre de motivation.");
       return;
     }
     
-    // If validation passes, you would typically submit the form data
+    // Here you would typically submit the form data to your backend
     alert("Candidature soumise avec succès!");
     closeModal();
   };
@@ -184,7 +206,7 @@ const Postule = () => {
     <div className="careers-page">
       <Navbar />
       
-      {/* Existing banner and search code */}
+      {/* Banner and search bar */}
       <div className="banner">
         <div className="search-container">
           <form onSubmit={handleSearch}>
@@ -210,7 +232,7 @@ const Postule = () => {
 
       <div className="content-container">
         <div className="filters-container">
-          {/* Existing filters code */}
+          {/* Filters section */}
           <div className="filters-header">
             <h2>Filtres</h2>
             <button className="reset-button" onClick={resetFilters}>
@@ -254,46 +276,68 @@ const Postule = () => {
         <div className="job-listings-container">
           <h1>Postes à pourvoir actuellement</h1>
 
-          {hasSearched && (
-            <div className="search-results-info">
-              <p>
-                {filteredJobs.length} offre(s) d'emploi trouvée(s){" "}
-                {searchKeyword && `pour "${searchKeyword}"`}
-                {dateFilter === "Sous 30 jours" && " des 30 derniers jours"}
-              </p>
-              {filteredJobs.length === 0 && (
-                <p className="no-results">
-                  Aucun résultat trouvé. Veuillez essayer d'autres critères de
-                  recherche.
-                </p>
-              )}
+          {isLoading ? (
+            <div className="loading-state">
+              <p>Chargement des offres d'emploi...</p>
             </div>
-          )}
-
-          <div className="job-cards">
-            {displayedJobs.map((job) => (
-              <div className="job-card" key={job.id}>
-                <div className="job-card-content">
-                  <h3 className="job-title">{job.title}</h3>
-                  <div className="job-details">
-                    <p className="job-location">{job.location}</p>
-                    <p className="job-date">{job.date}</p>
-                  </div>
+          ) : error ? (
+            <div className="error-state">
+              <p>{error}</p>
+              <button 
+                className="retry-button"
+                onClick={() => window.location.reload()}
+              >
+                Réessayer
+              </button>
+            </div>
+          ) : (
+            <>
+              {hasSearched && (
+                <div className="search-results-info">
+                  <p>
+                    {filteredJobs.length} offre(s) d'emploi trouvée(s){" "}
+                    {searchKeyword && `pour "${searchKeyword}"`}
+                    {dateFilter === "Sous 30 jours" && " des 30 derniers jours"}
+                  </p>
+                  {filteredJobs.length === 0 && (
+                    <p className="no-results">
+                      Aucun résultat trouvé. Veuillez essayer d'autres critères de
+                      recherche.
+                    </p>
+                  )}
                 </div>
-                <button 
-                  className="postuler-button"
-                  onClick={() => openApplicationModal(job)}
-                >
-                  Postuler
-                </button>
+              )}
+
+              <div className="job-cards">
+                {displayedJobs.length === 0 && !isLoading ? (
+                  <p className="no-jobs">Aucune offre d'emploi disponible pour le moment.</p>
+                ) : (
+                  displayedJobs.map((job) => (
+                    <div className="job-card" key={job.id}>
+                      <div className="job-card-content">
+                        <h3 className="job-title">{job.title}</h3>
+                        <div className="job-details">
+                          <p className="job-location">{job.location}</p>
+                          <p className="job-date">{job.date}</p>
+                        </div>
+                      </div>
+                      <button 
+                        className="postuler-button"
+                        onClick={() => openApplicationModal(job)}
+                      >
+                        Postuler
+                      </button>
+                    </div>
+                  ))
+                )}
               </div>
-            ))}
-          </div>
+            </>
+          )}
         </div>
       </div>
 
-      {/* Modal for job application with improved design and PDF-only validation */}
-      {isModalOpen && (
+      {/* Modal for job application */}
+      {isModalOpen && selectedJob && (
         <div className="modal-overlay" onClick={closeModal}>
           <div 
             className="modal-content" 
@@ -315,8 +359,6 @@ const Postule = () => {
               <div className="form-section">
                 <label>Adresse actuelle</label>
                 <input type="text" placeholder="Adresse" className="mb-3" required />
-                
-                
               </div>
 
               <div className="form-section">
@@ -615,6 +657,35 @@ const Postule = () => {
 
         .postuler-button:hover {
           background-color: #2563eb;
+        }
+
+        .loading-state, .error-state, .no-jobs {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          flex-direction: column;
+          padding: 40px 0;
+          color: #555;
+          font-size: 16px;
+        }
+
+        .error-state {
+          color: #d32f2f;
+        }
+
+        .retry-button {
+          margin-top: 15px;
+          padding: 8px 16px;
+          background-color: #1a73e8;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+          transition: background-color 0.3s;
+        }
+
+        .retry-button:hover {
+          background-color: #0d47a1;
         }
 
         .modal-overlay {
