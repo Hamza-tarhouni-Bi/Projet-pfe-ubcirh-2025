@@ -21,6 +21,7 @@ import Congé from "views/admin/Congé";
 import Formation from "views/admin/Formation";
 import Recrutement from "views/Recrutement";
 import DemandeFormation from "views/employe/DemandeFormation";
+import Condidature from "views/admin/Condidature";
 export default function Admin() {
   return (
     <>
@@ -41,7 +42,8 @@ export default function Admin() {
             <Route path="/admin/settings" exact component={Settings} />
             <Route path="/admin/tables" exact component={Tables} />
             <Route path="/admin/recrutement" exact component={Recrutement} />
-
+            
+            <Route path="/admin/condidature" exact component={Condidature} />
            <Redirect from="/admin" to="/admin/dashboard" />
           </Switch>
           <FooterAdmin />

@@ -30,20 +30,20 @@ module.exports.deletePersonnel = async (req, res) => {
 module.exports.addPersonnelWithimage = async (req, res) => {
   try {
     const personnelData = { ...req.body };
-    const rawPassword = personnelData.password; // Sauvegarder le mot de passe non crypté pour l'email
+    const rawPassword = personnelData.password; 
     
-    // Si une image est uploadée
+    
     if (req.file) {
       personnelData.image = req.file.filename;
     } else {
-      // Sinon, utiliser l'image par défaut
+      
       personnelData.image = 'defaultuser.jpg';
     }
     
     const personnel = new personnelModal(personnelData);
     const personneladded = await personnel.save();
     
-    // Envoyer un email de bienvenue avec le mot de passe
+    // Envoyer un email 
     try {
       await sendWelcomeEmail(
         personneladded.email,

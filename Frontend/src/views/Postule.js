@@ -14,12 +14,25 @@ const Postule = () => {
   const [fileName, setFileName] = useState("Aucun fichier sélectionné");
   const [fileError, setFileError] = useState("");
 
+  // Form data state
+  const [formData, setFormData] = useState({
+    prenom: "",
+    nom: "",
+    adresse: "",
+    email: "",
+    tel: "",
+    cv: null
+  });
+
   // Search and filter states
   const [dateFilter, setDateFilter] = useState("N'importe quand");
   const [isDateExpanded, setIsDateExpanded] = useState(true);
   const [searchKeyword, setSearchKeyword] = useState("");
   const [filteredJobs, setFilteredJobs] = useState([]);
   const [hasSearched, setHasSearched] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   // Fetch job listings from backend
   useEffect(() => {
@@ -133,6 +146,16 @@ const Postule = () => {
     setSelectedJob(job);
     setIsModalOpen(true);
     setFileError(""); // Reset file error when opening modal
+    setFormData({
+      prenom: "",
+      nom: "",
+      adresse: "",
+      email: "",
+      tel: "",
+      cv: "",
+    });
+    setSubmitSuccess(false);
+    setSubmitError("");
   };
 
   // Close modal
@@ -143,42 +166,89 @@ const Postule = () => {
     setFileError(""); // Reset file error when closing modal
   };
 
+  // Handle input changes
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({
+      ...formData,
+      [name]: value
+    });
+  };
+
   // Handle file upload with PDF validation
   const handleFileChange = (e) => {
     setFileError(""); // Reset error message
     
     if (e.target.files.length > 0) {
-      const files = Array.from(e.target.files);
+      const file = e.target.files[0];
       
-      // Check if all files are PDFs
-      const nonPdfFiles = files.filter(file => file.type !== 'application/pdf');
-      
-      if (nonPdfFiles.length > 0) {
+      // Check if file is PDF
+      if (file.type !== 'application/pdf') {
         setFileError("Erreur: Veuillez ne sélectionner que des fichiers PDF.");
         e.target.value = ''; // Clear the file input
         setFileName("Aucun fichier sélectionné");
+        setFormData({
+          ...formData,
+          cv: null
+        });
         return;
       }
       
-      const fileNames = files.map(file => file.name).join(", ");
-      setFileName(fileNames);
+      setFileName(file.name);
+      setFormData({
+        ...formData,
+        cv: file
+      });
     } else {
       setFileName("Aucun fichier sélectionné");
+      setFormData({
+        ...formData,
+        cv: null
+      });
     }
   };
 
   // Handle form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (fileName === "Aucun fichier sélectionné") {
+    if (!formData.cv) {
       setFileError("Erreur: Veuillez télécharger votre CV et lettre de motivation.");
       return;
     }
-    
-    // Here you would typically submit the form data to your backend
-    alert("Candidature soumise avec succès!");
-    closeModal();
+
+    try {
+      setIsSubmitting(true);
+      
+      // Create a FormData object to send the file
+      const formDataToSend = new FormData();
+      formDataToSend.append("nom", formData.nom);
+      formDataToSend.append("prenom", formData.prenom);
+      formDataToSend.append("adresse", formData.adresse);
+      formDataToSend.append("email", formData.email);
+      formDataToSend.append("tel", formData.tel);
+      formDataToSend.append("cv", formData.cv);
+      
+      // Send the data to the backend
+      const response = await axios.post('/addcondidature', formDataToSend, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
+      setSubmitSuccess(true);
+      
+      // Reset form after successful submission
+      setTimeout(() => {
+        closeModal();
+      }, 2000);
+      
+    } catch (err) {
+      console.error("Error submitting application:", err);
+      setSubmitError("Une erreur s'est produite lors de l'envoi de votre candidature. Veuillez réessayer.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Trigger the file input when clicking on the upload area
@@ -347,69 +417,110 @@ const Postule = () => {
             <div className="modal-title">
               <h2>Candidature pour {selectedJob.title}</h2>
             </div>
-            <form onSubmit={handleSubmit}>
-              <div className="form-section">
-                <label>Nom complet</label> 
-                <div className="name-inputs">
-                  <input type="text" placeholder="Prénom" required />
-                  <input type="text" placeholder="Nom de famille" required />
-                </div>
+            
+            {submitSuccess ? (
+              <div className="success-message">
+                <p>Votre candidature a été envoyée avec succès!</p>
               </div>
-
-              <div className="form-section">
-                <label>Adresse actuelle</label>
-                <input type="text" placeholder="Adresse" className="mb-3" required />
-              </div>
-
-              <div className="form-section">
-                <label>Adresse E-mail</label>
-                <input type="email" placeholder="Prénom@gmail.com" required />
-              </div>
-
-              <div className="form-section">
-                <label>Numéro de téléphone</label>
-                <div className="phone-input">
-                  <select className="country-code" required>
-                    <option value="+216">Tunisie (+216)</option>
-                    <option value="+33">France (+33)</option>
-                    <option value="+212">Maroc (+212)</option>
-                    <option value="+213">Algérie (+213)</option>
-                    <option value="+32">Belgique (+32)</option>
-                    <option value="+1">Canada/USA (+1)</option>
-                    <option value="+41">Suisse (+41)</option>
-                    <option value="">Autre</option>
-                  </select>
-                  <input type="text" placeholder="Numéro de téléphone" required />
-                </div>
-              </div>
-
-              <div className="form-section">
-                <label>Déposez votre CV et lettre de motivation (format PDF uniquement)</label>
-                <div className={`file-upload ${fileError ? "file-error" : ""}`} onClick={triggerFileInput}>
-                  <input 
-                    type="file" 
-                    id="file-upload-input" 
-                    multiple 
-                    accept=".pdf,application/pdf" 
-                    onChange={handleFileChange}
-                  />
-                  <div className="file-upload-content">
-                    <span className="upload-icon">📁</span>
-                    <span className="browse-text">Parcourir les fichiers PDF</span>
-                    <p className="selected-files">{fileName}</p>
-                    {fileError && <p className="error-message">{fileError}</p>}
+            ) : (
+              <form onSubmit={handleSubmit}>
+                {submitError && (
+                  <div className="submit-error">
+                    <p>{submitError}</p>
+                  </div>
+                )}
+                
+                <div className="form-section">
+                  <label>Nom complet</label> 
+                  <div className="name-inputs">
+                    <input 
+                      type="text" 
+                      name="prenom" 
+                      placeholder="Prénom" 
+                      value={formData.prenom}
+                      onChange={handleInputChange}
+                      required 
+                    />
+                    <input 
+                      type="text" 
+                      name="nom" 
+                      placeholder="Nom de famille" 
+                      value={formData.nom}
+                      onChange={handleInputChange}
+                      required 
+                    />
                   </div>
                 </div>
-              </div>
 
-              <button type="submit" className="submit-application">
-                Postuler
-              </button>
-            </form>
+                <div className="form-section">
+                  <label>Adresse actuelle</label>
+                  <input 
+                    type="text" 
+                    name="adresse" 
+                    placeholder="Adresse" 
+                    className="mb-3" 
+                    value={formData.adresse}
+                    onChange={handleInputChange}
+                    required 
+                  />
+                </div>
+
+                <div className="form-section">
+                  <label>Adresse E-mail</label>
+                  <input 
+                    type="email" 
+                    name="email" 
+                    placeholder="Prénom@gmail.com" 
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    required 
+                  />
+                </div>
+
+                <div className="form-section">
+                  <label>Numéro de téléphone</label>
+                  <div className="phone-input">
+                    <input 
+                      type="text" 
+                      name="tel" 
+                      placeholder="Numéro de téléphone" 
+                      value={formData.tel}
+                      onChange={handleInputChange}
+                      required 
+                    />
+                  </div>
+                </div>
+
+                <div className="form-section">
+                  <label>Déposez votre CV et lettre de motivation (format PDF uniquement)</label>
+                  <div className={`file-upload ${fileError ? "file-error" : ""}`} onClick={triggerFileInput}>
+                    <input 
+                      type="file" 
+                      id="file-upload-input" 
+                      accept=".pdf,application/pdf" 
+                      onChange={handleFileChange}
+                    />
+                    <div className="file-upload-content">
+                      <span className="upload-icon">📁</span>
+                      <span className="browse-text">Parcourir les fichiers PDF</span>
+                      <p className="selected-files">{fileName}</p>
+                      {fileError && <p className="error-message">{fileError}</p>}
+                    </div>
+                  </div>
+                </div>
+
+                <button 
+                  type="submit" 
+                  className="submit-application" 
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? "Envoi en cours..." : "Postuler"}
+                </button>
+              </form>
+            )}
           </div>
         </div>
       )}
-
       <style jsx>{`
         * {
           margin: 0;

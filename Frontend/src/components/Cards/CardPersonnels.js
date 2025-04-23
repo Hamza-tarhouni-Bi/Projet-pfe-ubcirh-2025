@@ -55,7 +55,7 @@ const DetailsModal = ({ employe, onClose }) => {
         <div>
           <div className="gp-details-row">
             <span className="gp-details-label">ID:</span>
-            <span className="gp-details-value">{employe.id}</span>
+            <span className="gp-details-value">{employe._id}</span>
           </div>
           <div className="gp-details-row">
             <span className="gp-details-label">Nom complet:</span>
@@ -73,7 +73,7 @@ const DetailsModal = ({ employe, onClose }) => {
           </div>
           <div className="gp-details-row">
             <span className="gp-details-label">Téléphone:</span>
-            <span className="gp-details-value">{employe.telephone}</span>
+            <span className="gp-details-value">{employe.tel}</span>
           </div>
           <div className="gp-details-row">
             <span className="gp-details-label">Département:</span>

@@ -50,8 +50,10 @@ const Signin = () => {
     <div className="login-page">
      
       <div className="login-content">
+        
         {/* Left panel with only background image */}
         <div className="login-left-panel">
+          
           {/* No content here - the background image is applied via CSS */}
         </div>
         

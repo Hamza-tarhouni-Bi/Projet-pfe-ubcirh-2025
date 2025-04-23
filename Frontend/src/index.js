@@ -21,6 +21,7 @@ import Landing from "views/Landing.js";
 import Profile from "views/Profile.js";
 import Index from "views/Index.js";
 import Postule from "views/Postule";
+import Condidature from "views/admin/Condidature";
 
 ReactDOM.render(
   <BrowserRouter>

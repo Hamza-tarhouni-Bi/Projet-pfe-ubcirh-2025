@@ -660,7 +660,7 @@ const CardRecrutement = () => {
                 <input
                   type="text"
                   name="location"
-                  placeholder="Ex: Paris, Remote, etc."
+                  placeholder="Ex: Tunis, Remote, etc."
                   className="cr-form-input"
                   value={currentOffer?.location || ''}
                   onChange={handleInputChange}

@@ -177,11 +177,11 @@ export default function Sidebar() {
                 <Link
                   className={
                     "text-sm py-3 font-medium flex items-center " +
-                    (window.location.pathname.toLowerCase() === "/admin/candidature"
+                    (window.location.pathname.toLowerCase() === "/admin/condidature"
                       ? "text-blue-600 hover:text-blue-700"
                       : "text-gray-700 hover:text-gray-500")
                   }
-                  to="/admin/candidature"
+                  to="/admin/condidature"
                 >
                   <i className="fas fa-file-alt mr-3 text-lg"></i>
                   <span>Candidature</span>

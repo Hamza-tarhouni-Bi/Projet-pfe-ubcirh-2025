@@ -6,7 +6,25 @@
 
   export default function HeaderStats() {
     const [departmentCount, setDepartmentCount] = useState(0);
-    
+    const [personnelCount, setPersonnelCount] = useState(0);
+    const [formationCount, setFormationCount] = useState(0);
+    //Recuperer le nombre de personnels:
+    useEffect(() => {
+      
+      const fetchPersonnelCount = async () => {
+        try {
+          const response = await axios.get('/allpersonnel');
+          
+          setPersonnelCount(response.data.length.toString());
+        } catch (error) {
+          console.error("Erreur lors de la récupération des personnels:", error);
+          setPersonnelCount("Erreur");
+        }
+      };
+
+      fetchPersonnelCount();
+    }, []);
+
     useEffect(() => {
       // Récupérer le nombre de départements 
       const fetchDepartmentCount = async () => {
@@ -23,6 +41,23 @@
       fetchDepartmentCount();
     }, []);
 
+      //Recuperer le nombre de formation:
+      useEffect(() => {
+      
+        const fetchFormationCount = async () => {
+          try {
+            const response = await axios.get('/getformation');
+            
+            setFormationCount(response.data.length.toString());
+          } catch (error) {
+            console.error("Erreur lors de la récupération des formations:", error);
+            setFormationCount("Erreur");
+          }
+        };
+  
+        fetchFormationCount();
+      }, []);
+
     return (
       <>
         {/* Header */}
@@ -34,7 +69,7 @@
                 <div className="w-full lg:w-6/12 xl:w-4/12 px-4">
                   <CardStats
                     statSubtitle="Nombre du personnel"
-                    statTitle="350,897"
+                    statTitle={personnelCount}
                     statArrow="up"
                     statPercent="3.48"
                     statPercentColor="text-emerald-500"
@@ -58,7 +93,7 @@
                 <div className="w-full lg:w-6/12 xl:w-4/12 px-4">
                   <CardStats
                     statSubtitle="Nombre de formation"
-                    statTitle="924"
+                    statTitle={formationCount}
                     statArrow="down"
                     statPercent="1.10"
                     statPercentColor="text-orange-500"
