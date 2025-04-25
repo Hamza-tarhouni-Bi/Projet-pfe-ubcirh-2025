@@ -3,7 +3,7 @@ const bcrypt=require("bcrypt");
 
 const personnelSchema=new mongoose.Schema({
     nom:{ type: String,
-      /* required: true*/},
+       required: true},
     prenom:{ type: String,
   },
      tel:{
