@@ -33,19 +33,13 @@ const DetailsModal = ({ employe, onClose }) => {
     <div className="gp-modal-overlay">
       <div className="gp-modal-container">
         <div className="gp-modal-header">
-          <h2 className="gp-modal-title">Détails de l'employé</h2>
+          <h2 className="gp-modal-title">DETAILS:</h2>
           <button onClick={onClose} className="gp-modal-close">
             <X size={24} />
           </button>
         </div>
 
         <div className="gp-details-container">
-          <img
-            src={employe.image || "/placeholder-user.png"}
-            alt={`${employe.prenom} ${employe.nom}`}
-            className="gp-employee-image"
-            loading="lazy"
-          />
           <h3 className="gp-details-name">
             {employe.nom} {employe.prenom}
           </h3>
@@ -90,7 +84,7 @@ const DetailsModal = ({ employe, onClose }) => {
           <div className="gp-details-row">
             <span className="gp-details-label">Solde de congé:</span>
             <span className="gp-conge-badge">
-              {employe.soldeConge || 30} jours restants
+              {employe.soldeConge || employe.soldedeconge || 30} jours restants
             </span>
           </div>
 
@@ -153,11 +147,11 @@ export default function GestionPersonnel() {
   const [employeDetails, setEmployeDetails] = useState(null);
   const [employeASupprimer, setEmployeASupprimer] = useState(null);
   const [toast, setToast] = useState({ affiche: false, message: "", type: "" });
-  const [imagePreview, setImagePreview] = useState(null);
 
-  //Etape1  :Ajouter le state pour les départements
+  //Etape1: Ajouter le state pour les départements
   const [departements, setDepartements] = useState([]);
-  //Etpae 2 :Charger les départements depuis le backend
+  
+  //Etape2: Charger les départements depuis le backend
   useEffect(() => {
     const fetchDepartements = async () => {
       try {
@@ -179,7 +173,6 @@ export default function GestionPersonnel() {
   // Nouvel employé vide pour le formulaire d'ajout
   const employeVide = {
     id: "",
-    image: "",
     nom: "",
     prenom: "",
     email: "",
@@ -209,8 +202,9 @@ export default function GestionPersonnel() {
             employe.prenom.toLowerCase().includes(recherche.toLowerCase())
           );
         } else if (filtreType === "id") {
-          return employe.id.toString().includes(recherche);
+          return employe._id.toString().includes(recherche);
         }
+        return true;
       });
     }
 
@@ -233,7 +227,6 @@ export default function GestionPersonnel() {
       // Adaptez les données pour correspondre à votre formulaire
       setEmployeActuel({
         _id: employe._id,
-        image: employe.image || "",
         nom: employe.nom,
         prenom: employe.prenom,
         email: employe.email,
@@ -241,38 +234,22 @@ export default function GestionPersonnel() {
         departement: employe.departement,
         sexe: employe.sexe.charAt(0).toUpperCase() + employe.sexe.slice(1), // Majuscule pour l'affichage
         salaire: employe.salaire,
-        soldeConge: employe.soldedeconge,
+        soldeConge: employe.soldedeconge || 30,
         password: employe.password || "",
       });
-      setImagePreview(employe.image || null);
     } else {
       setEmployeActuel({
         ...employeVide,
         password: generatePassword(),
       });
-      setImagePreview(null);
     }
     setModalOuvert(true);
-  };
-
-  // Gérer l'upload d'image
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result);
-        setEmployeActuel((prev) => ({ ...prev, image: reader.result }));
-      };
-      reader.readAsDataURL(file);
-    }
   };
 
   // Fermer le modal
   const fermerModal = () => {
     setModalOuvert(false);
     setEmployeActuel(null);
-    setImagePreview(null);
   };
 
   // Ouvrir le modal de détails
@@ -316,8 +293,22 @@ export default function GestionPersonnel() {
     afficherToast("Mot de passe copié !", "success");
   };
 
+  // Charger la liste des employés dès le chargement du composant
+  useEffect(() => {
+    const fetchEmployes = async () => {
+      try {
+        const response = await axios.get("/allpersonnel");
+        setEmployes(response.data);
+      } catch (error) {
+        console.error("Erreur lors du chargement des employés:", error);
+        afficherToast("Erreur lors du chargement des employés", "error");
+      }
+    };
+
+    fetchEmployes();
+  }, []);
+
   // Sauvegarder l'employé (ajout ou modification)
-  // Fonction sauvegarderEmploye pour l'ajout et la modification d'un employé
   const sauvegarderEmploye = async () => {
     // Vérifier si tous les champs obligatoires sont remplis
     if (
@@ -349,7 +340,6 @@ export default function GestionPersonnel() {
         sexe: employeActuel.sexe.toLowerCase(),
         soldedeconge: employeActuel.soldeConge,
         salaire: employeActuel.salaire,
-        image: employeActuel.image || "",
       };
 
       if (employeActuel._id) {
@@ -359,9 +349,10 @@ export default function GestionPersonnel() {
         );
         if (response.status === 200) {
           afficherToast("Employé modifié avec succès", "success");
+          
         }
       } else {
-        const response = await axios.post("/addPersonnelWithimage", employeData);
+        const response = await axios.post("/addPersonnel", employeData);
         if (response.status === 201) {
           afficherToast("Employé ajouté avec succès", "success");
         }
@@ -378,20 +369,6 @@ export default function GestionPersonnel() {
       );
     }
   };
-
-  useEffect(() => {
-    const fetchEmployes = async () => {
-      try {
-        const response = await axios.get("/allpersonnel");
-        setEmployes(response.data);
-      } catch (error) {
-        console.error("Erreur lors du chargement des employés:", error);
-        afficherToast("Erreur lors du chargement des employés", "error");
-      }
-    };
-
-    fetchEmployes();
-  }, []);
 
   // Supprimer un employé après confirmation
   const confirmerSuppression = async () => {
@@ -460,7 +437,6 @@ export default function GestionPersonnel() {
                   className="gp-form-select"
                 >
                   <option value="nom">Filtrer par Nom</option>
-
                   <option value="id">Filtrer par ID</option>
                 </select>
               </div>
@@ -504,7 +480,6 @@ export default function GestionPersonnel() {
               <table className="gp-table">
                 <thead>
                   <tr>
-                    <th className="gp-th">Image</th>
                     <th className="gp-th">Nom</th>
                     <th className="gp-th">Prénom</th>
                     <th className="gp-th">Email</th>
@@ -517,13 +492,6 @@ export default function GestionPersonnel() {
                   {employesAffiches.length > 0 ? (
                     employesAffiches.map((employe, index) => (
                       <tr key={index} className="gp-tr">
-                        <td className="gp-td">
-                          <img
-                            src={employe.image || "/placeholder-user.png"}
-                            alt={`${employe.prenom} ${employe.nom}`}
-                            className="gp-employee-image"
-                          />
-                        </td>
                         <td className="gp-td">{employe.nom}</td>
                         <td className="gp-td">{employe.prenom}</td>
                         <td className="gp-td">{employe.email}</td>
@@ -564,7 +532,7 @@ export default function GestionPersonnel() {
                     <tr>
                       <td
                         className="gp-td"
-                        colSpan="8"
+                        colSpan="6"
                         style={{ textAlign: "center" }}
                       >
                         Aucun employé trouvé
@@ -616,25 +584,6 @@ export default function GestionPersonnel() {
                     className="gp-form-input"
                     disabled
                   />
-                </div>
-
-                <div className="gp-form-group">
-                  <label className="gp-form-label">Image</label>
-                  <div className="gp-image-upload-container">
-                    {imagePreview && (
-                      <img
-                        src={imagePreview}
-                        alt="Preview"
-                        className="gp-image-preview"
-                      />
-                    )}
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      className="gp-form-input"
-                    />
-                  </div>
                 </div>
 
                 <div className="gp-form-group">

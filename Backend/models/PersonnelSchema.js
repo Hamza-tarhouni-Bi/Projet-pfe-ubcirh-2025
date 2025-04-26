@@ -40,12 +40,14 @@ const personnelSchema=new mongoose.Schema({
     salaire:{
       type:Number,
  
-    },
-    image:
-      { type: String,
-         required: false }
-        
-    
+     }
+        ,
+    role:{
+      type:String,
+      enum:["drh","personnel"],
+      default:"personnel",
+      
+    }
     
 
 
@@ -61,6 +63,24 @@ personnelSchema.pre("save", async function(next) {
         next(error);
     }
 });
+
+personnelSchema.statics.login= async function (email,password){
+ 
+      const personnel =await this.findOne({email});
+      if(personnel){
+         const auth =await bcrypt.compare(password,personnel.password);
+         if (auth){
+            
+            return personnel
+         }
+         throw new Error("Incorrect Password");
+      }
+      throw new Error("Incorrect email")
+   };
+
+
+   
+
 
 const Personnel = mongoose.model("Personnel", personnelSchema);
 module.exports = Personnel;

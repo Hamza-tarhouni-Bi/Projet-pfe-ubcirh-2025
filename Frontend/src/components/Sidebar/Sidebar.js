@@ -1,11 +1,48 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useHistory } from "react-router-dom";
+import axios from "axios";
 
 import NotificationDropdown from "components/Dropdowns/NotificationDropdown.js";
 import UserDropdown from "components/Dropdowns/UserDropdown.js";
 
 export default function Sidebar() {
   const [collapseShow, setCollapseShow] = React.useState("hidden");
+  const history = useHistory();
+
+  const handleLogout = async (e) => {
+    // Empêcher le comportement par défaut du bouton
+    e.preventDefault();
+    
+    try {
+      // Vérifiez si votre API a le bon chemin - ajustez selon votre configuration
+      await axios.post('/logout');
+      
+      // Clear any auth tokens or user data from localStorage
+      localStorage.removeItem('token');
+      localStorage.removeItem('userData');
+      
+      // Redirection vers la page de connexion
+      history.push('/signin');
+    } catch (error) {
+      console.error("Logout failed:", error);
+      
+      // Message d'erreur plus descriptif
+      if (error.response) {
+        // Le serveur a répondu avec un code d'état en dehors de la plage 2xx
+        console.error("Status:", error.response.status);
+        console.error("Data:", error.response.data);
+        alert(`Échec de la déconnexion: ${error.response.data.message || 'Erreur serveur'}`);
+      } else if (error.request) {
+        // La requête a été faite mais aucune réponse n'a été reçue
+        console.error("No response received:", error.request);
+        alert("Échec de la déconnexion: Le serveur ne répond pas.");
+      } else {
+        // Une erreur s'est produite lors de la configuration de la requête
+        console.error("Error message:", error.message);
+        alert(`Échec de la déconnexion: ${error.message}`);
+      }
+    }
+  };
 
   return (
     <>
@@ -125,6 +162,7 @@ export default function Sidebar() {
                 </Link>
               </li>
 
+              {/* Reste du menu... */}
               {/* Departements */}
               <li className="items-center">
                 <Link
@@ -140,7 +178,8 @@ export default function Sidebar() {
                   <span>Départements</span>
                 </Link>
               </li>
-                  {/* Demande*/}
+              
+              {/* Demande*/}
               <li className="items-center">
                 <Link
                   className={
@@ -236,8 +275,16 @@ export default function Sidebar() {
                 </Link>
               </li>
 
-            
-             
+              {/* Logout - Added Button */}
+              <li className="items-center">
+                <Link
+                  className="text-sm py-3 font-medium flex items-center w-full text-left text-red-500 hover:text-red-700-sm py-3 font-medium flex items-center"
+                  onClick={handleLogout}
+                >
+                  <i className="fas fa-sign-out-alt mr-3 text-lg"></i>
+                  <span>Déconnexion</span>
+                </Link>
+              </li>
             </ul>
 
             <hr className="my-4 md:min-w-full" />

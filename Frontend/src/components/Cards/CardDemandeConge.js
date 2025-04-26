@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 
 const CardDemandeConge = () => {
   const [formData, setFormData] = useState({
@@ -6,12 +6,13 @@ const CardDemandeConge = () => {
     endDate: '',
     reason: '',
     type: 'congé payé',
-    notes: ''
+    notes: '',
+    medicalFile: null
   });
   
   const [submitted, setSubmitted] = useState(false);
-  const [activeCategory, setActiveCategory] = useState('Tous');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [fileName, setFileName] = useState('');
+  const fileInputRef = useRef(null);
   
   const styles = {
     container: {
@@ -34,13 +35,12 @@ const CardDemandeConge = () => {
     },
     title: {
       fontSize: '2.2rem', 
-  fontWeight: '700',
-  color: '#1e40af',
-  margin: '0 0 10px 0',
-  position: 'relative',
-  display: 'inline-block',
-  paddingBottom: '15px',
-  fontWeight: 'inherit',
+      fontWeight: '700',
+      color: '#1e40af',
+      margin: '0 0 10px 0',
+      position: 'relative',
+      display: 'inline-block',
+      paddingBottom: '15px'
     },
     titleAfter: {
       content: '""',
@@ -60,124 +60,29 @@ const CardDemandeConge = () => {
       margin: '0',
       letterSpacing: '0.3px'
     },
-    searchSection: {
+    formContainer: {
       backgroundColor: '#ffffff',
       borderRadius: '12px',
-      padding: '30px',
+      padding: '35px',
       marginBottom: '35px',
       boxShadow: '0 4px 10px rgba(0,0,0,0.06)',
       border: '1px solid rgba(0,0,0,0.04)'
     },
-    searchContainer: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      flexWrap: 'wrap',
-      gap: '20px'
+    formHeader: {
+      marginBottom: '25px',
+      borderBottom: '1px solid #e2e8f0',
+      paddingBottom: '15px'
     },
-    searchInputContainer: {
-      position: 'relative',
-      flexGrow: '1'
-    },
-    searchIcon: {
-      position: 'absolute',
-      left: '12px',
-      top: '50%',
-      transform: 'translateY(-50%)',
-      color: '#6b7280',
-      fontSize: '16px'
-    },
-    searchInput: {
-      width: '100%',
-      padding: '14px 14px 14px 40px',
-      border: '1px solid #e2e8f0',
-      borderRadius: '8px',
-      fontSize: '16px',
-      boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
-      transition: 'all 0.2s ease',
-      '&:focus': {
-        outline: 'none',
-        borderColor: '#3b82f6',
-        boxShadow: '0 0 0 3px rgba(59, 130, 246, 0.2)'
-      }
-    },
-    categoryLabel: {
-      fontSize: '15px',
-      fontWeight: '600',
-      color: '#475569',
-      marginRight: '12px'
-    },
-    categoriesContainer: {
-      display: 'flex',
-      gap: '10px',
-      flexWrap: 'wrap'
-    },
-    category: {
-      padding: '10px 18px',
-      borderRadius: '8px',
-      fontSize: '14px',
-      fontWeight: '600',
-      cursor: 'pointer',
-      transition: 'all 0.2s ease'
-    },
-    activeCategory: {
-      backgroundColor: '#2563eb',
-      color: '#ffffff',
-      boxShadow: '0 2px 4px rgba(37, 99, 235, 0.3)'
-    },
-    inactiveCategory: {
-      backgroundColor: '#f1f5f9',
-      color: '#475569',
-      '&:hover': {
-        backgroundColor: '#e2e8f0'
-      }
-    },
-    cardsContainer: {
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
-      gap: '30px'
-    },
-    card: {
-      backgroundColor: '#ffffff',
-      borderRadius: '12px',
-      overflow: 'hidden',
-      boxShadow: '0 4px 10px rgba(0,0,0,0.06)',
-      border: '1px solid rgba(0,0,0,0.04)',
-      transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-      '&:hover': {
-        transform: 'translateY(-5px)',
-        boxShadow: '0 8px 20px rgba(0,0,0,0.08)'
-      }
-    },
-    cardHeader: {
-      backgroundColor: '#f8fafc',
-      padding: '25px',
-      borderBottom: '1px solid #e2e8f0'
-    },
-    cardTitle: {
+    formTitle: {
       fontSize: '22px',
       fontWeight: '700',
       color: '#1e40af',
       margin: '0 0 8px 0'
     },
-    cardDescription: {
+    formDescription: {
       fontSize: '15px',
       color: '#64748b',
       margin: '0'
-    },
-    cardBody: {
-      padding: '25px'
-    },
-    placesTag: {
-      display: 'inline-block',
-      backgroundColor: '#e0f2fe',
-      color: '#0369a1',
-      padding: '6px 12px',
-      borderRadius: '20px',
-      fontSize: '13px',
-      fontWeight: '600',
-      marginBottom: '20px',
-      boxShadow: '0 1px 2px rgba(0,0,0,0.04)'
     },
     formGroup: {
       marginBottom: '20px'
@@ -196,18 +101,58 @@ const CardDemandeConge = () => {
       borderRadius: '8px',
       fontSize: '15px',
       boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
-      transition: 'all 0.2s ease',
-      '&:focus': {
-        outline: 'none',
-        borderColor: '#3b82f6',
-        boxShadow: '0 0 0 3px rgba(59, 130, 246, 0.2)'
-      }
+      transition: 'all 0.2s ease'
     },
     formGrid: {
       display: 'grid',
       gridTemplateColumns: 'repeat(2, 1fr)',
       gap: '20px',
       marginBottom: '20px'
+    },
+    selectContainer: {
+      position: 'relative'
+    },
+    select: {
+      width: '100%',
+      padding: '12px 14px',
+      border: '1px solid #e2e8f0',
+      borderRadius: '8px',
+      fontSize: '15px',
+      boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+      transition: 'all 0.2s ease',
+      appearance: 'none',
+      paddingRight: '40px',
+      backgroundColor: '#ffffff'
+    },
+    selectArrow: {
+      position: 'absolute',
+      right: '15px',
+      top: '50%',
+      transform: 'translateY(-50%)',
+      color: '#64748b',
+      pointerEvents: 'none',
+      width: '12px',
+      height: '12px',
+      borderLeft: '2px solid #64748b',
+      borderBottom: '2px solid #64748b',
+      transform: 'translateY(-70%) rotate(-45deg)'
+    },
+    congeInfoTag: {
+      display: 'block',
+      fontSize: '14px',
+      color: '#64748b',
+      marginTop: '5px'
+    },
+    textarea: {
+      width: '100%',
+      padding: '12px 14px',
+      border: '1px solid #e2e8f0',
+      borderRadius: '8px',
+      fontSize: '15px',
+      boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
+      transition: 'all 0.2s ease',
+      minHeight: '100px',
+      resize: 'vertical'
     },
     alert: {
       backgroundColor: '#e0f2fe',
@@ -243,19 +188,7 @@ const CardDemandeConge = () => {
       fontWeight: '600',
       cursor: 'pointer',
       transition: 'all 0.2s ease',
-      boxShadow: '0 2px 5px rgba(37, 99, 235, 0.3)',
-      '&:hover': {
-        backgroundColor: '#1d4ed8',
-        boxShadow: '0 4px 8px rgba(37, 99, 235, 0.4)'
-      }
-    },
-    formContainer: {
-      backgroundColor: '#ffffff',
-      borderRadius: '12px',
-      padding: '35px',
-      marginBottom: '35px',
-      boxShadow: '0 4px 10px rgba(0,0,0,0.06)',
-      border: '1px solid rgba(0,0,0,0.04)'
+      boxShadow: '0 2px 5px rgba(37, 99, 235, 0.3)'
     },
     successAlert: {
       backgroundColor: '#dcfce7',
@@ -312,28 +245,118 @@ const CardDemandeConge = () => {
     colSpan2: {
       gridColumn: 'span 2'
     },
-    noResults: {
-      textAlign: 'center',
-      padding: '50px',
-      color: '#64748b',
-      fontSize: '17px',
-      backgroundColor: '#ffffff',
-      borderRadius: '12px',
-      marginBottom: '35px',
-      boxShadow: '0 4px 10px rgba(0,0,0,0.06)',
-      border: '1px solid rgba(0,0,0,0.04)'
+    fileInputContainer: {
+      position: 'relative',
+      display: 'flex',
+      flexDirection: 'column',
+      width: '100%'
     },
-    noResultsIcon: {
-      fontSize: '50px',
-      marginBottom: '15px',
-      color: '#94a3b8'
+    fileInput: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      opacity: 0,
+      width: '100%',
+      height: '100%',
+      cursor: 'pointer'
     },
-    noResultsText: {
-      margin: '0',
-      fontWeight: '500'
+    fileInputLabel: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '12px 14px',
+      border: '1px dashed #3b82f6',
+      borderRadius: '8px',
+      backgroundColor: '#f1f5f9',
+      color: '#475569',
+      fontSize: '15px',
+      cursor: 'pointer',
+      transition: 'all 0.2s ease',
+      minHeight: '50px'
+    },
+    selectedFile: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '10px',
+      marginTop: '10px',
+      padding: '10px',
+      backgroundColor: '#f1f5f9',
+      borderRadius: '6px',
+      fontSize: '14px'
+    },
+    fileIcon: {
+      fontSize: '20px',
+      color: '#3b82f6'
+    },
+    fileInfo: {
+      flex: 1,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap'
+    },
+    removeButton: {
+      background: 'none',
+      border: 'none',
+      color: '#ef4444',
+      cursor: 'pointer',
+      fontSize: '16px',
+      padding: '0 5px'
     }
   };
   
+  // Types de congés avec des icônes - Version améliorée
+  const congeTypes = [
+    {
+      type: 'congé payé',
+      title: 'Congé Payé Standard',
+      description: 'Congé annuel rémunéré',
+      remainingDays: 15,
+      icon: '🏖️'
+    },
+    {
+      type: 'rtt',
+      title: 'RTT',
+      description: 'Réduction du temps de travail',
+      remainingDays: 8,
+      icon: '⏱️'
+    },
+    {
+      type: 'congé maladie',
+      title: 'Congé Maladie',
+      description: 'Absence pour raison médicale',
+      remainingDays: 10,
+      icon: '🏥'
+    },
+    {
+      type: 'congé parental',
+      title: 'Congé Parental',
+      description: 'Congé pour s\'occuper d\'un enfant',
+      remainingDays: 'Selon droits',
+      icon: '👶'
+    },
+    {
+      type: 'congé familial',
+      title: 'Événement Familial',
+      description: 'Mariage, naissance, décès',
+      remainingDays: 'Selon événement',
+      icon: '👪'
+    },
+    {
+      type: 'congé sans solde',
+      title: 'Congé Sans Solde',
+      description: 'Absence autorisée non rémunérée',
+      remainingDays: 'Illimité',
+      icon: '📅'
+    },
+    {
+      type: 'télétravail',
+      title: 'Télétravail Exceptionnel',
+      description: 'Journée de travail à distance',
+      remainingDays: 'Selon accord',
+      icon: '🏠'
+    }
+  ];
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prevData => ({
@@ -342,8 +365,37 @@ const CardDemandeConge = () => {
     }));
   };
   
+  const handleFileChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setFormData(prev => ({
+        ...prev,
+        medicalFile: file
+      }));
+      setFileName(file.name);
+    }
+  };
+  
+  const removeFile = () => {
+    setFormData(prev => ({
+      ...prev,
+      medicalFile: null
+    }));
+    setFileName('');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+  
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    // Validation pour congé maladie: fichier requis
+    if (formData.type === 'congé maladie' && !formData.medicalFile) {
+      alert('Veuillez joindre votre justificatif médical');
+      return;
+    }
+    
     setSubmitted(true);
   };
   
@@ -358,46 +410,10 @@ const CardDemandeConge = () => {
     return diffDays;
   };
 
-  // Types de congés avec des icônes
-  const congeTypes = [
-    {
-      type: 'congé payé',
-      title: 'Congé Payé Standard',
-      description: 'Congé annuel rémunéré',
-      remainingDays: 15,
-      category: 'Payés',
-      icon: '🏖️'
-    },
-    {
-      type: 'congé sans solde',
-      title: 'Congé Sans Solde',
-      description: 'Absence autorisée non rémunérée',
-      remainingDays: 'Illimité',
-      category: 'Sans solde',
-      icon: '📅'
-    },
-    {
-      type: 'congé maladie',
-      title: 'Congé Maladie',
-      description: 'Absence pour raison médicale',
-      remainingDays: 10,
-      category: 'Maladie',
-      icon: '🏥'
-    }
-  ];
-
-  // Filter congé types based on active category and search term
-  const filteredCongeTypes = congeTypes.filter(conge => {
-    // Filter by category
-    const categoryMatch = activeCategory === 'Tous' || conge.category === activeCategory;
-    
-    // Filter by search term
-    const searchMatch = conge.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                        conge.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        conge.type.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    return categoryMatch && searchMatch;
-  });
+  // Trouver les informations du type de congé sélectionné
+  const selectedCongeType = congeTypes.find(conge => conge.type === formData.type);
+  const isMaladieType = formData.type === 'congé maladie';
+  const needsJustification = ['congé maladie', 'congé familial'].includes(formData.type);
   
   return (
     <div style={styles.container}>
@@ -426,7 +442,7 @@ const CardDemandeConge = () => {
                 <div>
                   <p style={styles.summaryLabel}>Type de congé</p>
                   <p style={styles.summaryValue}>
-                    {congeTypes.find(c => c.type === formData.type)?.icon || ''} {formData.type}
+                    {selectedCongeType?.icon || ''} {selectedCongeType?.title || formData.type}
                   </p>
                 </div>
                 <div>
@@ -441,10 +457,19 @@ const CardDemandeConge = () => {
                   <p style={styles.summaryLabel}>Date de fin</p>
                   <p style={styles.summaryValue}>{new Date(formData.endDate).toLocaleDateString('fr-FR')}</p>
                 </div>
-                <div style={styles.colSpan2}>
-                  <p style={styles.summaryLabel}>Motif</p>
-                  <p style={styles.summaryValue}>{formData.reason}</p>
-                </div>
+                
+                {isMaladieType ? (
+                  <div style={styles.colSpan2}>
+                    <p style={styles.summaryLabel}>Justificatif médical</p>
+                    <p style={styles.summaryValue}>{fileName || 'Fichier joint'}</p>
+                  </div>
+                ) : (
+                  <div style={styles.colSpan2}>
+                    <p style={styles.summaryLabel}>Motif</p>
+                    <p style={styles.summaryValue}>{formData.reason}</p>
+                  </div>
+                )}
+                
                 {formData.notes && (
                   <div style={styles.colSpan2}>
                     <p style={styles.summaryLabel}>Notes complémentaires</p>
@@ -464,140 +489,158 @@ const CardDemandeConge = () => {
             </div>
           </div>
         ) : (
-          <>
-            <div style={styles.searchSection}>
-              <div style={styles.searchContainer}>
-                <div style={styles.searchInputContainer}>
-                  <span style={styles.searchIcon}>🔍</span>
-                  <input 
-                    type="text" 
-                    placeholder="Rechercher un type de congé..." 
-                    style={styles.searchInput}
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+          <div style={styles.formContainer}>
+            <div style={styles.formHeader}>
+              <h2 style={styles.formTitle}>Formulaire de demande de congé</h2>
+              <p style={styles.formDescription}>Veuillez remplir tous les champs obligatoires</p>
+            </div>
+            
+            <form onSubmit={handleSubmit}>
+              <div style={styles.formGroup}>
+                <label style={styles.label} htmlFor="type">
+                  Type de congé
+                </label>
+                <div style={styles.selectContainer}>
+                  <select
+                    id="type"
+                    name="type"
+                    value={formData.type}
+                    onChange={handleChange}
+                    style={styles.select}
+                    required
+                  >
+                    {congeTypes.map((conge, index) => (
+                      <option key={index} value={conge.type}>
+                        {conge.icon} {conge.title}
+                      </option>
+                    ))}
+                  </select>
+                  <div style={styles.selectArrow}></div>
+                </div>
+                <span style={styles.congeInfoTag}>
+                  {selectedCongeType?.description} - 
+                  {typeof selectedCongeType?.remainingDays === 'number' 
+                    ? ` ${selectedCongeType.remainingDays} jours disponibles` 
+                    : ` ${selectedCongeType?.remainingDays}`}
+                </span>
+              </div>
+              
+              {/* Afficher un champ de téléchargement de fichier pour le congé maladie, sinon un champ de texte pour le motif */}
+              {isMaladieType ? (
+                <div style={styles.formGroup}>
+                  <label style={styles.label} htmlFor="medicalFile">
+                    Justificatif médical *
+                  </label>
+                  <div style={styles.fileInputContainer}>
+                    <label style={styles.fileInputLabel} htmlFor="medicalFile">
+                      {formData.medicalFile ? 'Changer de fichier' : 'Joindre votre justificatif médical'}
+                    </label>
+                    <input
+                      type="file"
+                      id="medicalFile"
+                      ref={fileInputRef}
+                      style={styles.fileInput}
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      onChange={handleFileChange}
+                      required
+                    />
+                  </div>
+                  {formData.medicalFile && (
+                    <div style={styles.selectedFile}>
+                      <span style={styles.fileIcon}>📄</span>
+                      <span style={styles.fileInfo}>{fileName}</span>
+                      <button 
+                        type="button" 
+                        style={styles.removeButton}
+                        onClick={removeFile}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div style={styles.formGroup}>
+                  <label style={styles.label} htmlFor="reason">
+                    Motif {needsJustification && '*'}
+                  </label>
+                  <input
+                    type="text"
+                    id="reason"
+                    name="reason"
+                    value={formData.reason}
+                    onChange={handleChange}
+                    style={styles.input}
+                    placeholder={needsJustification 
+                      ? "Précisez le motif (obligatoire)" 
+                      : "Précisez le motif de votre demande (facultatif)"}
+                    required={needsJustification}
+                  />
+                </div>
+              )}
+              
+              <div style={styles.formGrid}>
+                <div style={styles.formGroup}>
+                  <label style={styles.label} htmlFor="startDate">
+                    Date de début
+                  </label>
+                  <input
+                    type="date"
+                    id="startDate"
+                    name="startDate"
+                    value={formData.startDate}
+                    onChange={handleChange}
+                    style={styles.input}
+                    required
                   />
                 </div>
                 
-                <div style={{display: 'flex', alignItems: 'center', flexWrap: 'wrap'}}>
-                  <span style={styles.categoryLabel}>Catégorie:</span>
-                  <div style={styles.categoriesContainer}>
-                    {['Tous', 'Payés', 'Sans solde', 'Maladie'].map(cat => (
-                      <span 
-                        key={cat}
-                        style={{
-                          ...styles.category, 
-                          ...(activeCategory === cat ? styles.activeCategory : styles.inactiveCategory)
-                        }}
-                        onClick={() => setActiveCategory(cat)}
-                      >
-                        {cat}
-                      </span>
-                    ))}
-                  </div>
+                <div style={styles.formGroup}>
+                  <label style={styles.label} htmlFor="endDate">
+                    Date de fin
+                  </label>
+                  <input
+                    type="date"
+                    id="endDate"
+                    name="endDate"
+                    value={formData.endDate}
+                    onChange={handleChange}
+                    style={styles.input}
+                    required
+                  />
                 </div>
               </div>
-            </div>
-            
-            {filteredCongeTypes.length > 0 ? (
-              <div style={styles.cardsContainer}>
-                {filteredCongeTypes.map((conge, index) => (
-                  <div style={styles.card} key={index}>
-                    <div style={styles.cardHeader}>
-                      <h3 style={styles.cardTitle}>
-                        {conge.icon} {conge.title}
-                      </h3>
-                      <p style={styles.cardDescription}>{conge.description}</p>
-                    </div>
-                    <div style={styles.cardBody}>
-                      <div style={styles.placesTag}>
-                        {typeof conge.remainingDays === 'number' 
-                          ? `${conge.remainingDays} jours disponibles` 
-                          : conge.remainingDays}
-                      </div>
-                      
-                      <form onSubmit={(e) => {
-                        e.preventDefault();
-                        if (formData.type !== conge.type) {
-                          setFormData(prev => ({ ...prev, type: conge.type }));
-                        }
-                        setSubmitted(true);
-                      }}>
-                        <div style={styles.formGroup}>
-                          <label style={styles.label} htmlFor={`reason-${index}`}>
-                            Motif
-                          </label>
-                          <input
-                            type="text"
-                            id={`reason-${index}`}
-                            name="reason"
-                            value={formData.reason}
-                            onChange={handleChange}
-                            style={styles.input}
-                            placeholder="Précisez le motif de votre demande"
-                            required
-                          />
-                        </div>
-                        
-                        <div style={styles.formGrid}>
-                          <div style={styles.formGroup}>
-                            <label style={styles.label} htmlFor={`startDate-${index}`}>
-                              Date de début
-                            </label>
-                            <input
-                              type="date"
-                              id={`startDate-${index}`}
-                              name="startDate"
-                              value={formData.startDate}
-                              onChange={handleChange}
-                              style={styles.input}
-                              required
-                            />
-                          </div>
-                          
-                          <div style={styles.formGroup}>
-                            <label style={styles.label} htmlFor={`endDate-${index}`}>
-                              Date de fin
-                            </label>
-                            <input
-                              type="date"
-                              id={`endDate-${index}`}
-                              name="endDate"
-                              value={formData.endDate}
-                              onChange={handleChange}
-                              style={styles.input}
-                              required
-                            />
-                          </div>
-                        </div>
-                        
-                        {formData.startDate && formData.endDate && (
-                          <div style={styles.alert}>
-                            <span style={styles.alertIcon}>ℹ️</span>
-                            <p style={styles.alertText}>
-                              Durée: <strong>{calculateDays()} jours</strong>
-                            </p>
-                          </div>
-                        )}
-                        
-                        <div style={styles.buttonContainer}>
-                          <button type="submit" style={styles.button}>
-                            Demander ce congé
-                          </button>
-                        </div>
-                      </form>
-                    </div>
-                  </div>
-                ))}
+              
+              {formData.startDate && formData.endDate && (
+                <div style={styles.alert}>
+                  <span style={styles.alertIcon}>ℹ️</span>
+                  <p style={styles.alertText}>
+                    Durée: <strong>{calculateDays()} jours</strong>
+                  </p>
+                </div>
+              )}
+              
+              <div style={styles.formGroup}>
+                <label style={styles.label} htmlFor="notes">
+                  Notes complémentaires
+                </label>
+                <textarea
+                  id="notes"
+                  name="notes"
+                  value={formData.notes}
+                  onChange={handleChange}
+                  style={styles.textarea}
+                  placeholder="Informations additionnelles (facultatif)"
+                />
               </div>
-            ) : (
-              <div style={styles.noResults}>
-                <div style={styles.noResultsIcon}>🔎</div>
-                <p style={styles.noResultsText}>
-                  Aucun type de congé ne correspond à votre recherche.
-                </p>
+              
+              <div style={styles.buttonContainer}>
+                <button type="submit" style={styles.button}>
+                  Soumettre la demande
+                </button>
               </div>
-            )}
-          </>
+            </form>
+          </div>
         )}
       </div>
     </div>

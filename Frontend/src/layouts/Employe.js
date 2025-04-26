@@ -15,7 +15,6 @@ import SettingsEmploye from "views/employe/SettingsEmploye";
 export default function Employe() {
   return (
     <>
-      <AdminNavbar />
       <SidebarEmploye />
       <div className="relative md:ml-64 bg-blueGray-100">
         <AdminNavbar />

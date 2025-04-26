@@ -4,6 +4,10 @@ const { sendWelcomeEmail } = require('../utiles/emailService');
 const { sendUpdateEmail, sendProfileImageUpdateEmail } = require('../utiles/updatemail');
 const path = require('path');
 const fs = require('fs');
+const Personnel = require('../models/PersonnelSchema');
+
+
+
 
 //Liste des personnels
 module.exports.getAllPersonnel = async (req, res) => {
@@ -122,10 +126,63 @@ module.exports.updatePersonnel = async (req, res) => {
         console.error("Erreur d'envoi email champs:", emailError);
       }
     }
-
+  
     res.status(200).json(updatedPersonnel);
   } catch (error) {
     console.error('Erreur dans updatePersonnel:', error);
     res.status(500).json({ error: error.message });
   }
 };
+const jwt=require("jsonwebtoken");
+
+const createToken =(id)=>{
+  return jwt.sign({id},'net ubcirh secret',{expiresIn:'1m'})
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+module.exports.login=async(req,res)=>{
+      try {
+         const {email ,password}=req.body
+         const personnel = await personnelModal.login(email, password);
+         const connecte = true
+         await personnelModal.findByIdAndUpdate(personnel._id,{
+          $set: {connecte}
+      })
+      const token=createToken(personnel._id);
+      res.cookie('jwt_token_ubcirh',token,{httpOnly:true,maxAge:60*1000 })
+
+      res.status(200).json({message :"connected",personnel : personnel})
+      } catch (error) {
+        res.status(500).json({message:error.message})
+         
+      }
+   }
+
+   module.exports.logout = async (req, res) => {
+    try {
+      const id  = req.personnel._id;
+      
+      const connecte = false;
+      await personnelModal.findByIdAndUpdate(id, { 
+        $set: { connecte }
+      });
+      res.cookie("jwt_token_ubcirh","",{httpOnly:false,maxAge:1})
+      res.status(200).json("User successfully logged out");
+    } catch (error) {
+      res.status(500).json({message:error.message});
+    }
+  }

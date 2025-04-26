@@ -1,12 +1,31 @@
 /* eslint-disable */
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useHistory } from "react-router-dom";
+import axios from "axios";
 
 import NotificationDropdown from "components/Dropdowns/NotificationDropdown.js";
 import UserDropdown from "components/Dropdowns/UserDropdown.js";
 
 export default function SidebarEmploye() {
   const [collapseShow, setCollapseShow] = React.useState("hidden");
+  const history = useHistory();
+
+  const handleLogout = async () => {
+    try {
+      // Call the logout API endpoint
+      await axios.post('/logout', {}, {
+        withCredentials: true
+      });
+      
+      // Clear any local storage items if needed
+      localStorage.removeItem('user');
+      
+      // Redirect to login page using history instead of navigate
+      history.push('/signin');
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
 
   return (
     <>
@@ -147,6 +166,17 @@ export default function SidebarEmploye() {
                 >
                   <i className="fas fa-cog mr-3 text-lg"></i>
                   <span>Paramètres</span>
+                </Link>
+              </li>
+              
+              {/* Logout - Added new logout button */}
+              <li className="items-center">
+                <Link
+                  onClick={handleLogout}
+                  className="text-sm py-3 font-medium flex items-center w-full text-left text-red-500 hover:text-red-700"
+                >
+                  <i className="fas fa-sign-out-alt mr-3 text-lg"></i>
+                  <span>Déconnexion</span>
                 </Link>
               </li>
             </ul>

@@ -1,7 +1,7 @@
 {
   "name": "notus-react",
   "version": "1.1.0",
-  "proxy":"http://127.0.0.1:5000",
+  "proxy": "http://127.0.0.1:5000",
   "description": "Notus React - A free Tailwind CSS and React UI Kit and Admin by Creative Tim.",
   "repository": "https://github.com/creativetimofficial/notus-react",
   "license": "MIT",
@@ -27,7 +27,7 @@
     "react-loader-spinner": "^6.1.6",
     "react-modal": "^3.16.3",
     "react-router": "5.2.0",
-    "react-router-dom": "5.2.0",
+    "react-router-dom": "^5.2.0",
     "react-scripts": "4.0.3",
     "react-slideshow-image": "^4.3.2",
     "styled-components": "^6.1.15",

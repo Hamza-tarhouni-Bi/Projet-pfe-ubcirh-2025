@@ -12,16 +12,13 @@ import Admin from "layouts/Admin.js";
 import Auth from "layouts/Auth.js";
 //Auth
 import Signin from "views/auth/Signin";
-import Signup from "views/auth/Signup";
 
 
-import TestForm from "views/auth/TestForm";
 
-import Landing from "views/Landing.js";
-import Profile from "views/Profile.js";
+
 import Index from "views/Index.js";
 import Postule from "views/Postule";
-import Condidature from "views/admin/Condidature";
+
 
 ReactDOM.render(
   <BrowserRouter>
@@ -32,7 +29,7 @@ ReactDOM.render(
       
       <Route path="/employe" component={Employe} />
       {/*Route pour signin et signup*/}
-      <Route path="/signup" component={Signup} />
+     
     
 
       <Route path="/signin" component={Signin} />
@@ -40,11 +37,6 @@ ReactDOM.render(
       <Route path="/test" component={Test} />
       <Route path="/postule" component={Postule} />
 
-      <Route path="/testform" component={TestForm} />
-
-      {/* add routes without layouts */}
-      <Route path="/landing" exact component={Landing} />
-      <Route path="/profile" exact component={Profile} />
       <Route path="/" exact component={Index} />
       {/* add redirect for first page */}
       <Redirect from="*" to="/" />
