@@ -1,45 +1,35 @@
 import { useState, useEffect } from "react";
-import {
-  Search,
-  ChevronDown,
-  ChevronUp,
-  Filter,
-  Eye,
-  Check,
-  X,
-  AlertCircle,
-  ThumbsUp,
-  ThumbsDown,
-} from "lucide-react";
+import { Search, AlertCircle, Check, X, Eye } from "lucide-react";
 
-// CSS encapsulé avec préfixe "gdp-" (Gestion Demandes Personnel)
+// CSS encapsulé avec préfixe "gav-" (Gestion Avances)
 const encapsulatedStyles = `
-  .gdp-container {
+  .gav-container {
     background: white;
     border-radius: 8px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     overflow: hidden;
     position: relative;
+    width: 100%;
   }
   
-  .gdp-header-section {
+  .gav-header-section {
     padding: 1.5rem;
     border-bottom: 1px solid #e2e8f0;
   }
   
-  .gdp-search-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
+  .gav-title {
+    font-size: 1.5rem;
+    font-weight: 700;
     margin-bottom: 1.5rem;
+    color: #1f2937;
   }
   
-  .gdp-search-input {
-    flex: 1;
+  .gav-search-container {
     position: relative;
+    margin-bottom: 1rem;
   }
   
-  .gdp-search-icon {
+  .gav-search-icon {
     position: absolute;
     left: 10px;
     top: 50%;
@@ -47,34 +37,32 @@ const encapsulatedStyles = `
     color: #9ca3af;
   }
   
-  .gdp-tab-button {
-    padding: 0.5rem 1rem;
-    border-bottom: 2px solid transparent;
-    color: #6b7280;
-    font-weight: 500;
+  .gav-search-input {
+    width: 100%;
+    padding: 0.5rem 0.75rem 0.5rem 2.5rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
     transition: all 0.2s ease;
+    font-size: 0.875rem;
   }
   
-  .gdp-tab-button.gdp-active {
-    border-bottom-color: #14b8a6;
-    color: #14b8a6;
+  .gav-search-input:focus {
+    outline: none;
+    border-color: #14b8a6;
+    box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.2);
   }
   
-  .gdp-tab-button:hover:not(.gdp-active) {
-    color: #374151;
-  }
-  
-  .gdp-table-container {
+  .gav-table-container {
     width: 100%;
     overflow-x: auto;
   }
   
-  .gdp-table {
+  .gav-table {
     width: 100%;
     border-collapse: collapse;
   }
   
-  .gdp-th {
+  .gav-th {
     text-align: left;
     padding: 0.75rem 1rem;
     font-size: 0.75rem;
@@ -85,917 +73,907 @@ const encapsulatedStyles = `
     border-bottom: 1px solid #e5e7eb;
   }
   
-  .gdp-td {
+  .gav-td {
     padding: 1rem;
     vertical-align: middle;
     color: #374151;
     border-bottom: 1px solid #f3f4f6;
   }
   
-  .gdp-tr {
-    cursor: pointer;
+  .gav-tr {
+    transition: background-color 0.2s ease;
   }
   
-  .gdp-tr:hover {
+  .gav-tr:hover {
     background-color: #f9fafb;
   }
   
-  .gdp-department-badge {
-    background-color: #e6fffa;
-    color: #047857;
+  .gav-employee-name {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #111827;
+  }
+  
+  .gav-employee-dept {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-top: 0.25rem;
+  }
+  
+  .gav-amount {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #111827;
+  }
+  
+  .gav-date {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-top: 0.25rem;
+  }
+  
+  .gav-badge {
+    display: inline-flex;
+    align-items: center;
     padding: 0.25rem 0.5rem;
     border-radius: 9999px;
     font-size: 0.75rem;
     font-weight: 500;
   }
   
-  .gdp-type-badge {
+  .gav-badge-standard {
+    background-color: #dbeafe;
+    color: #1e40af;
+  }
+  
+  .gav-badge-urgent {
     background-color: #ede9fe;
     color: #5b21b6;
-    padding: 0.25rem 0.5rem;
-    border-radius: 9999px;
-    font-size: 0.75rem;
-    font-weight: 500;
   }
   
-  .gdp-status-badge {
-    padding: 0.25rem 0.5rem;
-    border-radius: 9999px;
-    font-size: 0.75rem;
-    font-weight: 500;
+  .gav-status-badge {
     display: flex;
     align-items: center;
     gap: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
     width: fit-content;
   }
   
-  .gdp-status-completed {
+  .gav-status-approved {
     background-color: #dcfce7;
     color: #166534;
   }
   
-  .gdp-status-pending {
+  .gav-status-pending {
     background-color: #fef3c7;
     color: #92400e;
   }
   
-  .gdp-status-rejected {
+  .gav-status-rejected {
     background-color: #fee2e2;
     color: #b91c1c;
   }
   
-  .gdp-expanded-row {
-    background-color: #f8fafc;
-    border-bottom: 1px solid #e5e7eb;
-  }
-  
-  .gdp-expanded-content {
-    padding: 1.5rem;
-  }
-  
-  .gdp-pagination {
-    display: flex;
-    justify-content: space-between;
+  .gav-view-button {
+    display: inline-flex;
     align-items: center;
-    margin-top: 1.5rem;
-    padding: 0 1rem;
+    gap: 0.25rem;
+    padding: 0.375rem 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #4b5563;
+    background-color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
   }
   
-  .gdp-page-button {
-    padding: 0.375rem 0.75rem;
+  .gav-view-button:hover {
+    background-color: #f9fafb;
+    border-color: #9ca3af;
+  }
+  
+  .gav-view-button:focus {
+    outline: none;
+    border-color: #14b8a6;
+    ring: 2px solid #14b8a6;
+  }
+  
+  .gav-motif-popup {
+    position: absolute;
+    z-index: 10;
+    margin-top: 0.5rem;
+    width: 18rem;
+    background-color: white;
     border: 1px solid #e5e7eb;
     border-radius: 0.375rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    padding: 1rem;
     font-size: 0.875rem;
-    transition: all 0.2s ease;
-  }
-  
-  .gdp-page-button.gdp-active {
-    background-color: #14b8a6;
-    color: white;
-    border-color: #14b8a6;
-  }
-  
-  .gdp-page-button:hover:not(.gdp-active) {
-    background-color: #f9fafb;
-  }
-  
-  .gdp-form-group {
-    margin-bottom: 1rem;
-  }
-  
-  .gdp-form-label {
-    display: block;
-    margin-bottom: 0.25rem;
-    font-size: 0.875rem;
-    font-weight: 500;
     color: #374151;
   }
   
-  .gdp-form-input {
-    width: 100%;
-    padding: 0.5rem;
-    border: 1px solid #d1d5db;
-    border-radius: 0.375rem;
-    transition: all 0.2s ease;
-  }
-  
-  .gdp-form-input:focus {
-    outline: none;
-    border-color: #14b8a6;
-    box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.2);
-  }
-  
-  .gdp-form-select {
-    width: 100%;
-    padding: 0.5rem;
-    border: 1px solid #d1d5db;
-    border-radius: 0.375rem;
-    transition: all 0.2s ease;
-  }
-  
-  .gdp-form-select:focus {
-    outline: none;
-    border-color: #14b8a6;
-    box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.2);
-  }
-  
-  .gdp-expanded-title {
-    font-size: 1.25rem;
+  .gav-motif-title {
+    font-size: 0.875rem;
     font-weight: 600;
-    color: #1f2937;
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
+    color: #111827;
   }
   
-  .gdp-detail-row {
-    display: flex;
-    border-bottom: 1px solid #e5e7eb;
-    padding-bottom: 0.75rem;
-    margin-bottom: 0.75rem;
-  }
-  
-  .gdp-detail-label {
-    width: 33.333333%;
-    font-weight: 500;
-    color: #374151;
-  }
-  
-  .gdp-detail-value {
-    flex: 1;
+  .gav-motif-text {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
     color: #4b5563;
   }
   
-  .gdp-expander-icon {
-    color: #6b7280;
-    transition: transform 0.2s ease;
+  .gav-response-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-top: 0.75rem;
+    margin-bottom: 0.25rem;
+    color: #111827;
   }
   
-  /* Nouveaux styles pour les boutons d'action et les toasts */
-  .gdp-action-buttons {
-    display: flex;
-    gap: 0.5rem;
-    margin-top: 1rem;
+  .gav-response-text {
+    font-style: italic;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    color: #4b5563;
   }
   
-  .gdp-btn {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    border-radius: 0.375rem;
-    font-weight: 500;
-    transition: all 0.2s ease;
-    border: none;
-    cursor: pointer;
-  }
-  
-  .gdp-btn-success {
-    background-color: #10b981;
-    color: white;
-  }
-  
-  .gdp-btn-success:hover {
-    background-color: #059669;
-  }
-  
-  .gdp-btn-danger {
-    background-color: #ef4444;
-    color: white;
-  }
-  
-  .gdp-btn-danger:hover {
-    background-color: #dc2626;
-  }
-  
-  .gdp-btn-disabled {
-    background-color: #d1d5db;
-    color: #6b7280;
-    cursor: not-allowed;
-  }
-  
-  /* Toast notifications */
-  .gdp-toast-container {
-    position: fixed;
-    bottom: 2rem;
-    right: 2rem;
-    z-index: 50;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
-  
-  .gdp-toast {
-    min-width: 300px;
+  .gav-footer {
     padding: 1rem;
-    border-radius: 0.5rem;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    background-color: #f9fafb;
+    border-top: 1px solid #e5e7eb;
+    font-size: 0.875rem;
+    color: #6b7280;
+  }
+  
+  /* Styles pour les actions */
+  .gav-actions {
     display: flex;
+    gap: 0.5rem;
+  }
+  
+  .gav-action-button {
+    display: inline-flex;
     align-items: center;
-    gap: 0.75rem;
-    animation: gdp-slide-in 0.3s ease, gdp-fade-out 0.5s ease 4.5s forwards;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 0.375rem;
+    color: #6b7280;
+    background-color: white;
+    border: 1px solid #e5e7eb;
+    cursor: pointer;
+    transition: all 0.2s ease;
   }
   
-  .gdp-toast-success {
-    background-color: #dcfce7;
-    border-left: 4px solid #10b981;
-    color: #166534;
+  .gav-action-button:hover {
+    background-color: #f9fafb;
+    color: #111827;
+    border-color: #d1d5db;
   }
   
-  .gdp-toast-error {
-    background-color: #fee2e2;
-    border-left: 4px solid #ef4444;
+  .gav-action-button-edit:hover {
+    color: #2563eb;
+    background-color: #eff6ff;
+    border-color: #bfdbfe;
+  }
+  
+  .gav-action-button-approve {
+    color: #047857;
+  }
+  
+  .gav-action-button-approve:hover {
+    color: #047857;
+    background-color: #ecfdf5;
+    border-color: #a7f3d0;
+  }
+  
+  .gav-action-button-reject {
     color: #b91c1c;
   }
   
-  .gdp-toast-info {
-    background-color: #dbeafe;
-    border-left: 4px solid #3b82f6;
-    color: #1e40af;
+  .gav-action-button-reject:hover {
+    color: #dc2626;
+    background-color: #fef2f2;
+    border-color: #fecaca;
   }
   
-  @keyframes gdp-slide-in {
-    from {
-      transform: translateX(100%);
-      opacity: 0;
-    }
-    to {
-      transform: translateX(0);
-      opacity: 1;
-    }
+  .gav-action-button-more {
+    position: relative;
   }
   
-  @keyframes gdp-fade-out {
-    from {
-      opacity: 1;
-    }
-    to {
-      opacity: 0;
-    }
+  /* Styles pour le modal */
+  .gav-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 50;
+  }
+  
+  .gav-modal {
+    background-color: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    width: 90%;
+    max-width: 32rem;
+    max-height: 90vh;
+    overflow-y: auto;
+    z-index: 60;
+  }
+  
+  .gav-modal-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .gav-modal-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #111827;
+  }
+  
+  .gav-modal-close {
+    background: none;
+    border: none;
+    color: #6b7280;
+    cursor: pointer;
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.375rem;
+    transition: all 0.2s ease;
+  }
+  
+  .gav-modal-close:hover {
+    background-color: #f3f4f6;
+    color: #111827;
+  }
+  
+  .gav-modal-body {
+    padding: 1.5rem;
+  }
+  
+  .gav-modal-section {
+    margin-bottom: 1.5rem;
+  }
+  
+  .gav-modal-section:last-child {
+    margin-bottom: 0;
+  }
+  
+  .gav-modal-section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 0.5rem;
+  }
+  
+  .gav-modal-section-content {
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: #4b5563;
+    background-color: #f9fafb;
+    padding: 1rem;
+    border-radius: 0.375rem;
+    border: 1px solid #e5e7eb;
+  }
+  
+  .gav-modal-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .gav-modal-info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  
+  .gav-modal-info-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #6b7280;
+  }
+  
+  .gav-modal-info-value {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #111827;
+  }
+  
+  .gav-modal-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+  }
+  
+  .gav-modal-button {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .gav-modal-button-secondary {
+    background-color: white;
+    color: #4b5563;
+    border: 1px solid #d1d5db;
+  }
+  
+  .gav-modal-button-secondary:hover {
+    background-color: #f9fafb;
+    border-color: #9ca3af;
+  }
+  
+  .gav-modal-button-primary {
+    background-color: #14b8a6;
+    color: white;
+    border: 1px solid transparent;
+  }
+  
+  .gav-modal-button-primary:hover {
+    background-color: #0d9488;
+  }
+
+  .gav-loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+    font-size: 1rem;
+    color: #6b7280;
+  }
+
+  .gav-error {
+    padding: 1rem;
+    background-color: #fee2e2;
+    color: #b91c1c;
+    border-radius: 0.375rem;
+    margin: 1rem;
+    text-align: center;
   }
 `;
 
-// Composant Toast
-const Toast = ({ type, message, onClose }) => {
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      onClose();
-    }, 5000);
-    return () => clearTimeout(timer);
-  }, [onClose]);
-
-  let icon;
-  let toastClass;
-
-  switch (type) {
-    case "success":
-      icon = <Check size={20} />;
-      toastClass = "gdp-toast-success";
-      break;
-    case "error":
-      icon = <X size={20} />;
-      toastClass = "gdp-toast-error";
-      break;
-    default:
-      icon = <AlertCircle size={20} />;
-      toastClass = "gdp-toast-info";
-  }
-
-  return (
-    <div className={`gdp-toast ${toastClass}`}>
-      {icon}
-      <span>{message}</span>
-    </div>
-  );
-};
-
-export default function Tables() {
-  // Données fictives des demandes
-  const [demandes, setDemandes] = useState([
+export default function GestionAvances() {
+  // Données statiques pour les demandes d'avance
+  const staticDemandes = [
     {
-      id: 1,
-      employeId: 1,
+      _id: "1",
+      personnel: "1",
+      montant: 1200,
+      typeDemande: "Standard",
+      statut: "pending",
+      motif: "Avance sur salaire pour frais médicaux",
+      createdAt: "2023-05-15T09:30:00Z",
+      reponse: ""
+    },
+    {
+      _id: "2",
+      personnel: "2",
+      montant: 800,
+      typeDemande: "Urgente",
+      statut: "approved",
+      motif: "Réparation urgente de voiture pour pouvoir se rendre au travail",
+      createdAt: "2023-05-10T14:15:00Z",
+      reponse: "Demande approuvée le 12/05/2023"
+    },
+    {
+      _id: "3",
+      personnel: "3",
+      montant: 1500,
+      typeDemande: "Standard",
+      statut: "rejected",
+      motif: "Achat de matériel informatique pour télétravail",
+      createdAt: "2023-05-05T11:20:00Z",
+      reponse: "Demande refusée le 07/05/2023 - Le matériel doit être fourni par l'entreprise"
+    },
+    {
+      _id: "4",
+      personnel: "4",
+      montant: 600,
+      typeDemande: "Urgente",
+      statut: "pending",
+      motif: "Frais de garde d'enfants imprévus",
+      createdAt: "2023-05-18T16:45:00Z",
+      reponse: ""
+    },
+    {
+      _id: "5",
+      personnel: "5",
+      montant: 900,
+      typeDemande: "Standard",
+      statut: "approved",
+      motif: "Avance pour règlement de factures énergétiques",
+      createdAt: "2023-04-28T10:10:00Z",
+      reponse: "Demande approuvée le 30/04/2023"
+    }
+  ];
+
+  // Données statiques pour les employés
+  const staticPersonnelDetails = {
+    "1": {
       nom: "Dupont",
       prenom: "Jean",
-      departement: "Marketing",
-      typeDemande: "Demande de congé",
-      statut: "Complété",
-      dateDemande: "12/03/2025",
-      dateDebut: "20/04/2025",
-      dateFin: "30/04/2025",
-      motif: "Vacances annuelles",
-      commentaire:
-        "Je souhaite prendre mes congés annuels pour partir en voyage avec ma famille.",
-      reponse: "Demande approuvée. Bon congé !",
+      role: "Développeur"
     },
-    {
-      id: 2,
-      employeId: 2,
-      nom: "Lambert",
-      prenom: "Marie",
-      departement: "RH",
-      typeDemande: "Demande d'avance sur salaire",
-      statut: "En attente",
-      dateDemande: "05/04/2025",
-      montant: "1500",
-      motif: "Achat d'équipement",
-      commentaire:
-        "J'ai besoin d'une avance pour l'achat d'un ordinateur nécessaire à mon travail à distance.",
-      reponse: "",
-    },
-    {
-      id: 3,
-      employeId: 3,
+    "2": {
       nom: "Martin",
-      prenom: "Paul",
-      departement: "Technique",
-      typeDemande: "Demande de formation",
-      statut: "Refusé",
-      dateDemande: "28/03/2025",
-      formation: "Développement React avancé",
-      cout: "2500",
-      dateDebut: "15/05/2025",
-      dateFin: "20/05/2025",
-      motif: "Amélioration des compétences",
-      commentaire:
-        "Cette formation me permettrait d'améliorer mes compétences en React pour les projets à venir.",
-      reponse:
-        "Budget formation épuisé pour ce trimestre. Veuillez réessayer plus tard.",
-    },
-    {
-      id: 4,
-      employeId: 4,
-      nom: "Bernard",
       prenom: "Sophie",
-      departement: "Finance",
-      typeDemande: "Demande de congé",
-      statut: "Complété",
-      dateDemande: "01/04/2025",
-      dateDebut: "12/04/2025",
-      dateFin: "14/04/2025",
-      motif: "Raison familiale",
-      commentaire: "Besoin de m'absenter pour un événement familial important.",
-      reponse: "Demande approuvée.",
+      role: "Chef de projet"
     },
-    {
-      id: 5,
-      employeId: 1,
-      nom: "Dupont",
-      prenom: "Jean",
-      departement: "Marketing",
-      typeDemande: "Demande de formation",
-      statut: "En attente",
-      dateDemande: "08/04/2025",
-      formation: "Marketing digital",
-      cout: "1800",
-      dateDebut: "10/05/2025",
-      dateFin: "12/05/2025",
-      motif: "Formation professionnelle",
-      commentaire:
-        "Cette formation me permettrait de mieux comprendre les nouvelles stratégies de marketing digital.",
-      reponse: "",
+    "3": {
+      nom: "Bernard",
+      prenom: "Pierre",
+      role: "Designer"
     },
-  ]);
+    "4": {
+      nom: "Petit",
+      prenom: "Marie",
+      role: "RH"
+    },
+    "5": {
+      nom: "Leroy",
+      prenom: "Thomas",
+      role: "Commercial"
+    }
+  };
 
-  const [demandesAffichees, setDemandesAffichees] = useState([]);
+  const [demandes, setDemandes] = useState(staticDemandes);
+  const [demandesFiltrees, setDemandesFiltrees] = useState(staticDemandes);
   const [recherche, setRecherche] = useState("");
-  const [filtreType, setFiltreType] = useState("tous");
-  const [filtreStatut, setFiltreStatut] = useState("tous");
-  const [expandedRowId, setExpandedRowId] = useState(null);
-  
-  // État pour les toasts
-  const [toasts, setToasts] = useState([]);
+  const [demandeSelected, setDemandeSelected] = useState(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [error, setError] = useState(null);
+  const [personnelDetails] = useState(staticPersonnelDetails);
 
-  // Filtrer les demandes en fonction de la recherche et des filtres
+  // Formater la date pour l'affichage
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('fr-FR');
+  };
+
+  // Filtrage des demandes basé sur la recherche
+  const filtrerDemandes = (terme) => {
+    setRecherche(terme);
+    if (!terme.trim()) {
+      setDemandesFiltrees(demandes);
+      return;
+    }
+    
+    const termeLower = terme.toLowerCase();
+    const resultats = demandes.filter(demande => {
+      const personnel = personnelDetails[demande.personnel];
+      if (!personnel) return false;
+      
+      return (
+        (personnel.nom && personnel.nom.toLowerCase().includes(termeLower)) ||
+        (personnel.prenom && personnel.prenom.toLowerCase().includes(termeLower)) ||
+        demande.montant.toString().includes(terme)
+      );
+    });
+    
+    setDemandesFiltrees(resultats);
+  };
+
+  // Ouvrir le modal avec les détails de la demande
+  const ouvrirModal = (demande) => {
+    setDemandeSelected(demande);
+    setModalVisible(true);
+  };
+
+  // Fermer le modal
+  const fermerModal = () => {
+    setModalVisible(false);
+    setDemandeSelected(null);
+  };
+
+  // Fermer le modal si on clique à l'extérieur
   useEffect(() => {
-    let filtres = [...demandes];
-
-    // Filtre par type de demande
-    if (filtreType !== "tous") {
-      filtres = filtres.filter((d) => d.typeDemande === filtreType);
-    }
-
-    // Filtre par statut
-    if (filtreStatut !== "tous") {
-      filtres = filtres.filter((d) => d.statut === filtreStatut);
-    }
-
-    // Filtre par recherche (nom ou ID)
-    if (recherche !== "") {
-      filtres = filtres.filter((demande) => {
-        const searchTerm = recherche.toLowerCase();
-        return (
-          demande.nom.toLowerCase().includes(searchTerm) ||
-          demande.prenom.toLowerCase().includes(searchTerm) ||
-          demande.employeId.toString().includes(searchTerm)
-        );
-      });
-    }
-
-    setDemandesAffichees(filtres);
-  }, [recherche, filtreType, filtreStatut, demandes]);
-
-  // Basculer l'affichage des détails d'une demande
-  const toggleExpandedRow = (id) => {
-    setExpandedRowId(expandedRowId === id ? null : id);
-  };
-
-  // Fonction pour ajouter un toast
-  const addToast = (type, message) => {
-    const id = Date.now();
-    setToasts((prevToasts) => [...prevToasts, { id, type, message }]);
-  };
-
-  // Fonction pour supprimer un toast
-  const removeToast = (id) => {
-    setToasts((prevToasts) => prevToasts.filter((toast) => toast.id !== id));
-  };
-
-  // Fonction pour accepter une demande
-  const accepterDemande = (e, demande) => {
-    e.stopPropagation(); // Empêcher la propagation du clic
-    
-    // Mettre à jour l'état de la demande
-    const demandesUpdated = demandes.map((d) => {
-      if (d.id === demande.id) {
-        return {
-          ...d,
-          statut: "Complété",
-          reponse: "Demande approuvée le " + new Date().toLocaleDateString(),
-        };
+    const handleEscape = (e) => {
+      if (e.key === 'Escape') {
+        fermerModal();
       }
-      return d;
-    });
-    
-    setDemandes(demandesUpdated);
-    
-    // Afficher le toast
-    addToast("success", `Demande de ${demande.prenom} ${demande.nom} acceptée avec succès`);
-  };
+    };
 
-  // Fonction pour refuser une demande
-  const refuserDemande = (e, demande) => {
-    e.stopPropagation(); // Empêcher la propagation du clic
-    
-    // Mettre à jour l'état de la demande
-    const demandesUpdated = demandes.map((d) => {
-      if (d.id === demande.id) {
-        return {
-          ...d,
-          statut: "Refusé",
-          reponse: "Demande refusée le " + new Date().toLocaleDateString(),
-        };
-      }
-      return d;
-    });
-    
-    setDemandes(demandesUpdated);
-    
-    // Afficher le toast
-    addToast("error", `Demande de ${demande.prenom} ${demande.nom} refusée`);
-  };
+    window.addEventListener('keydown', handleEscape);
+    return () => {
+      window.removeEventListener('keydown', handleEscape);
+    };
+  }, []);
 
-  // Rendu des détails du formulaire de demande
-  const renderFormDetails = (demande) => {
-    switch (demande.typeDemande) {
-      case "Demande de congé":
-        return (
-          <>
-            <div className="gdp-detail-row">
-              <span className="gdp-detail-label">Date de début:</span>
-              <span className="gdp-detail-value">{demande.dateDebut}</span>
-            </div>
-            <div className="gdp-detail-row">
-              <span className="gdp-detail-label">Date de fin:</span>
-              <span className="gdp-detail-value">{demande.dateFin}</span>
-            </div>
-            <div className="gdp-detail-row">
-              <span className="gdp-detail-label">Motif:</span>
-              <span className="gdp-detail-value">{demande.motif}</span>
-            </div>
-          </>
-        );
-      case "Demande d'avance sur salaire":
-        return (
-          <>
-            <div className="gdp-detail-row">
-              <span className="gdp-detail-label">Montant demandé:</span>
-              <span className="gdp-detail-value">{demande.montant} €</span>
-            </div>
-            <div className="gdp-detail-row">
-              <span className="gdp-detail-label">Motif:</span>
-              <span className="gdp-detail-value">{demande.motif}</span>
-            </div>
-          </>
-        );
-      case "Demande de formation":
-        return (
-          <>
-            <div className="gdp-detail-row">
-              <span className="gdp-detail-label">Formation:</span>
-              <span className="gdp-detail-value">{demande.formation}</span>
-            </div>
-            <div className="gdp-detail-row">
-              <span className="gdp-detail-label">Coût:</span>
-              <span className="gdp-detail-value">{demande.cout} €</span>
-            </div>
-            <div className="gdp-detail-row">
-              <span className="gdp-detail-label">Date de début:</span>
-              <span className="gdp-detail-value">{demande.dateDebut}</span>
-            </div>
-            <div className="gdp-detail-row">
-              <span className="gdp-detail-label">Date de fin:</span>
-              <span className="gdp-detail-value">{demande.dateFin}</span>
-            </div>
-            <div className="gdp-detail-row">
-              <span className="gdp-detail-label">Motif:</span>
-              <span className="gdp-detail-value">{demande.motif}</span>
-            </div>
-          </>
-        );
+  // Mapping des statuts API vers les statuts d'affichage
+  const mapStatus = (status) => {
+    switch (status) {
+      case 'approved':
+        return 'Complété';
+      case 'pending':
+        return 'En attente';
+      case 'rejected':
+        return 'Refusé';
       default:
-        return null;
+        return status;
+    }
+  };
+
+  // Actions des boutons 
+  const handleApprove = (id) => {
+    try {
+      // Mise à jour de l'état local
+      const demandesUpdated = demandes.map(demande => {
+        if (demande._id === id) {
+          return {
+            ...demande, 
+            statut: 'approved', 
+            reponse: `Demande approuvée le ${new Date().toLocaleDateString('fr-FR')}`
+          };
+        }
+        return demande;
+      });
+      
+      setDemandes(demandesUpdated);
+      setDemandesFiltrees(
+        demandesUpdated.filter(demande => {
+          if (recherche.trim() === "") return true;
+          
+          const personnel = personnelDetails[demande.personnel];
+          if (!personnel) return false;
+          
+          const termeLower = recherche.toLowerCase();
+          return (
+            (personnel.nom && personnel.nom.toLowerCase().includes(termeLower)) ||
+            (personnel.prenom && personnel.prenom.toLowerCase().includes(termeLower)) ||
+            demande.montant.toString().includes(recherche)
+          );
+        })
+      );
+      
+      alert(`La demande d'avance a été approuvée.`);
+    } catch (err) {
+      console.error("Erreur lors de l'approbation:", err);
+      alert("Erreur lors de l'approbation de la demande.");
+    }
+  };
+
+  const handleReject = (id) => {
+    try {
+      // Mise à jour de l'état local
+      const demandesUpdated = demandes.map(demande => {
+        if (demande._id === id) {
+          return {
+            ...demande, 
+            statut: 'rejected', 
+            reponse: `Demande refusée le ${new Date().toLocaleDateString('fr-FR')}`
+          };
+        }
+        return demande;
+      });
+      
+      setDemandes(demandesUpdated);
+      setDemandesFiltrees(
+        demandesUpdated.filter(demande => {
+          if (recherche.trim() === "") return true;
+          
+          const personnel = personnelDetails[demande.personnel];
+          if (!personnel) return false;
+          
+          const termeLower = recherche.toLowerCase();
+          return (
+            (personnel.nom && personnel.nom.toLowerCase().includes(termeLower)) ||
+            (personnel.prenom && personnel.prenom.toLowerCase().includes(termeLower)) ||
+            demande.montant.toString().includes(recherche)
+          );
+        })
+      );
+      
+      alert(`La demande d'avance a été refusée.`);
+    } catch (err) {
+      console.error("Erreur lors du refus:", err);
+      alert("Erreur lors du refus de la demande.");
     }
   };
 
   // Rendu du statut avec l'icône appropriée
-  const renderStatus = (statut) => {
-    switch (statut) {
+  const renderStatus = (status) => {
+    const displayStatus = mapStatus(status);
+    
+    switch (displayStatus) {
       case "Complété":
         return (
-          <span className="gdp-status-badge gdp-status-completed">
+          <div className="gav-status-badge gav-status-approved">
             <Check size={14} />
-            Complété
-          </span>
+            <span>Approuvé</span>
+          </div>
         );
       case "En attente":
         return (
-          <span className="gdp-status-badge gdp-status-pending">
+          <div className="gav-status-badge gav-status-pending">
             <AlertCircle size={14} />
-            En attente
-          </span>
+            <span>En attente</span>
+          </div>
         );
       case "Refusé":
         return (
-          <span className="gdp-status-badge gdp-status-rejected">
+          <div className="gav-status-badge gav-status-rejected">
             <X size={14} />
-            Refusé
-          </span>
+            <span>Refusé</span>
+          </div>
         );
       default:
         return null;
     }
   };
 
-  // Rendu des boutons d'action en fonction du statut
-  const renderActionButtons = (demande) => {
-    // Si la demande n'est pas en attente, désactiver les boutons
-    if (demande.statut !== "En attente") {
+  // Afficher l'employé avec les détails récupérés
+  const renderEmploye = (personnelId) => {
+    const personnel = personnelDetails[personnelId];
+    
+    if (!personnel) {
       return (
-        <div className="gdp-action-buttons">
-          <button className="gdp-btn gdp-btn-disabled" disabled>
-            <ThumbsUp size={16} />
-            Accepter
-          </button>
-          <button className="gdp-btn gdp-btn-disabled" disabled>
-            <ThumbsDown size={16} />
-            Refuser
-          </button>
-        </div>
+        <>
+          <div className="gav-employee-name">Employé inconnu</div>
+          <div className="gav-employee-dept">...</div>
+        </>
       );
     }
-
+    
     return (
-      <div className="gdp-action-buttons">
-        <button 
-          className="gdp-btn gdp-btn-success"
-          onClick={(e) => accepterDemande(e, demande)}
-        >
-          <ThumbsUp size={16} />
-          Accepter
-        </button>
-        <button 
-          className="gdp-btn gdp-btn-danger"
-          onClick={(e) => refuserDemande(e, demande)}
-        >
-          <ThumbsDown size={16} />
-          Refuser
-        </button>
-      </div>
+      <>
+        <div className="gav-employee-name">
+          {personnel.prenom} {personnel.nom}
+        </div>
+        <div className="gav-employee-dept">{personnel.role || "N/A"}</div>
+      </>
     );
   };
 
   return (
     <>
-      <div
-        className={
-          "relative flex flex-col min-w-0 break-words w-full mb-6 shadow-lg rounded"
-        }
-      >
-        {/* Injection du CSS */}
-        <style>{encapsulatedStyles}</style>
-
-        <div className="gdp-container">
-          <div className="gdp-header-section">
-            <h1
-              style={{
-                fontSize: "1.5rem",
-                fontWeight: "700",
-                marginBottom: "1.5rem",
-                color: "#1f2937",
-              }}
-            >
-              Gestion des demandes de personnel
-            </h1>
-
-            {/* Partie recherche et filtration */}
-            <div className="gdp-search-container">
-              <div className="gdp-search-input">
-                <div className="gdp-search-icon">
-                  <Search size={20} />
-                </div>
-                <input
-                  type="text"
-                  placeholder="Rechercher par nom ou ID d'employé"
-                  value={recherche}
-                  onChange={(e) => setRecherche(e.target.value)}
-                  className="gdp-form-input"
-                  style={{ paddingLeft: "2.5rem" }}
-                />
-              </div>
-
-              <div
-                style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
-              >
-                <Filter size={20} style={{ color: "#9ca3af" }} />
-                <select
-                  value={filtreType}
-                  onChange={(e) => setFiltreType(e.target.value)}
-                  className="gdp-form-select"
-                >
-                  <option value="tous">Tous les types</option>
-                  <option value="Demande de congé">Demande de congé</option>
-                  <option value="Demande d'avance sur salaire">
-                    Demande d'avance sur salaire
-                  </option>
-                  <option value="Demande de formation">
-                    Demande de formation
-                  </option>
-                </select>
-              </div>
+      {/* Injection du CSS encapsulé */}
+      <style>{encapsulatedStyles}</style>
+      
+      <div className="gav-container">
+        {/* En-tête et recherche */}
+        <div className="gav-header-section">
+          <h1 className="gav-title">
+            Gestion des Demandes d'Avances
+          </h1>
+          
+          {/* Barre de recherche */}
+          <div className="gav-search-container">
+            <div className="gav-search-icon">
+              <Search size={18} />
             </div>
-
-            {/* Onglets de filtration par statut */}
-            <div
-              style={{
-                display: "flex",
-                marginBottom: "1.5rem",
-                borderBottom: "1px solid #e5e7eb",
-              }}
-            >
-              <button
-                className={`gdp-tab-button ${
-                  filtreStatut === "tous" ? "gdp-active" : ""
-                }`}
-                onClick={() => setFiltreStatut("tous")}
-              >
-                Tous
-              </button>
-              <button
-                className={`gdp-tab-button ${
-                  filtreStatut === "Complété" ? "gdp-active" : ""
-                }`}
-                onClick={() => setFiltreStatut("Complété")}
-              >
-                Complété
-              </button>
-              <button
-                className={`gdp-tab-button ${
-                  filtreStatut === "En attente" ? "gdp-active" : ""
-                }`}
-                onClick={() => setFiltreStatut("En attente")}
-              >
-                En attente
-              </button>
-              <button
-                className={`gdp-tab-button ${
-                  filtreStatut === "Refusé" ? "gdp-active" : ""
-                }`}
-                onClick={() => setFiltreStatut("Refusé")}
-              >
-                Refusé
-              </button>
-            </div>
-
-            {/* Tableau des demandes */}
-            <div className="gdp-table-container">
-              <table className="gdp-table">
-                <thead>
-                  <tr>
-                    <th className="gdp-th" style={{ width: "5%" }}></th>
-                    <th className="gdp-th" style={{ width: "8%" }}>
-                      ID
-                    </th>
-                    <th className="gdp-th" style={{ width: "15%" }}>
-                      Nom
-                    </th>
-                    <th className="gdp-th" style={{ width: "15%" }}>
-                      Prénom
-                    </th>
-                    <th className="gdp-th" style={{ width: "12%" }}>
-                      Département
-                    </th>
-                    <th className="gdp-th" style={{ width: "25%" }}>
-                      Type de demande
-                    </th>
-                    <th className="gdp-th" style={{ width: "20%" }}>
-                      Statut
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {demandesAffichees.length > 0 ? (
-                    demandesAffichees.map((demande) => (
-                      <>
-                        <tr
-                          key={demande.id}
-                          className="gdp-tr"
-                          onClick={() => toggleExpandedRow(demande.id)}
-                        >
-                          <td
-                            className="gdp-td"
-                            style={{ textAlign: "center" }}
-                          >
-                            {expandedRowId === demande.id ? (
-                              <ChevronUp
-                                size={20}
-                                className="gdp-expander-icon"
-                              />
-                            ) : (
-                              <ChevronDown
-                                size={20}
-                                className="gdp-expander-icon"
-                              />
-                            )}
-                          </td>
-                          <td className="gdp-td">{demande.employeId}</td>
-                          <td className="gdp-td" style={{ fontWeight: 500 }}>
-                            {demande.nom}
-                          </td>
-                          <td className="gdp-td" style={{ fontWeight: 500 }}>
-                            {demande.prenom}
-                          </td>
-                          <td className="gdp-td">
-                            <span className="gdp-department-badge">
-                              {demande.departement}
-                            </span>
-                          </td>
-                          <td className="gdp-td">
-                            <span className="gdp-type-badge">
-                              {demande.typeDemande}
-                            </span>
-                          </td>
-                          <td className="gdp-td">
-                            {renderStatus(demande.statut)}
-                          </td>
-                        </tr>
-                        {expandedRowId === demande.id && (
-                          <tr className="gdp-expanded-row">
-                            <td colSpan="7" className="gdp-expanded-content">
-                              <h3 className="gdp-expanded-title">
-                                Détails de la demande #{demande.id}
-                              </h3>
-
-                              <div className="gdp-detail-row">
-                                <span className="gdp-detail-label">
-                                  Employé:
-                                </span>
-                                <span className="gdp-detail-value">
-                                  {demande.nom} {demande.prenom} (ID:{" "}
-                                  {demande.employeId})
-                                </span>
-                              </div>
-                              <div className="gdp-detail-row">
-                                <span className="gdp-detail-label">
-                                  Type de demande:
-                                </span>
-                                <span className="gdp-detail-value">
-                                  {demande.typeDemande}
-                                </span>
-                              </div>
-
-                              <div className="gdp-detail-row">
-                                <span className="gdp-detail-label">
-                                  Date de la demande:
-                                </span>
-                                <span className="gdp-detail-value">
-                                  {demande.dateDemande}
-                                </span>
-                              </div>
-
-                              {renderFormDetails(demande)}
-
-                              <div className="gdp-detail-row">
-                                <span className="gdp-detail-label">
-                                  Commentaire:
-                                </span>
-                                <span className="gdp-detail-value">
-                                  {demande.commentaire}
-                                </span>
-                              </div>
-
-                              <div className="gdp-detail-row">
-                                <span className="gdp-detail-label">
-                                  Statut:
-                                </span>
-                                <span className="gdp-detail-value">
-                                  {renderStatus(demande.statut)}
-                                </span>
-                              </div>
-
-                              {demande.reponse && (
-                                <div className="gdp-detail-row">
-                                  <span className="gdp-detail-label">
-                                    Réponse:
-                                  </span>
-                                  <span className="gdp-detail-value">
-                                    {demande.reponse}
-                                  </span>
-                                </div>
-                              )}
-                              
-                              {/* Ajout des boutons d'action */}
-                              {renderActionButtons(demande)}
-                            </td>
-                          </tr>
-                        )}
-                      </>
-                    ))
-                  ) : (
-                    <tr>
-                      <td
-                        colSpan="7"
-                        className="gdp-td"
-                        style={{
-                          textAlign: "center",
-                          color: "#6b7280",
-                          padding: "1.5rem 0",
-                        }}
-                      >
-                        Aucune demande trouvée
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Pagination */}
-            <div className="gdp-pagination">
-              <div style={{ fontSize: "0.875rem", color: "#6b7280" }}>
-                Affichage de {demandesAffichees.length} sur {demandes.length}{" "}
-                demandes
-              </div>
-              <div style={{ display: "flex", gap: "0.5rem" }}>
-                <button className="gdp-page-button">Précédent</button>
-                <button className="gdp-page-button gdp-active">1</button>
-                <button className="gdp-page-button">2</button>
-                <button className="gdp-page-button">Suivant</button>
-              </div>
-            </div>
+            <input
+              type="text"
+              className="gav-search-input"
+              placeholder="Rechercher par nom ou montant..."
+              value={recherche}
+              onChange={(e) => filtrerDemandes(e.target.value)}
+            />
           </div>
+        </div>
+
+        {/* Affichage des erreurs */}
+        {error && (
+          <div className="gav-error">
+            {error}
+          </div>
+        )}
+
+        {/* Tableau des demandes */}
+        <div className="gav-table-container">
+          <table className="gav-table">
+            <thead>
+              <tr>
+                <th className="gav-th">Employé</th>
+                <th className="gav-th">Montant</th>
+                <th className="gav-th">Type</th>
+                <th className="gav-th">Statut</th>
+                <th className="gav-th">Motif</th>
+                <th className="gav-th">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {demandesFiltrees.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="gav-td" style={{ textAlign: 'center' }}>
+                    Aucune demande d'avance trouvée
+                  </td>
+                </tr>
+              ) : (
+                demandesFiltrees.map((demande) => (
+                  <tr key={demande._id} className="gav-tr">
+                    <td className="gav-td">
+                      {renderEmploye(demande.personnel)}
+                    </td>
+                    <td className="gav-td">
+                      <div className="gav-amount">
+                        {demande.montant} €
+                      </div>
+                      <div className="gav-date">{formatDate(demande.createdAt)}</div>
+                    </td>
+                    <td className="gav-td">
+                      <span className={`gav-badge ${demande.typeDemande === "Urgente" ? "gav-badge-urgent" : "gav-badge-standard"}`}>
+                        {demande.typeDemande}
+                      </span>
+                    </td>
+                    <td className="gav-td">
+                      {renderStatus(demande.statut)}
+                    </td>
+                    <td className="gav-td">
+                      <button
+                        className="gav-view-button"
+                        onClick={() => ouvrirModal(demande)}
+                      >
+                        <Eye size={14} />
+                        <span>Voir motif</span>
+                      </button>
+                    </td>
+                    <td className="gav-td">
+                      <div className="gav-actions">
+                        {mapStatus(demande.statut) === "En attente" && (
+                          <>
+                            <button 
+                              className="gav-action-button gav-action-button-approve" 
+                              onClick={() => handleApprove(demande._id)}
+                              title="Approuver"
+                            >
+                              <Check size={16} />
+                            </button>
+                            <button 
+                              className="gav-action-button gav-action-button-reject" 
+                              onClick={() => handleReject(demande._id)}
+                              title="Refuser"
+                            >
+                              <X size={16} />
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+        
+        {/* Information sur les résultats */}
+        <div className="gav-footer">
+          Affichage de {demandesFiltrees.length} sur {demandes.length} demandes d'avance
         </div>
       </div>
 
-      {/* Conteneur des toasts */}
-      <div className="gdp-toast-container">
-        {toasts.map((toast) => (
-          <Toast
-            key={toast.id}
-            type={toast.type}
-            message={toast.message}
-            onClose={() => removeToast(toast.id)}
-          />
-        ))}
-      </div>
+      {/* Modal pour afficher le détail de la demande */}
+      {modalVisible && demandeSelected && (
+        <div className="gav-modal-overlay" onClick={fermerModal}>
+          <div className="gav-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="gav-modal-header">
+              <h3 className="gav-modal-title">Détails de la demande</h3>
+              <button className="gav-modal-close" onClick={fermerModal}>
+                <X size={20} />
+              </button>
+            </div>
+            <div className="gav-modal-body">
+              <div className="gav-modal-info-grid">
+                <div className="gav-modal-info-item">
+                  <span className="gav-modal-info-label">Employé</span>
+                  <span className="gav-modal-info-value">
+                    {personnelDetails[demandeSelected.personnel] ? 
+                      `${personnelDetails[demandeSelected.personnel].prenom} ${personnelDetails[demandeSelected.personnel].nom}` :
+                      "Employé inconnu"}
+                  </span>
+                </div>
+                <div className="gav-modal-info-item">
+                  <span className="gav-modal-info-label">Département</span>
+                  <span className="gav-modal-info-value">
+                    {personnelDetails[demandeSelected.personnel]?.role || "N/A"}
+                  </span>
+                </div>
+                <div className="gav-modal-info-item">
+                  <span className="gav-modal-info-label">Montant</span>
+                  <span className="gav-modal-info-value">{demandeSelected.montant} €</span>
+                </div>
+                <div className="gav-modal-info-item">
+                  <span className="gav-modal-info-label">Date de demande</span>
+                  <span className="gav-modal-info-value">{formatDate(demandeSelected.createdAt)}</span>
+                </div>
+                <div className="gav-modal-info-item">
+                  <span className="gav-modal-info-label">Type</span>
+                  <span className="gav-modal-info-value">
+                    <span className={`gav-badge ${demandeSelected.typeDemande === "Urgente" ? "gav-badge-urgent" : "gav-badge-standard"}`}>
+                      {demandeSelected.typeDemande}
+                    </span>
+                  </span>
+                </div>
+                <div className="gav-modal-info-item">
+                  <span className="gav-modal-info-label">Statut</span>
+                  <span className="gav-modal-info-value">
+                    {renderStatus(demandeSelected.statut)}
+                  </span>
+                </div>
+              </div>
+
+              <div className="gav-modal-section">
+                <h4 className="gav-modal-section-title">Motif de la demande</h4>
+                <div className="gav-modal-section-content">
+                  {demandeSelected.motif}
+                </div>
+              </div>
+
+              {demandeSelected.reponse && (
+                <div className="gav-modal-section">
+                  <h4 className="gav-modal-section-title">Réponse à la demande</h4>
+                  <div className="gav-modal-section-content">
+                    {demandeSelected.reponse}
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="gav-modal-footer">
+              <button className="gav-modal-button gav-modal-button-secondary" onClick={fermerModal}>
+                Fermer
+              </button>
+              {demandeSelected.statut === "pending" && (
+                <>
+                  <button 
+                    className="gav-modal-button" 
+                    onClick={() => {
+                      handleReject(demandeSelected._id);
+                      fermerModal();
+                    }}
+                    style={{ 
+                      backgroundColor: "#fee2e2", 
+                      color: "#b91c1c",
+                      borderColor: "#fecaca" 
+                    }}
+                  >
+                    Refuser
+                  </button>
+                  <button 
+                    className="gav-modal-button" 
+                    onClick={() => {
+                      handleApprove(demandeSelected._id);
+                      fermerModal();
+                    }}
+                    style={{ 
+                      backgroundColor: "#dcfce7", 
+                      color: "#166534",
+                      borderColor: "#86efac" 
+                    }}
+                  >
+                    Approuver
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

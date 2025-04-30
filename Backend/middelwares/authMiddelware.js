@@ -1,26 +1,28 @@
-const jwt = require("jsonwebtoken");
-const personnelModal = require("../models/PersonnelSchema");
+const jwt = require('jsonwebtoken');
+const Personnel = require('../models/PersonnelSchema');
 
-const requireAuthPersonnel = (req, res, next) => {
+const requireAuthPersonnel = async (req, res, next) => {
+  const token = req.cookies.jwt_token_ubcirh;
   
-  const token = req.cookies.jwt_token;  //partie 1 postman
-  //console.log("token", token); //token eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY0ODg5OWI0ZDViODAzM2UxY2M1MTNiMyIsImlhdCI6MTY4Njc1MzQ4NCwiZXhwIjoxNjg2NzYwNjg0fQ.KPnsNPjL0PS3oyZ5l3mMC9GUc0ymgheVr-FYt_31pN0
-  
-  //const authHeader = req.headers.authorization; //partie2 => non postman
-  //const token = authHeader && authHeader.split(" ")[1]; //Partie2
-  
-  if (token) {
-    jwt.verify(token, "net ubcirh secret", async (err, decodedToken) => {
-      if (err) {
-        console.log("il ya une erreur au niveau du token", err.message);
-        res.json("/Problem_token");
-      } else {
-        req.personnel = await personnelModal.findById(decodedToken.id);
-        next();
-      }
-    });
-  } else {
-    res.json("/pas_de_token");
+  if (!token) {
+    return res.status(401).json({ message: 'Non autorisé, aucun token' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, 'net ubcirh secret');
+    const personnel = await Personnel.findById(decoded.id);
+
+    if (!personnel) {
+      return res.status(401).json({ message: 'Personnel non trouvé' });
+    }
+
+    req.personnel = personnel; // 👈 Mettre personnel dans la requête
+
+    next();
+  } catch (error) {
+    console.error('Erreur Auth Middleware:', error);
+    res.status(401).json({ message: 'Non autorisé, token invalide' });
   }
 };
-module.exports ={requireAuthPersonnel};
+
+module.exports = { requireAuthPersonnel };

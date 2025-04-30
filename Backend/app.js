@@ -17,8 +17,7 @@ var personnelRoute=require("./routes/PersonnelRoute");
 var offreRoute=require("./routes/OffreRoute");
 var formationRoute=require("./routes/FormationRoute");
 var condidatureRoute=require("./routes/CondidatureRoute");
-
-
+var demandeRoute=require("./routes/DemandeRoute");
 var app = express();
 
 app.use(logger("dev"));
@@ -35,6 +34,12 @@ app.use("/",personnelRoute);
 app.use("/",offreRoute);
 app.use("/",formationRoute);
 app.use("/",condidatureRoute);
+app.use("/",demandeRoute);
+
+
+
+
+
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
   next(createError(404));

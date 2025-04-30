@@ -1,4 +1,5 @@
 const condidatureModal = require("../models/CondidatureSchema");
+const { sendAcceptedCandidatureEmail, sendRejectedCandidatureEmail } = require('../utiles/candidatureEmailService');
 
 module.exports.getCondidature = async (req, res) => {
   try {
@@ -16,7 +17,7 @@ module.exports.getCondidature = async (req, res) => {
 module.exports.addCondidature = async (req, res) => {
   try {
     // Validate required fields
-    const { nom, prenom, adresse, email, tel } = req.body;
+    const { nom, prenom, adresse, email, tel, posteId, posteTitle } = req.body;
     
     if (!nom || !prenom || !adresse || !email || !tel) {
       return res.status(400).json({ message: "Missing required fields" });
@@ -27,7 +28,9 @@ module.exports.addCondidature = async (req, res) => {
       prenom, 
       adresse, 
       email, 
-      tel 
+      tel,
+      posteId,
+      posteTitle
     };
     
     // Check if file was uploaded
@@ -54,7 +57,7 @@ module.exports.addCondidature = async (req, res) => {
   }
 };
 
-// Ajouter cette nouvelle méthode pour mettre à jour le statut d'une candidature
+// Méthode mise à jour pour inclure l'envoi d'emails
 module.exports.updateCondidatureStatus = async (req, res) => {
   try {
     const { id } = req.params;
@@ -65,15 +68,39 @@ module.exports.updateCondidatureStatus = async (req, res) => {
       return res.status(400).json({ message: "Invalid status value" });
     }
     
-    // Trouver et mettre à jour la candidature
-    const updatedCandidature = await condidatureModal.findByIdAndUpdate(
-      id, 
-      { status }, 
-      { new: true, runValidators: true }
-    );
+    // Trouver la candidature avant la mise à jour pour avoir les infos complètes
+    const candidature = await condidatureModal.findById(id);
     
-    if (!updatedCandidature) {
+    if (!candidature) {
       return res.status(404).json({ message: "Candidature not found" });
+    }
+    
+    // Mise à jour du statut
+    candidature.status = status;
+    const updatedCandidature = await candidature.save();
+    
+    // Envoi d'email en fonction du nouveau statut
+    try {
+      if (status === 'accepted') {
+        await sendAcceptedCandidatureEmail(
+          candidature.email,
+          candidature.nom,
+          candidature.prenom,
+          candidature.posteTitle || 'Non spécifié'
+        );
+        console.log(`Email d'acceptation envoyé à ${candidature.email}`);
+      } else if (status === 'rejected') {
+        await sendRejectedCandidatureEmail(
+          candidature.email,
+          candidature.nom,
+          candidature.prenom,
+          candidature.posteTitle || 'Non spécifié'
+        );
+        console.log(`Email de refus envoyé à ${candidature.email}`);
+      }
+    } catch (emailError) {
+      console.error("Erreur lors de l'envoi de l'email:", emailError);
+     
     }
     
     return res.status(200).json(updatedCandidature);
@@ -81,5 +108,20 @@ module.exports.updateCondidatureStatus = async (req, res) => {
   } catch (error) {
     console.error("Error in updateCondidatureStatus:", error);
     return res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports.deleteCondidature = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deleted = await condidatureModal.findByIdAndDelete(id);
+    
+    if (!deleted) {
+      return res.status(404).json({ message: "Candidature not found" });
+    }
+    
+    res.status(200).json(deleted);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 };

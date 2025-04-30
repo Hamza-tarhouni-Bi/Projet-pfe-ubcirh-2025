@@ -184,14 +184,42 @@ export default function Sidebar() {
                 <Link
                   className={
                     "text-sm py-3 font-medium flex items-center " +
-                    (window.location.href.indexOf("/admin/tables") !== -1
+                    (window.location.href.indexOf("/admin/demandef") !== -1
                       ? "text-blue-600 hover:text-blue-700"
                       : "text-gray-700 hover:text-gray-500")
                   }
-                  to="/admin/tables"
+                  to="/admin/demandef"
                 >
                   <i className="fas fa-clipboard-list mr-3 text-lg"></i>
-                  <span>Demandes</span>
+                  <span>Demande Formation</span>
+                </Link>
+              </li>
+              <li className="items-center">
+                <Link
+                  className={
+                    "text-sm py-3 font-medium flex items-center " +
+                    (window.location.href.indexOf("/admin/demandea") !== -1
+                      ? "text-blue-600 hover:text-blue-700"
+                      : "text-gray-700 hover:text-gray-500")
+                  }
+                  to="/admin/demandea"
+                >
+                  <i className="fas fa-clipboard-list mr-3 text-lg"></i>
+                  <span>Demande Avance</span>
+                </Link>
+              </li>
+              <li className="items-center">
+                <Link
+                  className={
+                    "text-sm py-3 font-medium flex items-center " +
+                    (window.location.href.indexOf("/admin/demandec") !== -1
+                      ? "text-blue-600 hover:text-blue-700"
+                      : "text-gray-700 hover:text-gray-500")
+                  }
+                  to="/admin/demandec"
+                >
+                  <i className="fas fa-clipboard-list mr-3 text-lg"></i>
+                  <span>Demande Congé</span>
                 </Link>
               </li>
 
@@ -228,7 +256,7 @@ export default function Sidebar() {
               </li>
 
               {/* Congé */}
-              <li className="items-center">
+              {/* <li className="items-center">
                 <Link
                   className={
                     "text-sm py-3 font-medium flex items-center " +
@@ -241,7 +269,7 @@ export default function Sidebar() {
                   <i className="fas fa-calendar-alt mr-3 text-lg"></i>
                   <span>Congé</span>
                 </Link>
-              </li>
+              </li> */}
 
               {/* Formation */}
               <li className="items-center">

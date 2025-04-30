@@ -2974,6 +2974,9 @@ padding-left:15rem;
   .md\:w-8\/12 {
     width: 66.666667%;
   }
+  .sf{
+    width: 80%;
+  }
 }
 
 @media (min-width: 1024px) {

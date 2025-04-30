@@ -70,9 +70,8 @@ const Signin = () => {
     setIsLoading(true);
     
     try {
-      // Make sure the URL is correct - this is critical
-      // If you're using a proxy in package.json, you might not need the full URL
-      const apiUrl = '/login'; // Adjust this based on your backend setup
+     
+      const apiUrl = '/login'; 
       console.log('Sending login request to:', apiUrl);
       
       const response = await axios.post(apiUrl, credentials);
@@ -84,6 +83,7 @@ const Signin = () => {
       
       // Handle redirection based on user role
       if (response.data && response.data.personnel) {
+        localStorage.setItem('userData', JSON.stringify(response.data.personnel));
         const role = response.data.personnel.role || 'inconnu';
         const message = `Utilisateur existe. Rôle: ${role}`;
         setLoginMessage(message);
@@ -148,6 +148,21 @@ const Signin = () => {
       setShowAlert(true);
     }
   };
+  const handleLogout = () => {
+    // Vider toutes les données stockées dans localStorage
+    localStorage.removeItem('userData');
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('userRole');
+    
+    // Vous pouvez aussi utiliser localStorage.clear() pour tout vider
+    // localStorage.clear();
+    
+    console.log('Utilisateur déconnecté et localStorage vidé');
+    
+    // Rediriger vers la page de connexion
+    history.push('/signin');
+  };
+
 
   const handleSocialLogin = (provider) => {
     console.log(`Attempting to login with ${provider}`);
@@ -257,7 +272,7 @@ const Signin = () => {
                 <div className="input-group">
                   <div className="label-row">
                     <label htmlFor="password">Mot de passe</label>
-                    <a href="/forgot-password" className="forgot-link">Oublié?</a>
+                    <a href="/forget" className="forgot-link">Oublié?</a>
                   </div>
                   <div className="input-container">
                     <input

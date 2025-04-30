@@ -1,35 +1,35 @@
-import React, { useState, useEffect } from "react";
-import PropTypes from "prop-types";
-import { Search, Edit, Trash, Plus, X, Check, Filter } from "lucide-react";
-import axios from "axios";
+import { useState, useEffect } from "react";
+import { Search, AlertCircle, Check, X, Eye } from "lucide-react";
 
-// CSS encapsulé avec préfixe "gp-" (cohérent avec Gestion Personnel)
+// CSS encapsulé avec préfixe "gf-" (Gestion Formations)
 const encapsulatedStyles = `
-  .gp-department-container {
+  .gf-container {
     background: white;
     border-radius: 8px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     overflow: hidden;
+    position: relative;
+    width: 100%;
   }
   
-  .gp-header-section {
+  .gf-header-section {
     padding: 1.5rem;
     border-bottom: 1px solid #e2e8f0;
   }
   
-  .gp-search-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
+  .gf-title {
+    font-size: 1.5rem;
+    font-weight: 700;
     margin-bottom: 1.5rem;
+    color: #1f2937;
   }
   
-  .gp-search-input {
-    flex: 1;
+  .gf-search-container {
     position: relative;
+    margin-bottom: 1rem;
   }
   
-  .gp-search-icon {
+  .gf-search-icon {
     position: absolute;
     left: 10px;
     top: 50%;
@@ -37,34 +37,32 @@ const encapsulatedStyles = `
     color: #9ca3af;
   }
   
-  .gp-tab-button {
-    padding: 0.5rem 1rem;
-    border-bottom: 2px solid transparent;
-    color: #6b7280;
-    font-weight: 500;
+  .gf-search-input {
+    width: 100%;
+    padding: 0.5rem 0.75rem 0.5rem 2.5rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
     transition: all 0.2s ease;
+    font-size: 0.875rem;
   }
   
-  .gp-tab-button.gp-active {
-    border-bottom-color: #14b8a6;
-    color: #14b8a6;
+  .gf-search-input:focus {
+    outline: none;
+    border-color: #14b8a6;
+    box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.2);
   }
   
-  .gp-tab-button:hover:not(.gp-active) {
-    color: #374151;
-  }
-  
-  .gp-table-container {
+  .gf-table-container {
     width: 100%;
     overflow-x: auto;
   }
   
-  .gp-table {
+  .gf-table {
     width: 100%;
     border-collapse: collapse;
   }
   
-  .gp-th {
+  .gf-th {
     text-align: left;
     padding: 0.75rem 1rem;
     font-size: 0.75rem;
@@ -75,189 +73,172 @@ const encapsulatedStyles = `
     border-bottom: 1px solid #e5e7eb;
   }
   
-  .gp-td {
+  .gf-td {
     padding: 1rem;
     vertical-align: middle;
     color: #374151;
     border-bottom: 1px solid #f3f4f6;
   }
   
-  .gp-tr:hover {
+  .gf-tr {
+    transition: background-color 0.2s ease;
+  }
+  
+  .gf-tr:hover {
     background-color: #f9fafb;
   }
   
-  .gp-department-badge {
-    background-color: #e6fffa;
-    color: #047857;
+  .gf-nom {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #111827;
+  }
+  
+  .gf-prenom {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #111827;
+  }
+  
+  .gf-formation-titre {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #111827;
+  }
+  
+  .gf-date {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-top: 0.25rem;
+  }
+  
+  .gf-badge {
+    display: inline-flex;
+    align-items: center;
     padding: 0.25rem 0.5rem;
     border-radius: 9999px;
     font-size: 0.75rem;
     font-weight: 500;
   }
   
-  .gp-action-button {
-    padding: 0.375rem;
-    border-radius: 0.375rem;
-    transition: all 0.2s ease;
-  }
-  
-  .gp-edit-button {
+  .gf-badge-obligatoire {
     background-color: #dbeafe;
-    color: #3b82f6;
+    color: #1e40af;
   }
   
-  .gp-edit-button:hover {
-    background-color: #bfdbfe;
+  .gf-badge-optionnel {
+    background-color: #ede9fe;
+    color: #5b21b6;
   }
   
-  .gp-delete-button {
-    background-color: #fee2e2;
-    color: #ef4444;
-  }
-  
-  .gp-delete-button:hover {
-    background-color: #fecaca;
-  }
-  
-  .gp-add-button {
+  .gf-status-badge {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    background-color: #14b8a6;
-    color: white;
-    padding: 0.5rem 1rem;
-    border-radius: 0.375rem;
+    gap: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
     font-weight: 500;
+    width: fit-content;
+  }
+  
+  .gf-status-accepte {
+    background-color: #dcfce7;
+    color: #166534;
+  }
+  
+  .gf-status-en-cours {
+    background-color: #fef3c7;
+    color: #92400e;
+  }
+  
+  .gf-status-refuse {
+    background-color: #fee2e2;
+    color: #b91c1c;
+  }
+  
+  .gf-view-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.375rem 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #4b5563;
+    background-color: white;
+    cursor: pointer;
     transition: all 0.2s ease;
   }
   
-  .gp-add-button:hover {
-    background-color: #0d9488;
+  .gf-view-button:hover {
+    background-color: #f9fafb;
+    border-color: #9ca3af;
   }
   
-  .gp-pagination {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 1.5rem;
-    padding: 0 1rem;
+  .gf-view-button:focus {
+    outline: none;
+    border-color: #14b8a6;
+    ring: 2px solid #14b8a6;
   }
   
-  .gp-modal-overlay {
-    position: fixed;
-    inset: 0;
-    background-color: rgba(0, 0, 0, 0.5);
+  .gf-footer {
+    padding: 1rem;
+    background-color: #f9fafb;
+    border-top: 1px solid #e5e7eb;
+    font-size: 0.875rem;
+    color: #6b7280;
+  }
+  
+  /* Styles pour les actions */
+  .gf-actions {
     display: flex;
+    gap: 0.5rem;
+  }
+  
+  .gf-action-button {
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 1rem;
-    z-index: 50;
-  }
-  
-  .gp-modal-container {
-    background-color: white;
-    border-radius: 0.5rem;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    padding: 1.5rem;
-    width: 100%;
-    max-width: 28rem;
-  }
-  
-  .gp-modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-  }
-  
-  .gp-modal-title {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: #1f2937;
-  }
-  
-  .gp-modal-close {
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 0.375rem;
     color: #6b7280;
-    transition: color 0.2s ease;
-  }
-  
-  .gp-modal-close:hover {
-    color: #1f2937;
-  }
-  
-  .gp-form-group {
-    margin-bottom: 1rem;
-  }
-  
-  .gp-form-label {
-    display: block;
-    margin-bottom: 0.25rem;
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: #374151;
-  }
-  
-  .gp-form-input {
-    width: 100%;
-    padding: 0.5rem;
-    border: 1px solid #d1d5db;
-    border-radius: 0.375rem;
+    background-color: white;
+    border: 1px solid #e5e7eb;
+    cursor: pointer;
     transition: all 0.2s ease;
   }
   
-  .gp-form-input:focus {
-    outline: none;
-    border-color: #14b8a6;
-    box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.2);
+  .gf-action-button:hover {
+    background-color: #f9fafb;
+    color: #111827;
+    border-color: #d1d5db;
   }
   
-  .gp-form-select {
-    width: 100%;
-    padding: 1 rem;
-    border: 1px solid #d1d5db;
-    border-radius: 0.375rem;
-    transition: all 0.2s ease;
+  .gf-action-button-accepter:hover {
+    color: #047857;
+    background-color: #ecfdf5;
+    border-color: #a7f3d0;
   }
   
-  .gp-form-select:focus {
-    outline: none;
-    border-color: #14b8a6;
-    box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.2);
+  .gf-action-button-accepter {
+    color: #047857;
   }
   
-  .gp-modal-footer {
-    display: flex;
-    justify-content: flex-end;
-    gap: 0.5rem;
-    margin-top: 1.5rem;
+  .gf-action-button-refuser {
+    color: #b91c1c;
   }
   
-  .gp-btn {
-    padding: 0.5rem 1rem;
-    border-radius: 0.375rem;
-    font-weight: 500;
-    transition: all 0.2s ease;
+  .gf-action-button-refuser:hover {
+    color: #dc2626;
+    background-color: #fef2f2;
+    border-color: #fecaca;
   }
   
-  .gp-btn-cancel {
-    background-color: #f3f4f6;
-    color: #374151;
-  }
-  
-  .gp-btn-cancel:hover {
-    background-color: #e5e7eb;
-  }
-  
-  .gp-btn-save {
-    background-color: #14b8a6;
-    color: white;
-  }
-  
-  .gp-btn-save:hover {
-    background-color: #0d9488;
-  }
-  
-  .gp-toast {
+  /* Toast component styles */
+  .gf-toast {
     position: fixed;
     bottom: 1rem;
     right: 1rem;
@@ -269,26 +250,43 @@ const encapsulatedStyles = `
     gap: 0.5rem;
     color: white;
     z-index: 50;
+    animation: gf-toast-appear 0.3s ease;
   }
   
-  .gp-toast-success {
+  @keyframes gf-toast-appear {
+    from {
+      opacity: 0;
+      transform: translateY(1rem);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .gf-toast-success {
     background-color: #10b981;
   }
   
-  .gp-toast-error {
+  .gf-toast-error {
     background-color: #ef4444;
   }
+  
+  .gf-toast-info {
+    background-color: #3b82f6;
+  }
 `;
-// Toast component for notifications
-const Toast = ({ message, type, onClose }) => {
-  const toastClass =
-    type === "success"
-      ? "gp-toast-success"
-      : type === "error"
-      ? "gp-toast-error"
-      : "gp-toast-info";
 
-  React.useEffect(() => {
+// Toast component
+const Toast = ({ message, type, onClose }) => {
+  const toastClass = 
+    type === "success" 
+      ? "gf-toast-success" 
+      : type === "error" 
+      ? "gf-toast-error" 
+      : "gf-toast-info";
+
+  useEffect(() => {
     const timer = setTimeout(() => {
       onClose();
     }, 3000);
@@ -297,532 +295,346 @@ const Toast = ({ message, type, onClose }) => {
   }, [onClose]);
 
   return (
-    <div className={`gp-toast ${toastClass}`}>
+    <div className={`gf-toast ${toastClass}`}>
       {type === "success" && <Check size={20} />}
       {type === "error" && <X size={20} />}
+      {type === "info" && <AlertCircle size={20} />}
       <p>{message}</p>
     </div>
   );
 };
 
-export default function CardDepartment({ color = "light" }) {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [sortOption, setSortOption] = useState("");
-  const [departments, setDepartments] = useState([]);
-  const [modalOuvert, setModalOuvert] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedDepartmentId, setSelectedDepartmentId] = useState(null);
-  const [selectedDepartmentName, setSelectedDepartmentName] = useState("");
-  const [newDepartment, setNewDepartment] = useState({
-    nom: "",
-  });
-  const [selectedDepartment, setSelectedDepartment] = useState(null);
-  const [errors, setErrors] = useState({});
+export default function GestionFormations() {
+  // Données statiques pour les formations avec les nouveaux statuts
+  const staticFormations = [
+    {
+      _id: "1",
+      nom: "Dupont",
+      prenom: "Jean",
+      titre: "Développement React Avancé",
+      type: "Obligatoire",
+      statut: "en_cours",
+      dateDebut: "2023-06-15T09:30:00Z",
+      dateFin: "2023-06-18T16:30:00Z"
+    },
+    {
+      _id: "2",
+      nom: "Martin",
+      prenom: "Sophie",
+      titre: "Gestion de Projet Agile",
+      type: "Obligatoire",
+      statut: "accepte",
+      dateDebut: "2023-05-10T09:00:00Z",
+      dateFin: "2023-05-12T17:00:00Z"
+    },
+    {
+      _id: "3",
+      nom: "Bernard",
+      prenom: "Pierre",
+      titre: "Design UX/UI Fondamentaux",
+      type: "Optionnel",
+      statut: "refuse",
+      dateDebut: "2023-07-05T10:00:00Z",
+      dateFin: "2023-07-07T16:00:00Z"
+    },
+    {
+      _id: "4",
+      nom: "Petit",
+      prenom: "Marie",
+      titre: "RH: Gestion des Compétences",
+      type: "Obligatoire",
+      statut: "en_cours",
+      dateDebut: "2023-06-20T09:30:00Z",
+      dateFin: "2023-06-21T17:30:00Z"
+    },
+    {
+      _id: "5",
+      nom: "Leroy",
+      prenom: "Thomas",
+      titre: "Techniques de Vente Avancées",
+      type: "Optionnel",
+      statut: "accepte",
+      dateDebut: "2023-05-22T09:00:00Z",
+      dateFin: "2023-05-24T17:00:00Z"
+    }
+  ];
+
+  const [formations, setFormations] = useState(staticFormations);
+  const [formationsFiltrees, setFormationsFiltrees] = useState(staticFormations);
+  const [recherche, setRecherche] = useState("");
+  const [error, setError] = useState(null);
   const [toast, setToast] = useState({ affiche: false, message: "", type: "" });
-  const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch departments on component mount
-  useEffect(() => {
-    fetchDepartments();
-  }, []);
+  // Formater la date pour l'affichage
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('fr-FR');
+  };
 
+  // Filtrage des formations basé sur la recherche
+  const filtrerFormations = (terme) => {
+    setRecherche(terme);
+    if (!terme.trim()) {
+      setFormationsFiltrees(formations);
+      return;
+    }
+    
+    const termeLower = terme.toLowerCase();
+    const resultats = formations.filter(formation => {
+      return (
+        formation.nom.toLowerCase().includes(termeLower) ||
+        formation.prenom.toLowerCase().includes(termeLower) ||
+        formation.titre.toLowerCase().includes(termeLower)
+      );
+    });
+    
+    setFormationsFiltrees(resultats);
+  };
 
-
-  // Fetch all departments
-  const fetchDepartments = async () => {
-    try {
-      setIsLoading(true);
-      const response = await axios.get(`/alldepartment`);
-      setDepartments(response.data);
-      setIsLoading(false);
-    } catch (error) {
-      console.error("Error fetching departments:", error);
-      afficherToast("Erreur lors du chargement des départements", "error");
-      setIsLoading(false);
+  // Mapping des statuts API vers les statuts d'affichage
+  const mapStatus = (status) => {
+    switch (status) {
+      case 'accepte':
+        return 'Accepté';
+      case 'en_cours':
+        return 'En cours';
+      case 'refuse':
+        return 'Refusé';
+      default:
+        return status;
     }
   };
 
-  const filteredDepartments = departments
-    .filter((department) => {
-      if (!isNaN(searchTerm) && searchTerm !== "") {
-        return department._id.toString().includes(searchTerm);
-      }
-      return department.nom.toLowerCase().includes(searchTerm.toLowerCase());
-    })
-    .sort((a, b) => {
-      if (!sortOption) return 0;
-      if (sortOption === "id-asc") return a._id.localeCompare(b._id);
-      if (sortOption === "id-desc") return b._id.localeCompare(a._id);
-      if (sortOption === "departement") return a.nom.localeCompare(b.nom);
-      return 0;
-    });
-
-  // Display a toast notification
+  // Affichage du toast
   const afficherToast = (message, type) => {
     setToast({ affiche: true, message, type });
   };
 
-  // Close toast
+  // Fermeture du toast
   const fermerToast = () => {
     setToast({ ...toast, affiche: false });
   };
 
-  const handleAction = (action, id, nom) => {
-    switch (action) {
-      case "modifier":
-        const departmentToEdit = departments.find(
-          (department) => department._id === id
-        );
-        setSelectedDepartment(departmentToEdit);
-        setIsEditModalOpen(true);
-        break;
-      case "supprimer":
-        setSelectedDepartmentId(id);
-        setSelectedDepartmentName(nom);
-        setModalOuvert(true);
-        break;
-      default:
-        break;
-    }
-  };
-
-  const handleConfirmDelete = async () => {
+  // Actions des boutons 
+  const handleAccepter = (id) => {
     try {
-      await axios.delete(
-        `/deletedepartment/${selectedDepartmentId}`
-      );
-      setDepartments(
-        departments.filter(
-          (department) => department._id !== selectedDepartmentId
-        )
-      );
-      setModalOuvert(false);
-      setSelectedDepartmentName("");
-      afficherToast("Département supprimé avec succès", "success");
-    } catch (error) {
-      console.error("Error deleting department:", error);
-      afficherToast("Erreur lors de la suppression du département", "error");
-    }
-  };
-
-  const handleCancelDelete = () => {
-    setModalOuvert(false);
-    setSelectedDepartmentName("");
-  };
-
-  const handleAddDepartment = () => {
-    setNewDepartment({ nom: "" });
-    setSelectedDepartmentId(null);
-    setIsEditModalOpen(false);
-    setModalOuvert(true);
-  };
-
-  const validateForm = (department) => {
-    const newErrors = {};
-    if (!department.nom)
-      newErrors.nom = "Le nom du département est obligatoire.";
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleModalSubmit = async () => {
-    if (!validateForm(newDepartment)) return;
-
-    try {
-      const response = await axios.post(`/adddepartment`, {
-        nom: newDepartment.nom,
-      });
-
-      setDepartments([...departments, response.data]);
-      setModalOuvert(false);
-      setNewDepartment({
-        nom: "",
-      });
-      setErrors({});
-      afficherToast("Département ajouté avec succès", "success");
-    } catch (error) {
-      console.error("Error adding department:", error);
-      afficherToast("Erreur lors de l'ajout du département", "error");
-    }
-  };
-
-  const handleModalCancel = () => {
-    setModalOuvert(false);
-    setNewDepartment({
-      nom: "",
-    });
-    setErrors({});
-  };
-
-  const handleEditSubmit = async () => {
-    if (!validateForm(selectedDepartment)) return;
-
-    try {
-      await axios.put(
-        `/updatedepartment/${selectedDepartment._id}`,
-        {
-          nom: selectedDepartment.nom,
+      // Récupération des infos de la formation
+      const formationToUpdate = formations.find(f => f._id === id);
+      
+      // Mise à jour de l'état local
+      const formationsUpdated = formations.map(formation => {
+        if (formation._id === id) {
+          return {
+            ...formation, 
+            statut: 'accepte'
+          };
         }
+        return formation;
+      });
+      
+      setFormations(formationsUpdated);
+      setFormationsFiltrees(
+        formationsUpdated.filter(formation => {
+          if (recherche.trim() === "") return true;
+          
+          const termeLower = recherche.toLowerCase();
+          return (
+            formation.nom.toLowerCase().includes(termeLower) ||
+            formation.prenom.toLowerCase().includes(termeLower) ||
+            formation.titre.toLowerCase().includes(termeLower)
+          );
+        })
       );
-
-      const updatedDepartments = departments.map((department) =>
-        department._id === selectedDepartment._id
-          ? { ...selectedDepartment }
-          : department
-      );
-
-      setDepartments(updatedDepartments);
-      setIsEditModalOpen(false);
-      afficherToast("Département modifié avec succès", "success");
-    } catch (error) {
-      console.error("Error updating department:", error);
-      afficherToast("Erreur lors de la modification du département", "error");
+      
+      // Afficher le toast de succès
+      afficherToast(`Formation "${formationToUpdate.titre}" acceptée pour ${formationToUpdate.prenom} ${formationToUpdate.nom}`, "success");
+    } catch (err) {
+      console.error("Erreur lors de la mise à jour:", err);
+      afficherToast("Erreur lors de la mise à jour de la formation", "error");
     }
   };
 
-  const handleEditCancel = () => {
-    setIsEditModalOpen(false);
+  const handleRefuser = (id) => {
+    try {
+      // Récupération des infos de la formation
+      const formationToUpdate = formations.find(f => f._id === id);
+      
+      // Mise à jour de l'état local
+      const formationsUpdated = formations.map(formation => {
+        if (formation._id === id) {
+          return {
+            ...formation, 
+            statut: 'refuse'
+          };
+        }
+        return formation;
+      });
+      
+      setFormations(formationsUpdated);
+      setFormationsFiltrees(
+        formationsUpdated.filter(formation => {
+          if (recherche.trim() === "") return true;
+          
+          const termeLower = recherche.toLowerCase();
+          return (
+            formation.nom.toLowerCase().includes(termeLower) ||
+            formation.prenom.toLowerCase().includes(termeLower) ||
+            formation.titre.toLowerCase().includes(termeLower)
+          );
+        })
+      );
+      
+      // Afficher le toast de refus
+      afficherToast(`Formation "${formationToUpdate.titre}" refusée pour ${formationToUpdate.prenom} ${formationToUpdate.nom}`, "error");
+    } catch (err) {
+      console.error("Erreur lors du refus:", err);
+      afficherToast("Erreur lors du refus de la formation", "error");
+    }
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    if (isEditModalOpen) {
-      setSelectedDepartment((prev) => ({ ...prev, [name]: value }));
-    } else {
-      setNewDepartment((prev) => ({ ...prev, [name]: value }));
+  // Rendu du statut avec l'icône appropriée
+  const renderStatus = (status) => {
+    const displayStatus = mapStatus(status);
+    
+    switch (status) {
+      case "accepte":
+        return (
+          <div className="gf-status-badge gf-status-accepte">
+            <Check size={14} />
+            <span>Accepté</span>
+          </div>
+        );
+      case "en_cours":
+        return (
+          <div className="gf-status-badge gf-status-en-cours">
+            <AlertCircle size={14} />
+            <span>En cours</span>
+          </div>
+        );
+      case "refuse":
+        return (
+          <div className="gf-status-badge gf-status-refuse">
+            <X size={14} />
+            <span>Refusé</span>
+          </div>
+        );
+      default:
+        return null;
     }
   };
 
   return (
     <>
+      {/* Injection du CSS encapsulé */}
       <style>{encapsulatedStyles}</style>
-      <div
-        className={
-          "relative flex flex-col min-w-0 break-words w-full mb-6 shadow-lg rounded"
-        }
-      >
-        <div className="gp-department-container">
-          <div className="gp-header-section">
-            <h1
-              className="gp-modal-title"
-              style={{ fontSize: "1.5rem", marginBottom: "1.5rem" }}
-            >
-              Gestion des Départements
-            </h1>
-
-            {/* Search and filter section */}
-            <div className="gp-search-container">
-              <div className="gp-search-input">
-                <div className="gp-search-icon">
-                  <Search size={20} />
-                </div>
-                <input
-                  type="text"
-                  placeholder="Rechercher par nom ou ID"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="gp-form-input"
-                  style={{ paddingLeft: "2.5rem" }}
-                />
-              </div>
-
-              <div
-                style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
-              >
-                <Filter size={20} style={{ color: "#9ca3af" }} />
-                <select
-                  value={sortOption}
-                  onChange={(e) => setSortOption(e.target.value)}
-                  className="gp-form-select"
-                >
-                  <option value="">Filtrer par</option>
-                  <option value="id-asc">ID Ascendant</option>
-                  <option value="id-desc">ID Descendant</option>
-                  <option value="departement">Par Département</option>
-                </select>
-              </div>
-
-              <button onClick={handleAddDepartment} className="gp-add-button">
-                <Plus size={20} />
-                Ajouter
-              </button>
+      
+      <div className="gf-container">
+        {/* En-tête et recherche */}
+        <div className="gf-header-section">
+          <h1 className="gf-title">
+            Gestion des Formations
+          </h1>
+          
+          {/* Barre de recherche */}
+          <div className="gf-search-container">
+            <div className="gf-search-icon">
+              <Search size={18} />
             </div>
-
-            {/* Departments table */}
-            <div className="gp-table-container">
-              <table className="gp-table">
-                <thead>
-                  <tr>
-                    <th className="gp-th">ID</th>
-                    <th className="gp-th">Département</th>
-                    <th className="gp-th" style={{ textAlign: "center" }}>
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {isLoading ? (
-                    <tr>
-                      <td
-                        colSpan="3"
-                        className="gp-td"
-                        style={{
-                          textAlign: "center",
-                          color: "#6b7280",
-                          padding: "1.5rem 0",
-                        }}
-                      >
-                        Chargement des départements...
-                      </td>
-                    </tr>
-                  ) : filteredDepartments.length > 0 ? (
-                    filteredDepartments.map((department) => (
-                      <tr className="gp-tr" key={department._id}>
-                        <td className="gp-td">
-                          {department._id.substring(0, 8)}...
-                        </td>
-                        <td className="gp-td">
-                          <span className="gp-department-badge">
-                            {department.nom}
-                          </span>
-                        </td>
-                        <td className="gp-td">
-                          <div
-                            style={{
-                              display: "flex",
-                              justifyContent: "center",
-                              gap: "0.5rem",
-                            }}
-                          >
-                            <button
-                              onClick={() =>
-                                handleAction(
-                                  "modifier",
-                                  department._id,
-                                  department.nom
-                                )
-                              }
-                              className="gp-action-button gp-edit-button"
-                              title="Modifier"
-                            >
-                              <Edit size={16} />
-                            </button>
-                            <button
-                              onClick={() =>
-                                handleAction(
-                                  "supprimer",
-                                  department._id,
-                                  department.nom
-                                )
-                              }
-                              className="gp-action-button gp-delete-button"
-                              title="Supprimer"
-                            >
-                              <Trash size={16} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td
-                        colSpan="3"
-                        className="gp-td"
-                        style={{
-                          textAlign: "center",
-                          color: "#6b7280",
-                          padding: "1.5rem 0",
-                        }}
-                      >
-                        Aucun département trouvé
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Pagination */}
-            <div className="gp-pagination">
-              <div style={{ fontSize: "0.875rem", color: "#6b7280" }}>
-                Affichage de {filteredDepartments.length} sur{" "}
-                {departments.length} départements
-              </div>
-            </div>
+            <input
+              type="text"
+              className="gf-search-input"
+              placeholder="Rechercher par nom, prénom ou titre de formation..."
+              value={recherche}
+              onChange={(e) => filtrerFormations(e.target.value)}
+            />
           </div>
         </div>
 
-        {/* Delete department modal */}
-        {modalOuvert && selectedDepartmentId && (
-          <div className="gp-modal-overlay">
-            <div className="gp-modal-container">
-              <div className="gp-modal-header">
-                <h2 className="gp-modal-title">Confirmation de suppression</h2>
-                <button onClick={handleCancelDelete} className="gp-modal-close">
-                  <X size={24} />
-                </button>
-              </div>
-
-              <div>
-                <p style={{ marginBottom: "1.5rem", color: "#4b5563" }}>
-                  Êtes-vous sûr de vouloir supprimer le département{" "}
-                  <strong>{selectedDepartmentName}</strong> ?
-                </p>
-
-                <div className="gp-modal-footer">
-                  <button
-                    onClick={handleCancelDelete}
-                    className="gp-btn gp-btn-cancel"
-                  >
-                    Annuler
-                  </button>
-                  <button
-                    onClick={handleConfirmDelete}
-                    className="gp-btn gp-btn-save"
-                    style={{
-                      backgroundColor: "#ef4444",
-                      borderColor: "#ef4444",
-                    }}
-                  >
-                    Supprimer
-                  </button>
-                </div>
-              </div>
-            </div>
+        {/* Affichage des erreurs */}
+        {error && (
+          <div className="gf-error">
+            {error}
           </div>
         )}
 
-        {/* Add department modal */}
-        {modalOuvert && !selectedDepartmentId && (
-          <div className="gp-modal-overlay">
-            <div className="gp-modal-container">
-              <div className="gp-modal-header">
-                <h2 className="gp-modal-title">Ajouter un département</h2>
-                <button onClick={handleModalCancel} className="gp-modal-close">
-                  <X size={24} />
-                </button>
-              </div>
-
-              <div>
-                <div className="gp-form-group">
-                  <label className="gp-form-label">Nom du département</label>
-                  <input
-                    type="text"
-                    name="nom"
-                    value={newDepartment.nom}
-                    onChange={handleChange}
-                    className="gp-form-input"
-                  />
-                  {errors.nom && (
-                    <p
-                      style={{
-                        color: "#ef4444",
-                        fontSize: "0.75rem",
-                        marginTop: "0.25rem",
-                      }}
-                    >
-                      {errors.nom}
-                    </p>
-                  )}
-                </div>
-
-                <div className="gp-modal-footer">
-                  <button
-                    onClick={handleModalCancel}
-                    className="gp-btn gp-btn-cancel"
-                  >
-                    Annuler
-                  </button>
-                  <button
-                    onClick={handleModalSubmit}
-                    className="gp-btn gp-btn-save"
-                  >
-                    Ajouter
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Edit department modal */}
-        {isEditModalOpen && selectedDepartment && (
-          <div className="gp-modal-overlay">
-            <div className="gp-modal-container">
-              <div className="gp-modal-header">
-                <h2 className="gp-modal-title">Modifier le département</h2>
-                <button onClick={handleEditCancel} className="gp-modal-close">
-                  <X size={24} />
-                </button>
-              </div>
-
-              <div>
-                <div className="gp-form-group">
-                  <label className="gp-form-label">ID</label>
-                  <input
-                    type="text"
-                    value={selectedDepartment._id}
-                    disabled
-                    className="gp-form-input"
-                    style={{ backgroundColor: "#f3f4f6" }}
-                  />
-                </div>
-
-                <div className="gp-form-group">
-                  <label className="gp-form-label">Nom du département</label>
-                  <input
-                    type="text"
-                    name="nom"
-                    value={selectedDepartment.nom}
-                    onChange={handleChange}
-                    className="gp-form-input"
-                  />
-                  {errors.nom && (
-                    <p
-                      style={{
-                        color: "#ef4444",
-                        fontSize: "0.75rem",
-                        marginTop: "0.25rem",
-                      }}
-                    >
-                      {errors.nom}
-                    </p>
-                  )}
-                </div>
-
-                <div className="gp-modal-footer">
-                  <button
-                    onClick={handleEditCancel}
-                    className="gp-btn gp-btn-cancel"
-                  >
-                    Annuler
-                  </button>
-                  <button
-                    onClick={handleEditSubmit}
-                    className="gp-btn gp-btn-save"
-                  >
-                    Enregistrer
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Toast notifications */}
-        {toast.affiche && (
-          <Toast
-            message={toast.message}
-            type={toast.type}
-            onClose={fermerToast}
-          />
-        )}
+        {/* Tableau des formations */}
+        <div className="gf-table-container">
+          <table className="gf-table">
+            <thead>
+              <tr>
+                <th className="gf-th">Nom</th>
+                <th className="gf-th">Prénom</th>
+                <th className="gf-th">Titre de Formation</th>
+                <th className="gf-th">Statut</th>
+                <th className="gf-th">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {formationsFiltrees.length === 0 ? (
+                <tr>
+                  <td colSpan="5" className="gf-td" style={{ textAlign: 'center' }}>
+                    Aucune formation trouvée
+                  </td>
+                </tr>
+              ) : (
+                formationsFiltrees.map((formation) => (
+                  <tr key={formation._id} className="gf-tr">
+                    <td className="gf-td">
+                      <div className="gf-nom">{formation.nom}</div>
+                    </td>
+                    <td className="gf-td">
+                      <div className="gf-prenom">{formation.prenom}</div>
+                    </td>
+                    <td className="gf-td">
+                      <div className="gf-formation-titre">{formation.titre}</div>
+                      <div className="gf-date">{formatDate(formation.dateDebut)} - {formatDate(formation.dateFin)}</div>
+                    </td>
+                    <td className="gf-td">
+                      {renderStatus(formation.statut)}
+                    </td>
+                    <td className="gf-td">
+                      <div className="gf-actions">
+                        {formation.statut === "en_cours" && (
+                          <>
+                            <button 
+                              className="gf-action-button gf-action-button-accepter" 
+                              onClick={() => handleAccepter(formation._id)}
+                              title="Accepter"
+                            >
+                              <Check size={16} />
+                            </button>
+                            <button 
+                              className="gf-action-button gf-action-button-refuser" 
+                              onClick={() => handleRefuser(formation._id)}
+                              title="Refuser"
+                            >
+                              <X size={16} />
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+        
+        {/* Information sur les résultats */}
+        <div className="gf-footer">
+          Affichage de {formationsFiltrees.length} sur {formations.length} formations
+        </div>
       </div>
+
+      {/* Toast Notification */}
+      {toast.affiche && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={fermerToast}
+        />
+      )}
     </>
   );
 }
-
-CardDepartment.propTypes = {
-  color: PropTypes.string,
-};

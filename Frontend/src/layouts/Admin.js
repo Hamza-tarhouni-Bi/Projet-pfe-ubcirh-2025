@@ -22,6 +22,9 @@ import Formation from "views/admin/Formation";
 import Recrutement from "views/Recrutement";
 import DemandeFormation from "views/employe/DemandeFormation";
 import Condidature from "views/admin/Condidature";
+import DemandeF from "views/admin/DemandeF";
+import DemandeA from "views/admin/DemandeA";
+import DemandeC from "views/admin/DemandeC";
 export default function Admin() {
   return (
     <>
@@ -42,6 +45,10 @@ export default function Admin() {
             <Route path="/admin/settings" exact component={Settings} />
             <Route path="/admin/tables" exact component={Tables} />
             <Route path="/admin/recrutement" exact component={Recrutement} />
+            <Route path="/admin/demandef" exact component={DemandeF} />
+            <Route path="/admin/demandea" exact component={DemandeA} />
+            <Route path="/admin/demandec" exact component={DemandeC} />
+
             
             <Route path="/admin/condidature" exact component={Condidature} />
            <Redirect from="/admin" to="/admin/dashboard" />

@@ -358,7 +358,7 @@ export default function CardCandidature({ color = "light" }) {
         candidature.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
         candidature.prenom.toLowerCase().includes(searchTerm.toLowerCase()) ||
         candidature.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (candidature.poste && candidature.poste.toLowerCase().includes(searchTerm.toLowerCase()));
+        (candidature.posteTitle && candidature.posteTitle.toLowerCase().includes(searchTerm.toLowerCase()));
       
       // Filter by status
       const statusMatch = 
@@ -448,7 +448,7 @@ export default function CardCandidature({ color = "light" }) {
             {/* Search and filter section */}
             <div className="gp-search-container">
               <div className="gp-search-input">
-                <Search className="gp-search-icon" size={16} />
+                <Search className="gp-search-icon" size={16} /> 
                 <input
                   type="text"
                   placeholder="Rechercher par nom, prénom, email ou poste..."
@@ -509,7 +509,7 @@ export default function CardCandidature({ color = "light" }) {
                         <td className="gp-td">{candidature.nom}</td>
                         <td className="gp-td">{candidature.prenom}</td>
                         <td className="gp-td">{candidature.email}</td>
-                        <td className="gp-td">{candidature.poste}</td>
+                        <td className="gp-td">{candidature.posteTitle}</td>
                         <td className="gp-td">{candidature.tel}</td>
                         <td className="gp-td">{formatDate(candidature.createdAt)}</td>
                         <td className="gp-td">
@@ -611,7 +611,7 @@ export default function CardCandidature({ color = "light" }) {
                 </div>
                 <div className="gp-detail-item">
                   <span className="gp-detail-label">Poste:</span>
-                  <span className="gp-detail-value">{selectedCandidature.poste}</span>
+                  <span className="gp-detail-value">{selectedCandidature.posteTitle}</span>
                 </div>
                 <div className="gp-detail-item">
                   <span className="gp-detail-label">Adresse:</span>
@@ -692,7 +692,7 @@ export default function CardCandidature({ color = "light" }) {
               <div>
                 <p style={{ marginBottom: "1.5rem", color: "#4b5563" }}>
                   Êtes-vous sûr de vouloir {statusAction === "accepted" ? "accepter" : "refuser"} la candidature de{" "}
-                  <strong>{selectedCandidature.nom} {selectedCandidature.prenom}</strong> pour le poste de <strong>{selectedCandidature.poste}</strong> ?
+                  <strong>{selectedCandidature.nom} {selectedCandidature.prenom}</strong> pour le poste de <strong>{selectedCandidature.posteTitle}</strong> ?
                 </p>
 
                 <div className="gp-modal-footer">

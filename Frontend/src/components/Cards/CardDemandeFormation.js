@@ -2,33 +2,25 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 
 function CardDemandeFormation() {
-  // État pour stocker les formations
   const [formations, setFormations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  // États pour le filtrage et la pagination
   const [filteredFormations, setFilteredFormations] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(3);
-  
-  // États pour la demande de formation
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedFormation, setSelectedFormation] = useState(null);
-  const [formData, setFormData] = useState({
-    nom: '',
-    prenom: '',
-    email: '',
-    departement: '',
-    justification: '',
-    formation: null
-  });
-  
-  // État pour afficher la confirmation
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const [demandes, setDemandes] = useState([]);
+  const [confirmationMessage, setConfirmationMessage] = useState('');
+  const [userInfo, setUserInfo] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Récupérer les informations de l'utilisateur connecté
+  useEffect(() => {
+    const userData = localStorage.getItem('userData');
+    if (userData) {
+      setUserInfo(JSON.parse(userData));
+    }
+  }, []);
 
   // Récupérer les formations depuis l'API
   useEffect(() => {
@@ -37,7 +29,6 @@ function CardDemandeFormation() {
         setLoading(true);
         const response = await axios.get('/getformation');
         
-        // Transformer les données pour correspondre à la structure attendue
         const formattedFormations = response.data.map(formation => ({
           id: formation._id,
           titre: formation.titre,
@@ -62,16 +53,13 @@ function CardDemandeFormation() {
     fetchFormations();
   }, []);
 
-  // Effet pour filtrer les formations
+  // Filtrer les formations
   useEffect(() => {
     let result = formations.filter(formation => 
-      // Ne montrer que les formations programmées (pas complètes ou terminées)
       formation.statut === 'Programmée' && 
-      // Vérifier qu'il reste des places
       formation.inscrits < formation.places
     );
     
-    // Filtrer par terme de recherche
     if (searchTerm) {
       result = result.filter(formation => 
         formation.titre.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -79,91 +67,60 @@ function CardDemandeFormation() {
       );
     }
     
-    // Filtrer par catégorie
-    if (selectedCategory !== 'all') {
-      result = result.filter(formation => {
-        // Exemple de catégorisation basée sur les titres, peut être remplacé par une catégorisation réelle
-        const title = formation.titre.toLowerCase();
-        if (selectedCategory === 'tech') {
-          return title.includes('react') || title.includes('excel') || title.includes('développement');
-        }
-        if (selectedCategory === 'management') {
-          return title.includes('leadership') || title.includes('management');
-        }
-        if (selectedCategory === 'soft') {
-          return title.includes('communication') || title.includes('rgpd');
-        }
-        return true;
-      });
-    }
-    
     setFilteredFormations(result);
-  }, [formations, searchTerm, selectedCategory]);
+  }, [formations, searchTerm]);
 
-  // Calcul de la pagination
+  // Pagination
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentFormations = filteredFormations.slice(indexOfFirstItem, indexOfLastItem);
   const totalPages = Math.ceil(filteredFormations.length / itemsPerPage);
 
-  // Formatage de la date
   const formatDate = (dateString) => {
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
     return new Date(dateString).toLocaleDateString('fr-FR', options);
   };
 
-  // Gérer la demande d'inscription à une formation
-  const handleRequestFormation = (formation) => {
-    setSelectedFormation(formation);
-    setFormData({...formData, formation: formation});
-    setIsModalOpen(true);
+  const handleRequestFormation = async (formation) => {
+    if (!userInfo) {
+      setError("Veuillez vous reconnecter");
+      setShowConfirmation(true);
+      setTimeout(() => setShowConfirmation(false), 3000);
+      return;
+    }
+  
+    setIsSubmitting(true);
+    try {
+      const token = localStorage.getItem('token');
+      
+      const response = await axios.post('/adddemandeformation', {
+        nom: userInfo.nom || '',
+        prenom: userInfo.prenom || '',
+        email: userInfo.email || '',
+        nomFormation: formation.titre || '',
+        idFormation: formation.id || '',  // Added formation ID
+        idUser: userInfo._id || ''        // Added user ID if needed
+      }, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      setConfirmationMessage(`Demande envoyée pour "${formation.titre}" !`);
+      setShowConfirmation(true);
+      setTimeout(() => setShowConfirmation(false), 3000);
+      
+    } catch (err) {
+      console.error("Erreur:", err.response?.data || err.message);
+      setError(err.response?.data?.message || "Erreur lors de l'envoi");
+      setShowConfirmation(true);
+      setTimeout(() => setShowConfirmation(false), 3000);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  // Gérer les changements dans le formulaire
-  const handleFormChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value
-    });
-  };
-
-  // Soumission du formulaire
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
-    // Créer un objet demande
-    const newDemande = {
-      id: Date.now(),
-      ...formData,
-      status: 'En attente',
-      dateCreation: new Date().toISOString()
-    };
-    
-    // Ajouter la demande à la liste
-    setDemandes([...demandes, newDemande]);
-    
-    // Fermer le modal et montrer la confirmation
-    setIsModalOpen(false);
-    setShowConfirmation(true);
-    
-    // Réinitialiser le formulaire
-    setFormData({
-      nom: '',
-      prenom: '',
-      email: '',
-      departement: '',
-      justification: '',
-      formation: null
-    });
-    
-    // Fermer la confirmation après 3 secondes
-    setTimeout(() => {
-      setShowConfirmation(false);
-    }, 3000);
-  };
-
-  // Afficher un message de chargement pendant la récupération des données
   if (loading) {
     return (
       <div className="loading-container">
@@ -173,7 +130,6 @@ function CardDemandeFormation() {
     );
   }
 
-  // Afficher un message d'erreur si la récupération a échoué
   if (error) {
     return (
       <div className="error-container">
@@ -187,13 +143,11 @@ function CardDemandeFormation() {
 
   return (
     <div className="container">
-      {/* Header */}
       <div className="header">
         <h1>Catalogue de formations</h1>
         <p>Découvrez et inscrivez-vous aux formations disponibles</p>
       </div>
 
-      {/* Filtres */}
       <div className="filters">
         <div className="search-container">
           <input
@@ -205,11 +159,8 @@ function CardDemandeFormation() {
           />
           <div className="search-icon">🔍</div>
         </div>
-        
-        
       </div>
 
-      {/* Liste des formations */}
       <div className="formations-grid">
         {currentFormations.length > 0 ? (
           currentFormations.map(formation => (
@@ -244,8 +195,9 @@ function CardDemandeFormation() {
                 <button 
                   className="request-btn"
                   onClick={() => handleRequestFormation(formation)}
+                  disabled={isSubmitting}
                 >
-                  Demander cette formation
+                  {isSubmitting ? 'Envoi en cours...' : 'Demander cette formation'}
                 </button>
               </div>
             </div>
@@ -257,7 +209,6 @@ function CardDemandeFormation() {
         )}
       </div>
 
-      {/* Pagination */}
       {filteredFormations.length > 0 && (
         <div className="pagination">
           <button 
@@ -282,168 +233,24 @@ function CardDemandeFormation() {
         </div>
       )}
 
-      {/* Modal de demande */}
-      {isModalOpen && selectedFormation && (
-        <div className="modal-overlay">
-          <div className="modal">
-            <div className="modal-header">
-              <h2>Demande de formation</h2>
-              <button 
-                className="close-btn"
-                onClick={() => setIsModalOpen(false)}
-              >
-                ×
-              </button>
-            </div>
-            
-            <div className="modal-content">
-              <div className="formation-info">
-                <h3>{selectedFormation.titre}</h3>
-                <p>{formatDate(selectedFormation.date)} | {selectedFormation.duree} heures</p>
-              </div>
-              
-              <form onSubmit={handleSubmit}>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label htmlFor="nom">Nom</label>
-                    <input
-                      type="text"
-                      id="nom"
-                      name="nom"
-                      value={formData.nom}
-                      onChange={handleFormChange}
-                      required
-                    />
-                  </div>
-                  
-                  <div className="form-group">
-                    <label htmlFor="prenom">Prénom</label>
-                    <input
-                      type="text"
-                      id="prenom"
-                      name="prenom"
-                      value={formData.prenom}
-                      onChange={handleFormChange}
-                      required
-                    />
-                  </div>
-                </div>
-                
-                <div className="form-group">
-                  <label htmlFor="email">Email professionnel</label>
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleFormChange}
-                    required
-                  />
-                </div>
-                
-                <div className="form-group">
-                  <label htmlFor="departement">Département</label>
-                  <select
-                    id="departement"
-                    name="departement"
-                    value={formData.departement}
-                    onChange={handleFormChange}
-                    required
-                  >
-                    <option value="">Sélectionnez votre département</option>
-                    <option value="IT">IT & Digital</option>
-                    <option value="RH">Ressources Humaines</option>
-                    <option value="Finance">Finance & Comptabilité</option>
-                    <option value="Marketing">Marketing & Communication</option>
-                    <option value="Operations">Opérations</option>
-                  </select>
-                </div>
-                
-                <div className="form-group">
-                  <label htmlFor="justification">Justification de la demande</label>
-                  <textarea
-                    id="justification"
-                    name="justification"
-                    rows="4"
-                    value={formData.justification}
-                    onChange={handleFormChange}
-                    placeholder="Expliquez en quoi cette formation contribuera à vos objectifs professionnels..."
-                    required
-                  ></textarea>
-                </div>
-                
-                <div className="modal-actions">
-                  <button 
-                    type="button" 
-                    className="cancel-btn"
-                    onClick={() => setIsModalOpen(false)}
-                  >
-                    Annuler
-                  </button>
-                  <button 
-                    type="submit" 
-                    className="submit-btn"
-                  >
-                    Soumettre la demande
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Message de confirmation */}
       {showConfirmation && (
-        <div className="confirmation-message">
-          <div className="confirmation-content">
-            <span className="confirmation-icon">✓</span>
-            <p>Votre demande a été soumise avec succès! Votre responsable sera informé de votre requête.</p>
+        <div className={`toast-message ${error ? 'error' : 'success'}`}>
+          <div className="toast-content">
+            <span className="toast-icon">{error ? '⚠️' : '✓'}</span>
+            <p>{error || confirmationMessage}</p>
           </div>
         </div>
       )}
 
-      {/* Historique des demandes */}
-      {demandes.length > 0 && (
-        <div className="demandes-section">
-          <h2>Mes demandes de formation</h2>
-          <div className="demandes-list">
-            <table>
-              <thead>
-                <tr>
-                  <th>Formation</th>
-                  <th>Date de la demande</th>
-                  <th>Statut</th>
-                </tr>
-              </thead>
-              <tbody>
-                {demandes.map(demande => (
-                  <tr key={demande.id}>
-                    <td>{demande.formation.titre}</td>
-                    <td>{new Date(demande.dateCreation).toLocaleDateString('fr-FR')}</td>
-                    <td>
-                      <span className={`status-badge ${demande.status.toLowerCase().replace(' ', '-')}`}>
-                        {demande.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      <style>
+<style>
         {`
         /* Styles généraux */
         .container {
           font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-          max-width: 1200px
-          
+          max-width: 1200px;
           margin: 0 auto;
           padding: 20px;
-          background-color: '#334155'
+          background-color: '#334155';
           min-height: 100vh;
         }
 
@@ -522,45 +329,6 @@ function CardDemandeFormation() {
           color: #9ca3af;
         }
 
-        .category-filter {
-          display: flex;
-          flex-wrap: wrap;
-          align-items: center;
-          gap: 10px;
-        }
-
-        .filter-label {
-          font-weight: 500;
-          color: #4b5563;
-        }
-
-        .filter-buttons {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 8px;
-        }
-
-        .category-btn {
-          padding: 8px 16px;
-          background-color: #f3f4f6;
-          border: 1px solid #e5e7eb;
-          border-radius: 6px;
-          color: #4b5563;
-          font-weight: 500;
-          cursor: pointer;
-          transition: all 0.2s ease;
-        }
-
-        .category-btn:hover {
-          background-color: #e5e7eb;
-        }
-
-        .category-btn.active {
-          background-color: #3b82f6;
-          border-color: #3b82f6;
-          color: white;
-        }
-
         /* Grille de formations */
         .formations-grid {
           display: grid;
@@ -606,6 +374,11 @@ function CardDemandeFormation() {
           border-radius: 999px;
           font-size: 0.8rem;
           font-weight: 500;
+        }
+
+        .places-badge.low-places {
+          background-color: #fecaca;
+          color: #b91c1c;
         }
 
         .formation-content {
@@ -655,8 +428,18 @@ function CardDemandeFormation() {
           transition: background-color 0.2s;
         }
 
-        .request-btn:hover {
+        .request-btn:hover:not(:disabled) {
           background-color: #1d4ed8;
+        }
+        
+        .request-btn.disabled {
+          background-color: #9ca3af;
+          cursor: not-allowed;
+        }
+        
+        .request-btn:disabled {
+          background-color: #9ca3af;
+          cursor: not-allowed;
         }
 
         .no-formations {
@@ -709,190 +492,61 @@ function CardDemandeFormation() {
           font-weight: 500;
         }
 
-        /* Modal */
-        .modal-overlay {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background-color: rgba(0, 0, 0, 0.5);
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          z-index: 1000;
-          padding: 20px;
-        }
-
-        .modal {
-          background-color: white;
-          border-radius: 12px;
-          width: 100%;
-          max-width: 600px;
-          max-height: 90vh;
-          overflow-y: auto;
-          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        }
-
-        .modal-header {
-          padding: 20px;
-          border-bottom: 1px solid #e5e7eb;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-
-        .modal-header h2 {
-          margin: 0;
-          color: #1e40af;
-          font-size: 1.5rem;
-        }
-
-        .close-btn {
-          background: none;
-          border: none;
-          font-size: 1.5rem;
-          color: #6b7280;
-          cursor: pointer;
-          padding: 0;
-          line-height: 1;
-        }
-
-        .modal-content {
-          padding: 20px;
-        }
-
-        .formation-info {
-          margin-bottom: 20px;
-          padding: 15px;
-          background-color: #f3f4f6;
-          border-radius: 8px;
-        }
-
-        .formation-info h3 {
-          margin-top: 0;
-          margin-bottom: 10px;
-          color: #1e40af;
-        }
-
-        .formation-info p {
-          margin: 0;
-          color: #4b5563;
-        }
-
-        /* Form */
-        form {
-          display: flex;
-          flex-direction: column;
-          gap: 20px;
-        }
-
-        .form-row {
-          display: flex;
-          gap: 15px;
-        }
-
-        .form-group {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-        }
-
-        label {
-          font-weight: 500;
-          color: #4b5563;
-        }
-
-        input, select, textarea {
-          padding: 10px 12px;
-          border: 1px solid #d1d5db;
-          border-radius: 6px;
-          font-size: 1rem;
-          transition: all 0.3s ease;
-        }
-
-        input:focus, select:focus, textarea:focus {
-          outline: none;
-          border-color: #3b82f6;
-          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
-        }
-
-        textarea {
-          resize: vertical;
-          min-height: 100px;
-        }
-
-        .modal-actions {
-          display: flex;
-          justify-content: flex-end;
-          gap: 12px;
-          margin-top: 10px;
-        }
-
-        .cancel-btn {
-          padding: 10px 20px;
-          background-color: white;
-          border: 1px solid #d1d5db;
-          border-radius: 6px;
-          color: #4b5563;
-          font-weight: 500;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-
-        .cancel-btn:hover {
-          background-color: #f3f4f6;
-          border-color: #9ca3af;
-        }
-
-        .submit-btn {
-          padding: 10px 20px;
-          background-color: #2563eb;
-          border: none;
-          border-radius: 6px;
-          color: white;
-          font-weight: 500;
-          cursor: pointer;
-          transition: background-color 0.2s;
-        }
-
-        .submit-btn:hover {
-          background-color: #1d4ed8;
-        }
-
-        /* Message de confirmation */
-        .confirmation-message {
+        /* Toast de confirmation */
+        .toast-message {
           position: fixed;
           bottom: 30px;
           left: 50%;
           transform: translateX(-50%);
-          background-color: #34d399;
-          color: white;
           border-radius: 12px;
           padding: 5px;
           box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
           z-index: 1000;
           animation: slideUp 0.3s ease, fadeOut 0.5s ease 2.5s;
+          min-width: 300px;
+          max-width: 600px;
         }
 
-        .confirmation-content {
+        .toast-message.success {
+          background-color: #34d399;
+          color: white;
+        }
+
+        .toast-message.error {
+          background-color: #f87171;
+          color: white;
+        }
+
+        .toast-content {
           display: flex;
           align-items: center;
           gap: 12px;
-          padding: 10px 20px;
+          padding: 15px 20px;
         }
 
-        .confirmation-icon {
-          font-size: 1.5rem;
+        .toast-icon {
+          font-size: 1.2rem;
           background-color: white;
-          color: #34d399;
           width: 30px;
           height: 30px;
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
+          flex-shrink: 0;
+        }
+
+        .toast-message.success .toast-icon {
+          color: #34d399;
+        }
+
+        .toast-message.error .toast-icon {
+          color: #f87171;
+        }
+
+        .toast-content p {
+          margin: 0;
+          flex-grow: 1;
         }
 
         /* Historique des demandes */
@@ -942,6 +596,16 @@ function CardDemandeFormation() {
           color: #92400e;
         }
 
+        .status-badge.approuvée {
+          background-color: #d1fae5;
+          color: #065f46;
+        }
+
+        .status-badge.rejetée {
+          background-color: #fee2e2;
+          color: #b91c1c;
+        }
+
         /* Animations */
         @keyframes slideUp {
           from {
@@ -969,13 +633,13 @@ function CardDemandeFormation() {
             grid-template-columns: 1fr;
           }
 
-          .form-row {
-            flex-direction: column;
-          }
-
           .filters {
             flex-direction: column;
             align-items: stretch;
+          }
+          
+          .toast-message {
+            width: 90%;
           }
         }
         `}
@@ -985,4 +649,3 @@ function CardDemandeFormation() {
 }
 
 export default CardDemandeFormation;
-

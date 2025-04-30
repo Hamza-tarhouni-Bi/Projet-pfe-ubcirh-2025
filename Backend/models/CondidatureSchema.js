@@ -30,7 +30,9 @@ const condidatureSchema = new mongoose.Schema({
         type: String,
         enum: ['pending', 'accepted', 'rejected'],
         default: 'pending'
-    }
+    },
+     posteId: { type: mongoose.Schema.Types.ObjectId, ref: 'Offre', required: true },
+    posteTitle: { type: String, required: true },
 }, { timestamps: true });
 
 const Condidature = mongoose.model("condidature", condidatureSchema);

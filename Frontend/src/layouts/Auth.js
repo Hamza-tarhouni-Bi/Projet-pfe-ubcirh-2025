@@ -8,7 +8,7 @@ import Navbar from "components/Navbars/IndexNavbar";
 // views
 import Signin from "views/auth/Signin";
 import Signup from "views/auth/Signup";
-import Forget from "views/auth/forget";
+
 
 export default function Auth() {
   return (

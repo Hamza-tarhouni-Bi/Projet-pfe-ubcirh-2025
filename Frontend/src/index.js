@@ -16,6 +16,7 @@ import Signin from "views/auth/Signin";
 
 
 
+
 import Index from "views/Index.js";
 import Postule from "views/Postule";
 
@@ -36,6 +37,8 @@ ReactDOM.render(
       <Route path="/auth" component={Auth} />
       <Route path="/test" component={Test} />
       <Route path="/postule" component={Postule} />
+
+
 
       <Route path="/" exact component={Index} />
       {/* add redirect for first page */}

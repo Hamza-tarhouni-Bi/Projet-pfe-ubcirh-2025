@@ -153,6 +153,8 @@ const Postule = () => {
       email: "",
       tel: "",
       cv: "",
+      posteId: job.id, // Ajout de l'ID du poste
+      posteTitle: job.title // Ajout du titre du poste
     });
     setSubmitSuccess(false);
     setSubmitError("");
@@ -216,7 +218,7 @@ const Postule = () => {
       setFileError("Erreur: Veuillez télécharger votre CV et lettre de motivation.");
       return;
     }
-
+  
     try {
       setIsSubmitting(true);
       
@@ -227,6 +229,9 @@ const Postule = () => {
       formDataToSend.append("adresse", formData.adresse);
       formDataToSend.append("email", formData.email);
       formDataToSend.append("tel", formData.tel);
+      // Ajouter l'ID et le titre du poste
+      formDataToSend.append("posteId", formData.posteId); 
+      formDataToSend.append("posteTitle", formData.posteTitle);
       formDataToSend.append("cv", formData.cv);
       
       // Send the data to the backend
@@ -250,7 +255,6 @@ const Postule = () => {
       setIsSubmitting(false);
     }
   };
-
   // Trigger the file input when clicking on the upload area
   const triggerFileInput = () => {
     document.getElementById("file-upload-input").click();
@@ -492,7 +496,7 @@ const Postule = () => {
                 </div>
 
                 <div className="form-section">
-                  <label>Déposez votre CV et lettre de motivation (format PDF uniquement)</label>
+                  <label>Déposez votre CV  (format PDF uniquement)</label>
                   <div className={`file-upload ${fileError ? "file-error" : ""}`} onClick={triggerFileInput}>
                     <input 
                       type="file" 
