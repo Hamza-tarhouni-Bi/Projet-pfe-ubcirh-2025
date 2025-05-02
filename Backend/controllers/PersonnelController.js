@@ -126,88 +126,40 @@ exports.updatePersonnel = async (req, res) => {
   try {
     const { id } = req.params;
     const updateData = { ...req.body };
-    
-    // Trouver le personnel avant la mise à jour
-    const personnelBeforeUpdate = await personnelModal.findById(id);
-    if (!personnelBeforeUpdate) {
-      return res.status(404).json({ error: "Personnel non trouvé" });
-    }
-    
-    // Si un nouveau mot de passe est fourni, vérifier l'ancien mot de passe
-    if (updateData.password && updateData.currentPassword) {
-      // Comparer le mot de passe actuel fourni avec celui stocké (crypté) en DB
-      const isPasswordValid = await bcrypt.compare(
-        updateData.currentPassword,
-        personnelBeforeUpdate.password
-      );
-      
-      if (!isPasswordValid) {
-        return res.status(401).json({ error: "Le mot de passe actuel est incorrect" });
+
+    // Gestion spécifique de la décrémentation du solde
+    if (updateData.decrementSolde !== undefined) {
+      const personnel = await Personnel.findById(id);
+      if (!personnel) {
+        return res.status(404).json({ error: "Personnel non trouvé" });
       }
-      
-      // Si mot de passe valide, crypter le nouveau mot de passe
-      const salt = await bcrypt.genSalt(10);
-      updateData.password = await bcrypt.hash(updateData.password, salt);
-    }
-    
-    // Supprimer le champ currentPassword car on ne veut pas le stocker
-    delete updateData.currentPassword;
-    
-    // Gestion de l'image
-    let imageUpdated = false;
-    if (req.file) {
-      updateData.image = req.file.filename;
-      imageUpdated = true;
-      
-      // Envoyer l'email pour la mise à jour de l'image IMMÉDIATEMENT
-      try {
-        await sendProfileImageUpdateEmail(
-          personnelBeforeUpdate.email,
-          personnelBeforeUpdate.nom,
-          personnelBeforeUpdate.prenom
-        );
-        console.log('Email pour mise à jour image envoyé avec succès');
-      } catch (emailError) {
-        console.error("Erreur d'envoi email image:", emailError);
+
+      // Vérifier que le solde ne deviendra pas négatif
+      const nouveauSolde = personnel.soldedeconge - updateData.decrementSolde;
+      if (nouveauSolde < 0) {
+        return res.status(400).json({ 
+          error: "Solde de congé insuffisant" 
+        });
       }
+
+      // Mettre à jour seulement le solde
+      personnel.soldedeconge = nouveauSolde;
+      await personnel.save();
+
+      // Ne pas renvoyer le mot de passe
+      const responseData = personnel.toObject();
+      delete responseData.password;
+      
+      return res.status(200).json(responseData);
     }
 
-    // Détection des champs modifiés (sauf image)
-    const changedFields = {};
-    Object.keys(updateData).forEach(key => {
-      if (key !== 'image' && key !== 'password' && personnelBeforeUpdate[key] !== updateData[key]) {
-        changedFields[key] = updateData[key];
-      }
-    });
-    
-    // Si le mot de passe a été changé, indiquer que le champ a changé
-    if (updateData.password) {
-      changedFields.password = "Votre mot de passe a été modifié";
-    }
-
-    // Mise à jour dans la base de données
-    const updatedPersonnel = await personnelModal.findByIdAndUpdate(
+    // Mise à jour normale pour les autres champs
+    const updatedPersonnel = await Personnel.findByIdAndUpdate(
       id,
       updateData,
       { new: true }
     );
 
-    // Envoyer l'email pour les autres champs modifiés (sauf si seul l'image a changé)
-    if (Object.keys(changedFields).length > 0) {
-      try {
-        await sendUpdateEmail(
-          updatedPersonnel.email,
-          updatedPersonnel.nom,
-          updatedPersonnel.prenom,
-          changedFields
-        );
-        console.log('Email pour champs modifiés envoyé avec succès');
-      } catch (emailError) {
-        console.error("Erreur d'envoi email champs:", emailError);
-      }
-    }
-  
-    // Ne pas renvoyer le mot de passe dans la réponse
     const responseData = updatedPersonnel.toObject();
     delete responseData.password;
     

@@ -3,28 +3,44 @@ const { sendUpdateDemandeCongeEmail } = require('../utiles/SendUpdateDc');
 
 exports.addDemandeConge = async (req, res) => {
   try {
-    const { idpersonnel,nom, prenom, email,DateDebut,DateFin,statut,motif } = req.body;
+    const { idpersonnel, nom, prenom, email, DateDebut, DateFin, statut, motif } = req.body;
 
-    // Validation simple des champs requis
-    if (!idpersonnel||!nom || !prenom || !email || !DateDebut ||!DateFin ||!motif||!statut) {
+    // Validation des champs requis
+    if (!idpersonnel || !nom || !prenom || !email || !DateDebut || !DateFin || !motif || !statut) {
       return res.status(400).json({ message: "Tous les champs sont requis" });
     }
 
-    // Vérification si l'email existe déjà
-    const demandeExistante = await DemandeConge.findOne({ email });
-    if (demandeExistante) {
-      return res.status(400).json({ message: "Une demande avec cet email existe déjà" });
+    // Vérification s'il y a déjà une demande EN ATTENTE pour cet employé
+    const demandeEnAttente = await DemandeConge.findOne({ 
+      idpersonnel,
+      statut: "En attente" 
+    });
+    
+    if (demandeEnAttente) {
+      return res.status(400).json({ 
+        message: "Vous avez déjà une demande de congé en attente" 
+      });
     }
 
     const nouvelleDemande = new DemandeConge({
-      idpersonnel,nom, prenom, email,DateDebut,DateFin,motif,statut
+      idpersonnel,
+      nom, 
+      prenom, 
+      email,
+      DateDebut,
+      DateFin,
+      motif,
+      statut
     });
 
     await nouvelleDemande.save();
-    res.status(201).json({ message: "Demande créée avec succès" });
+    res.status(201).json({ 
+      message: "Demande de congé créée avec succès",
+      demande: nouvelleDemande
+    });
 
   } catch (error) {
-    console.error(error);  // Ajouter un log pour aider au débogage
+    console.error(error);
     res.status(500).json({ 
       message: "Erreur serveur",
       error: error.message 

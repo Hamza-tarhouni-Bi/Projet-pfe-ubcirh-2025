@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, AlertCircle, Check, X, Eye } from "lucide-react";
+import { Search, AlertCircle, CheckCircle2, XCircle, Eye, Filter, ChevronDown, Clock, Check, X } from "lucide-react";
 
 // CSS encapsulé avec préfixe "gav-" (Gestion Avances)
 const encapsulatedStyles = `
@@ -24,9 +24,15 @@ const encapsulatedStyles = `
     color: #1f2937;
   }
   
+  .gav-search-filter-container {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  
   .gav-search-container {
     position: relative;
-    margin-bottom: 1rem;
+    flex-grow: 1;
   }
   
   .gav-search-icon {
@@ -50,6 +56,31 @@ const encapsulatedStyles = `
     outline: none;
     border-color: #14b8a6;
     box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.2);
+  }
+  
+  .gav-filter-container {
+    position: relative;
+    min-width: 180px;
+  }
+  
+  .gav-filter-select {
+    appearance: none;
+    width: 100%;
+    padding: 0.5rem 2.5rem 0.5rem 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    background-color: white;
+    font-size: 0.875rem;
+    cursor: pointer;
+  }
+  
+  .gav-filter-icon {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+    pointer-events: none;
   }
   
   .gav-table-container {
@@ -134,8 +165,8 @@ const encapsulatedStyles = `
   .gav-status-badge {
     display: flex;
     align-items: center;
-    gap: 0.25rem;
-    padding: 0.25rem 0.5rem;
+    gap: 0.5rem;
+    padding: 0.375rem 0.75rem;
     border-radius: 9999px;
     font-size: 0.75rem;
     font-weight: 500;
@@ -143,18 +174,18 @@ const encapsulatedStyles = `
   }
   
   .gav-status-approved {
-    background-color: #dcfce7;
-    color: #166534;
+    background-color: #ecfdf5;
+    color: #059669;
   }
   
   .gav-status-pending {
-    background-color: #fef3c7;
-    color: #92400e;
+    background-color: #fffbeb;
+    color: #d97706;
   }
   
   .gav-status-rejected {
-    background-color: #fee2e2;
-    color: #b91c1c;
+    background-color: #fef2f2;
+    color: #dc2626;
   }
   
   .gav-view-button {
@@ -177,119 +208,41 @@ const encapsulatedStyles = `
     border-color: #9ca3af;
   }
   
-  .gav-view-button:focus {
-    outline: none;
-    border-color: #14b8a6;
-    ring: 2px solid #14b8a6;
-  }
-  
-  .gav-motif-popup {
-    position: absolute;
-    z-index: 10;
-    margin-top: 0.5rem;
-    width: 18rem;
-    background-color: white;
-    border: 1px solid #e5e7eb;
-    border-radius: 0.375rem;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    padding: 1rem;
-    font-size: 0.875rem;
-    color: #374151;
-  }
-  
-  .gav-motif-title {
-    font-size: 0.875rem;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-    color: #111827;
-  }
-  
-  .gav-motif-text {
-    font-size: 0.875rem;
-    line-height: 1.25rem;
-    color: #4b5563;
-  }
-  
-  .gav-response-title {
-    font-size: 0.875rem;
-    font-weight: 600;
-    margin-top: 0.75rem;
-    margin-bottom: 0.25rem;
-    color: #111827;
-  }
-  
-  .gav-response-text {
-    font-style: italic;
-    font-size: 0.875rem;
-    line-height: 1.25rem;
-    color: #4b5563;
-  }
-  
-  .gav-footer {
-    padding: 1rem;
-    background-color: #f9fafb;
-    border-top: 1px solid #e5e7eb;
-    font-size: 0.875rem;
-    color: #6b7280;
-  }
-  
-  /* Styles pour les actions */
-  .gav-actions {
-    display: flex;
-    gap: 0.5rem;
-  }
-  
   .gav-action-button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 1.75rem;
-    height: 1.75rem;
-    border-radius: 0.375rem;
-    color: #6b7280;
-    background-color: white;
-    border: 1px solid #e5e7eb;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 8px;
+    color: white;
+    border: none;
     cursor: pointer;
     transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   }
   
   .gav-action-button:hover {
-    background-color: #f9fafb;
-    color: #111827;
-    border-color: #d1d5db;
-  }
-  
-  .gav-action-button-edit:hover {
-    color: #2563eb;
-    background-color: #eff6ff;
-    border-color: #bfdbfe;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   }
   
   .gav-action-button-approve {
-    color: #047857;
+    background-color: #10b981;
   }
   
   .gav-action-button-approve:hover {
-    color: #047857;
-    background-color: #ecfdf5;
-    border-color: #a7f3d0;
+    background-color: #059669;
   }
   
   .gav-action-button-reject {
-    color: #b91c1c;
+    background-color: #ef4444;
   }
   
   .gav-action-button-reject:hover {
-    color: #dc2626;
-    background-color: #fef2f2;
-    border-color: #fecaca;
+    background-color: #dc2626;
   }
   
-  .gav-action-button-more {
-    position: relative;
-  }
-  
-  /* Styles pour le modal */
   .gav-modal-overlay {
     position: fixed;
     top: 0;
@@ -456,16 +409,82 @@ const encapsulatedStyles = `
     margin: 1rem;
     text-align: center;
   }
+
+  .gav-footer {
+    padding: 1rem 1.5rem;
+    background-color: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+    font-size: 0.875rem;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-radius: 0 0 8px 8px;
+  }
+
+  .gav-count {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    color: #334155;
+  }
+
+  .gav-count-icon {
+    color: #14b8a6;
+  }
+
+  /* Toast styles */
+  .gav-toast-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+  }
+
+  .gav-toast {
+    padding: 12px 24px;
+    border-radius: 8px;
+    color: white;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    animation: slideIn 0.3s ease-out;
+    margin-bottom: 10px;
+  }
+
+  .gav-toast-success {
+    background-color: #10b981;
+  }
+
+  .gav-toast-error {
+    background-color: #ef4444;
+  }
+
+  @keyframes slideIn {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
 `;
 
 export default function GestionAvances() {
   const [demandes, setDemandes] = useState([]);
   const [demandesFiltrees, setDemandesFiltrees] = useState([]);
   const [recherche, setRecherche] = useState("");
+  const [filtreStatut, setFiltreStatut] = useState("Tous");
   const [demandeSelected, setDemandeSelected] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [toasts, setToasts] = useState([]);
 
   // Charger les demandes depuis l'API
   useEffect(() => {
@@ -488,6 +507,26 @@ export default function GestionAvances() {
     fetchDemandes();
   }, []);
 
+  // Filtrer les demandes basé sur la recherche et le statut
+  useEffect(() => {
+    let resultats = demandes;
+    
+    if (recherche.trim()) {
+      const termeLower = recherche.toLowerCase();
+      resultats = resultats.filter(demande => 
+        (demande.nom && demande.nom.toLowerCase().includes(termeLower)) ||
+        (demande.prenom && demande.prenom.toLowerCase().includes(termeLower)) ||
+        (demande.montant && demande.montant.toString().includes(recherche))
+      );
+    }
+    
+    if (filtreStatut !== "Tous") {
+      resultats = resultats.filter(demande => demande.statut === filtreStatut);
+    }
+    
+    setDemandesFiltrees(resultats);
+  }, [recherche, filtreStatut, demandes]);
+
   // Formater la date pour l'affichage
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
@@ -495,24 +534,20 @@ export default function GestionAvances() {
     return date.toLocaleDateString('fr-FR');
   };
 
-  // Filtrage des demandes basé sur la recherche
-  const filtrerDemandes = (terme) => {
-    setRecherche(terme);
-    if (!terme.trim()) {
-      setDemandesFiltrees(demandes);
-      return;
-    }
+  // Gestion des toasts
+  const showToast = (message, type = 'success') => {
+    const id = Date.now();
+    const newToast = { id, message, type };
     
-    const termeLower = terme.toLowerCase();
-    const resultats = demandes.filter(demande => {
-      return (
-        (demande.nom && demande.nom.toLowerCase().includes(termeLower)) ||
-        (demande.prenom && demande.prenom.toLowerCase().includes(termeLower)) ||
-        (demande.montant && demande.montant.toString().includes(terme))
-      );
-    });
+    setToasts(prev => [...prev, newToast]);
     
-    setDemandesFiltrees(resultats);
+    setTimeout(() => {
+      removeToast(id);
+    }, 3000);
+  };
+
+  const removeToast = (id) => {
+    setToasts(prev => prev.filter(toast => toast.id !== id));
   };
 
   // Ouvrir le modal avec les détails de la demande
@@ -527,97 +562,42 @@ export default function GestionAvances() {
     setDemandeSelected(null);
   };
 
-  // Fermer le modal si on clique à l'extérieur
-  useEffect(() => {
-    const handleEscape = (e) => {
-      if (e.key === 'Escape') {
-        fermerModal();
-      }
-    };
-
-    window.addEventListener('keydown', handleEscape);
-    return () => {
-      window.removeEventListener('keydown', handleEscape);
-    };
-  }, []);
-
-  // Actions des boutons 
-  const handleApprove = async (id) => {
+  // Mettre à jour le statut d'une demande
+  const handleStatusUpdate = async (id, newStatus) => {
     try {
-      const response = await fetch(`/demandeavance/${id}/approve`, {
-        method: 'PUT'
+      // Mettre à jour le statut de la demande via l'API
+      const response = await fetch(`/updatedemandeAvance/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ statut: newStatus })
       });
       
-      if (!response.ok) {
-        throw new Error('Erreur lors de l\'approbation');
-      }
+      if (!response.ok) throw new Error('Échec de la mise à jour de la demande');
       
-      // Mise à jour de l'état local
+      // Mettre à jour l'état local
       const demandesUpdated = demandes.map(demande => {
         if (demande._id === id) {
-          return { ...demande, statut: 'Approuvée' };
+          return { ...demande, statut: newStatus };
         }
         return demande;
       });
       
       setDemandes(demandesUpdated);
-      setDemandesFiltrees(
-        demandesUpdated.filter(demande => {
-          if (recherche.trim() === "") return true;
-          
-          const termeLower = recherche.toLowerCase();
-          return (
-            (demande.nom && demande.nom.toLowerCase().includes(termeLower)) ||
-            (demande.prenom && demande.prenom.toLowerCase().includes(termeLower)) ||
-            (demande.montant && demande.montant.toString().includes(recherche))
-          );
-        })
-      );
-      
-      alert(`La demande d'avance a été approuvée.`);
+      showToast(`Demande ${newStatus === 'Approuvée' ? 'approuvée' : 'refusée'}`, 'success');
     } catch (err) {
-      console.error("Erreur lors de l'approbation:", err);
-      alert("Erreur lors de l'approbation de la demande.");
+      showToast(err.message, 'error');
+      console.error(err);
     }
   };
 
-  const handleReject = async (id) => {
-    try {
-      const response = await fetch(`/demandeavance/${id}/reject`, {
-        method: 'PUT'
-      });
-      
-      if (!response.ok) {
-        throw new Error('Erreur lors du refus');
-      }
-      
-      // Mise à jour de l'état local
-      const demandesUpdated = demandes.map(demande => {
-        if (demande._id === id) {
-          return { ...demande, statut: 'Rejetée' };
-        }
-        return demande;
-      });
-      
-      setDemandes(demandesUpdated);
-      setDemandesFiltrees(
-        demandesUpdated.filter(demande => {
-          if (recherche.trim() === "") return true;
-          
-          const termeLower = recherche.toLowerCase();
-          return (
-            (demande.nom && demande.nom.toLowerCase().includes(termeLower)) ||
-            (demande.prenom && demande.prenom.toLowerCase().includes(termeLower)) ||
-            (demande.montant && demande.montant.toString().includes(recherche))
-          );
-        })
-      );
-      
-      alert(`La demande d'avance a été refusée.`);
-    } catch (err) {
-      console.error("Erreur lors du refus:", err);
-      alert("Erreur lors du refus de la demande.");
-    }
+  const handleApprove = (id) => {
+    handleStatusUpdate(id, 'Approuvée');
+  };
+
+  const handleReject = (id) => {
+    handleStatusUpdate(id, 'Rejetée');
   };
 
   // Rendu du statut avec l'icône appropriée
@@ -626,21 +606,21 @@ export default function GestionAvances() {
       case "Approuvée":
         return (
           <div className="gav-status-badge gav-status-approved">
-            <Check size={14} />
+            <CheckCircle2 size={16} />
             <span>Approuvé</span>
           </div>
         );
       case "En attente":
         return (
           <div className="gav-status-badge gav-status-pending">
-            <AlertCircle size={14} />
+            <Clock size={16} />
             <span>En attente</span>
           </div>
         );
       case "Rejetée":
         return (
           <div className="gav-status-badge gav-status-rejected">
-            <X size={14} />
+            <XCircle size={16} />
             <span>Refusé</span>
           </div>
         );
@@ -670,18 +650,37 @@ export default function GestionAvances() {
             Gestion des Demandes d'Avances
           </h1>
           
-          {/* Barre de recherche */}
-          <div className="gav-search-container">
-            <div className="gav-search-icon">
-              <Search size={18} />
+          <div className="gav-search-filter-container">
+            {/* Barre de recherche */}
+            <div className="gav-search-container">
+              <div className="gav-search-icon">
+                <Search size={18} />
+              </div>
+              <input
+                type="text"
+                className="gav-search-input"
+                placeholder="Rechercher par nom, prénom ou montant..."
+                value={recherche}
+                onChange={(e) => setRecherche(e.target.value)}
+              />
             </div>
-            <input
-              type="text"
-              className="gav-search-input"
-              placeholder="Rechercher par nom, prénom ou montant..."
-              value={recherche}
-              onChange={(e) => filtrerDemandes(e.target.value)}
-            />
+            
+            {/* Filtre par statut */}
+            <div className="gav-filter-container">
+              <select
+                className="gav-filter-select"
+                value={filtreStatut}
+                onChange={(e) => setFiltreStatut(e.target.value)}
+              >
+                <option value="Tous">Tous les statuts</option>
+                <option value="En attente">En attente</option>
+                <option value="Approuvée">Approuvée</option>
+                <option value="Rejetée">Rejetée</option>
+              </select>
+              <div className="gav-filter-icon">
+                <Filter size={18} />
+              </div>
+            </div>
           </div>
         </div>
 
@@ -710,7 +709,7 @@ export default function GestionAvances() {
               {demandesFiltrees.length === 0 ? (
                 <tr>
                   <td colSpan="7" className="gav-td" style={{ textAlign: 'center' }}>
-                    {loading ? 'Chargement...' : 'Aucune demande d\'avance trouvée'}
+                    Aucune demande d'avance trouvée
                   </td>
                 </tr>
               ) : (
@@ -780,7 +779,10 @@ export default function GestionAvances() {
         
         {/* Information sur les résultats */}
         <div className="gav-footer">
-          Affichage de {demandesFiltrees.length} sur {demandes.length} demandes d'avance
+          <div className="gav-count">
+            <CheckCircle2 className="gav-count-icon" size={16} />
+            <span>Affichage de {demandesFiltrees.length} sur {demandes.length} demandes</span>
+          </div>
         </div>
       </div>
 
@@ -885,6 +887,20 @@ export default function GestionAvances() {
           </div>
         </div>
       )}
+
+      {/* Toast notifications */}
+      <div className="gav-toast-container">
+        {toasts.map(toast => (
+          <div 
+            key={toast.id} 
+            className={`gav-toast gav-toast-${toast.type}`}
+            onClick={() => removeToast(toast.id)}
+          >
+            {toast.type === 'success' ? <Check size={18} /> : <X size={18} />}
+            {toast.message}
+          </div>
+        ))}
+      </div>
     </>
   );
 }

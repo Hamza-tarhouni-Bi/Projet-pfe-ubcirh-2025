@@ -6,8 +6,8 @@ const { requireAuthPersonnel } = require("../middelwares/authMiddelware");
 
 // Routes pour Personnel
 router.get('/allpersonnel', PersonnelController.getAllPersonnel);
-router.get('/getpersonnel',PersonnelController.getPersonnelWithId);
-
+// Dans votre fichier de routes (backend)
+router.get('/getpersonnel/:id', PersonnelController.getPersonnelWithId);
 router.delete('/deletepersonnel/:id', PersonnelController.deletePersonnel);
 
 router.post('/addPersonnel', uploadfile.single('image'), PersonnelController.addPersonnelWithimage);

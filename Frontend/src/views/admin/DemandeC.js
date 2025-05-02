@@ -569,51 +569,46 @@ export default function GestionConges() {
   };
 
   // Alternative approach - directly send the decrement value and let the backend handle the calculation
-const updateSoldeConge = async (idPersonnel, joursConges) => {
-  try {
-    console.log(`Updating leave balance for personnel ID ${idPersonnel}, deducting ${joursConges} days`);
-    
-    // Send the number of days to subtract rather than calculating the new balance on frontend
-    const response = await fetch(`/updatepersonnel/${idPersonnel}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ 
-        decrementSolde: joursConges  // Use a different field name if your API supports this pattern
-      })
-    });
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`Update failed: ${response.status} ${errorText}`);
-      throw new Error(`Échec de la mise à jour du solde de congé: ${response.status}`);
+  const updateSoldeConge = async (idPersonnel, joursConges) => {
+    try {
+      const response = await fetch(`/updatepersonnel/${idPersonnel}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          decrementSolde: joursConges
+        })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Échec de la mise à jour du solde");
+      }
+      
+      return true;
+    } catch (err) {
+      console.error('Error in updateSoldeConge:', err);
+      throw err; // Propager l'erreur pour la gérer dans handleStatusUpdate
     }
-    
-    return true;
-  } catch (err) {
-    console.error('Error in updateSoldeConge:', err);
-    return false;
-  }
-};
+  };
 
   const handleStatusUpdate = async (id, newStatus) => {
     try {
-      // Trouver la demande à mettre à jour
       const demandeToUpdate = demandes.find(demande => demande._id === id);
       if (!demandeToUpdate) throw new Error('Demande non trouvée');
-
-      // Si la demande est approuvée, mettre à jour le solde de congé
+  
       if (newStatus === "Approuvée" && demandeToUpdate.idpersonnel) {
         const joursConges = calculerJoursConges(demandeToUpdate.DateDebut, demandeToUpdate.DateFin);
-        const soldeUpdated = await updateSoldeConge(demandeToUpdate.idpersonnel, joursConges);
         
-        if (!soldeUpdated) {
-          throw new Error('Échec de la mise à jour du solde de congé');
+        try {
+          await updateSoldeConge(demandeToUpdate.idpersonnel, joursConges);
+        } catch (soldeError) {
+          // Annuler l'approbation si la mise à jour du solde échoue
+          throw new Error(`Impossible de mettre à jour le solde: ${soldeError.message}`);
         }
       }
-
-      // Mettre à jour le statut de la demande
+  
       const response = await fetch(`/updatedemandeconge/${id}`, {
         method: 'PUT',
         headers: {
@@ -622,9 +617,11 @@ const updateSoldeConge = async (idPersonnel, joursConges) => {
         body: JSON.stringify({ statut: newStatus })
       });
       
-      if (!response.ok) throw new Error('Échec de la mise à jour de la demande');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Échec de la mise à jour de la demande');
+      }
       
-      // Mettre à jour l'état local
       const demandesUpdated = demandes.map(demande => {
         if (demande._id === id) {
           return { ...demande, statut: newStatus };
@@ -636,7 +633,7 @@ const updateSoldeConge = async (idPersonnel, joursConges) => {
       showToast(`Demande ${newStatus === 'Approuvée' ? 'approuvée' : 'refusée'}`, 'success');
     } catch (err) {
       showToast(err.message, 'error');
-      console.error(err);
+      console.error("Erreur complète:", err);
     }
   };
 

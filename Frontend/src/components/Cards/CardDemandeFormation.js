@@ -19,7 +19,11 @@ function CardDemandeFormation() {
   useEffect(() => {
     const userData = localStorage.getItem('userData');
     if (userData) {
-      setUserInfo(JSON.parse(userData));
+      const parsedData = JSON.parse(userData);
+      setUserInfo(parsedData);
+      
+      // Charger les demandes existantes de l'utilisateur
+      fetchUserDemandes(parsedData._id);
     }
   }, []);
 
@@ -53,6 +57,28 @@ function CardDemandeFormation() {
 
     fetchFormations();
   }, []);
+
+  // Charger les demandes existantes de l'utilisateur
+  const fetchUserDemandes = async (userId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get('/alldemandeformation', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      // Filtrer les demandes de l'utilisateur actuel avec statut "En attente"
+      const userPendingDemandes = response.data.filter(
+        demande => demande.idUser === userId && demande.statut === 'En attente'
+      );
+      
+      // Ajouter les idFormation correspondantes à demandesEnvoyees
+      setDemandesEnvoyees(userPendingDemandes.map(d => d.idFormation));
+    } catch (err) {
+      console.error("Erreur lors de la récupération des demandes:", err);
+    }
+  };
 
   // Filtrer les formations
   useEffect(() => {
@@ -93,7 +119,14 @@ function CardDemandeFormation() {
       setTimeout(() => setShowConfirmation(false), 3000);
       return;
     }
-  
+
+    if (isFormationDemandee(formation.id)) {
+      setError("Vous avez déjà une demande en attente pour cette formation");
+      setShowConfirmation(true);
+      setTimeout(() => setShowConfirmation(false), 3000);
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const token = localStorage.getItem('token');
@@ -112,18 +145,22 @@ function CardDemandeFormation() {
         }
       });
       
-      // Ajouter l'id de la formation à la liste des demandes envoyées
       setDemandesEnvoyees(prev => [...prev, formation.id]);
-      
       setConfirmationMessage(`Demande envoyée pour "${formation.titre}" !`);
+      setError(null);
       setShowConfirmation(true);
       setTimeout(() => setShowConfirmation(false), 3000);
       
     } catch (err) {
-      console.error("Erreur:", err.response?.data || err.message);
-      setError(err.response?.data?.message || "Erreur lors de l'envoi");
+      const errorMessage = err.response?.data?.message || "Erreur lors de l'envoi";
+      setError(errorMessage);
       setShowConfirmation(true);
       setTimeout(() => setShowConfirmation(false), 3000);
+      
+      // Si l'erreur concerne une demande existante, mettez à jour demandesEnvoyees
+      if (errorMessage.includes("déjà une demande en attente")) {
+        setDemandesEnvoyees(prev => [...prev, formation.id]);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -138,7 +175,7 @@ function CardDemandeFormation() {
     );
   }
 
-  if (error) {
+  if (error && !showConfirmation) {
     return (
       <div className="error-container">
         <p className="error-message">{error}</p>
@@ -175,8 +212,8 @@ function CardDemandeFormation() {
             <div key={formation.id} className="formation-card">
               <div className="formation-header">
                 <h3>{formation.titre}</h3>
-                <span className={`places-badge ${formation.places - formation.inscrits <= 3 ? 'low-places' : ''}`}>
-                  {formation.places - formation.inscrits} places restantes
+                <span className={`places-badge ${formation.placesRestantes <= 3 ? 'low-places' : ''}`}>
+                  {formation.placesRestantes} places restantes
                 </span>
               </div>
               
@@ -206,7 +243,7 @@ function CardDemandeFormation() {
                   disabled={isSubmitting || isFormationDemandee(formation.id)}
                 >
                   {isSubmitting ? 'Envoi en cours...' : 
-                   isFormationDemandee(formation.id) ? 'Demande envoyée' : 
+                   isFormationDemandee(formation.id) ? 'Demande en attente' : 
                    'Demander cette formation'}
                 </button>
               </div>
@@ -252,15 +289,14 @@ function CardDemandeFormation() {
         </div>
       )}
 
-<style>
-        {`
+      <style jsx>{`
         /* Styles généraux */
         .container {
           font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
           max-width: 1200px;
           margin: 0 auto;
           padding: 20px;
-          background-color: '#334155';
+          background-color: #f8fafc;
           min-height: 100vh;
         }
 
@@ -275,21 +311,6 @@ function CardDemandeFormation() {
           color: #1e40af;
           font-size: 2.2rem;
           margin-bottom: 10px;
-          position: relative;
-          display: inline-block;
-          padding-bottom: 15px;
-        }
-
-        .header h1::after {
-          content: "";
-          position: absolute;
-          bottom: 0;
-          left: 50%;
-          transform: translateX(-50%);
-          width: 60%;
-          height: 4px;
-          background: linear-gradient(90deg, #1e40af, #3b82f6);
-          border-radius: 2px;
         }
 
         .header p {
@@ -302,17 +323,11 @@ function CardDemandeFormation() {
           background-color: white;
           border-radius: 12px;
           padding: 20px;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
           margin-bottom: 30px;
-          display: flex;
-          flex-wrap: wrap;
-          gap: 20px;
-          align-items: center;
         }
 
         .search-container {
-          flex: 1;
-          min-width: 200px;
           position: relative;
         }
 
@@ -322,13 +337,6 @@ function CardDemandeFormation() {
           border: 1px solid #d1d5db;
           border-radius: 8px;
           font-size: 1rem;
-          transition: all 0.3s ease;
-        }
-
-        .search-input:focus {
-          outline: none;
-          border-color: #3b82f6;
-          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
         }
 
         .search-icon {
@@ -336,7 +344,6 @@ function CardDemandeFormation() {
           left: 15px;
           top: 50%;
           transform: translateY(-50%);
-          color: #9ca3af;
         }
 
         /* Grille de formations */
@@ -351,21 +358,17 @@ function CardDemandeFormation() {
           background-color: white;
           border-radius: 12px;
           overflow: hidden;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-          transition: transform 0.3s ease, box-shadow 0.3s ease;
-          display: flex;
-          flex-direction: column;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+          transition: transform 0.3s ease;
         }
 
         .formation-card:hover {
           transform: translateY(-5px);
-          box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
 
         .formation-header {
           padding: 20px;
           background-color: #ebf5ff;
-          border-bottom: 1px solid #dbeafe;
           display: flex;
           justify-content: space-between;
           align-items: center;
@@ -374,7 +377,6 @@ function CardDemandeFormation() {
         .formation-header h3 {
           margin: 0;
           color: #1e40af;
-          font-size: 1.2rem;
         }
 
         .places-badge {
@@ -393,19 +395,16 @@ function CardDemandeFormation() {
 
         .formation-content {
           padding: 20px;
-          flex-grow: 1;
         }
 
         .formation-description {
-          margin-top: 0;
           margin-bottom: 20px;
           color: #4b5563;
-          line-height: 1.5;
         }
 
         .formation-details {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+          grid-template-columns: repeat(2, 1fr);
           gap: 15px;
         }
 
@@ -415,15 +414,9 @@ function CardDemandeFormation() {
           gap: 10px;
         }
 
-        .detail-icon {
-          font-size: 1.2rem;
-          color: #6b7280;
-        }
-
         .formation-footer {
           padding: 15px 20px;
           background-color: #f9fafb;
-          border-top: 1px solid #e5e7eb;
         }
 
         .request-btn {
@@ -433,38 +426,20 @@ function CardDemandeFormation() {
           color: white;
           border: none;
           border-radius: 6px;
-          font-weight: 500;
           cursor: pointer;
-          transition: background-color 0.2s;
         }
 
         .request-btn:hover:not(:disabled) {
           background-color: #1d4ed8;
         }
-        
-        .request-btn.disabled, 
+
         .request-btn:disabled {
           background-color: #9ca3af;
           cursor: not-allowed;
         }
-        
+
         .request-btn.demande-envoyee {
           background-color: #9ca3af;
-          cursor: not-allowed;
-        }
-
-        .no-formations {
-          grid-column: 1 / -1;
-          padding: 40px;
-          text-align: center;
-          background-color: white;
-          border-radius: 12px;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
-
-        .no-formations p {
-          color: #6b7280;
-          font-size: 1.1rem;
         }
 
         /* Pagination */
@@ -474,7 +449,6 @@ function CardDemandeFormation() {
           align-items: center;
           gap: 15px;
           margin-top: 30px;
-          margin-bottom: 30px;
         }
 
         .page-btn {
@@ -482,25 +456,12 @@ function CardDemandeFormation() {
           background-color: white;
           border: 1px solid #d1d5db;
           border-radius: 6px;
-          color: #4b5563;
-          font-weight: 500;
           cursor: pointer;
-          transition: all 0.2s;
-        }
-
-        .page-btn:hover:not(:disabled) {
-          background-color: #f3f4f6;
-          border-color: #9ca3af;
         }
 
         .page-btn:disabled {
           opacity: 0.5;
           cursor: not-allowed;
-        }
-
-        .page-info {
-          color: #4b5563;
-          font-weight: 500;
         }
 
         /* Toast de confirmation */
@@ -510,12 +471,10 @@ function CardDemandeFormation() {
           left: 50%;
           transform: translateX(-50%);
           border-radius: 12px;
-          padding: 5px;
-          box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+          padding: 15px 20px;
+          box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
           z-index: 1000;
           animation: slideUp 0.3s ease, fadeOut 0.5s ease 2.5s;
-          min-width: 300px;
-          max-width: 600px;
         }
 
         .toast-message.success {
@@ -532,35 +491,8 @@ function CardDemandeFormation() {
           display: flex;
           align-items: center;
           gap: 12px;
-          padding: 15px 20px;
         }
 
-        .toast-icon {
-          font-size: 1.2rem;
-          background-color: white;
-          width: 30px;
-          height: 30px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-        }
-
-        .toast-message.success .toast-icon {
-          color: #34d399;
-        }
-
-        .toast-message.error .toast-icon {
-          color: #f87171;
-        }
-
-        .toast-content p {
-          margin: 0;
-          flex-grow: 1;
-        }
-
-        /* Animations */
         @keyframes slideUp {
           from {
             transform: translate(-50%, 100%);
@@ -581,23 +513,49 @@ function CardDemandeFormation() {
           }
         }
 
-        /* Responsive */
-        @media (max-width: 768px) {
-          .formations-grid {
-            grid-template-columns: 1fr;
-          }
-
-          .filters {
-            flex-direction: column;
-            align-items: stretch;
-          }
-          
-          .toast-message {
-            width: 90%;
-          }
+        /* Loading */
+        .loading-container {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          height: 200px;
         }
-        `}
-      </style>
+
+        .loading-spinner {
+          border: 4px solid #f3f3f3;
+          border-top: 4px solid #3498db;
+          border-radius: 50%;
+          width: 40px;
+          height: 40px;
+          animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+
+        /* Error */
+        .error-container {
+          text-align: center;
+          padding: 20px;
+        }
+
+        .error-message {
+          color: #b91c1c;
+          margin-bottom: 15px;
+        }
+
+        .retry-btn {
+          padding: 8px 16px;
+          background-color: #2563eb;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+        }
+      `}</style>
     </div>
   );
 }

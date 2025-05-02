@@ -252,17 +252,16 @@ export default function GestionFormations() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Charger les données depuis l'API
   useEffect(() => {
     const fetchFormations = async () => {
       try {
         const response = await axios.get('/alldemandeformation');
-        // Transformer les données pour correspondre à notre structure
         const formattedData = response.data.map(item => ({
           _id: item._id,
           nom: item.nom,
           prenom: item.prenom,
           titre: item.nomFormation,
+          idFormation: item.idFormation._id,
           statut: item.statut.toLowerCase().replace(' ', '_'),
           dateDemande: item.dateDemande
         }));
@@ -280,13 +279,11 @@ export default function GestionFormations() {
     fetchFormations();
   }, []);
 
-  // Formater la date pour l'affichage
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('fr-FR');
   };
 
-  // Filtrage des formations basé sur la recherche
   const filtrerFormations = (terme) => {
     setRecherche(terme);
     if (!terme.trim()) {
@@ -306,7 +303,6 @@ export default function GestionFormations() {
     setFormationsFiltrees(resultats);
   };
 
-  // Mapping des statuts API vers les statuts d'affichage
   const mapStatus = (status) => {
     switch (status) {
       case 'accepte':
@@ -323,22 +319,33 @@ export default function GestionFormations() {
     }
   };
 
-  // Mettre à jour le statut d'une formation
   const updateStatut = async (id, nouveauStatut) => {
     try {
-      // Convertir notre statut vers le format attendu par le backend
       const backendStatut = nouveauStatut === 'accepte' ? 'Approuvée' : 
                           nouveauStatut === 'refuse' ? 'Rejetée' : 'En attente';
       
-      await axios.put(`/api/demandeformation/${id}`, { statut: backendStatut });
+      const demande = formations.find(f => f._id === id);
+      if (!demande) {
+        throw new Error("Demande non trouvée");
+      }
+
+      await axios.put(`/demandeformation/${id}`, { statut: backendStatut });
       
-      // Mise à jour de l'état local
+      if (nouveauStatut === 'accepte') {
+        try {
+          await axios.put(`/updateformation/${demande.idFormation}`, {
+            statut: 'Acceptée',
+            $inc: { nbinscrits: 1 }
+          });
+        } catch (err) {
+          console.error("Erreur lors de la mise à jour de la formation:", err);
+          throw new Error("La demande a été acceptée mais la formation n'a pas pu être mise à jour");
+        }
+      }
+
       const formationsUpdated = formations.map(formation => {
         if (formation._id === id) {
-          return {
-            ...formation, 
-            statut: nouveauStatut
-          };
+          return { ...formation, statut: nouveauStatut };
         }
         return formation;
       });
@@ -347,7 +354,6 @@ export default function GestionFormations() {
       setFormationsFiltrees(
         formationsUpdated.filter(formation => {
           if (recherche.trim() === "") return true;
-          
           const termeLower = recherche.toLowerCase();
           return (
             formation.nom.toLowerCase().includes(termeLower) ||
@@ -360,15 +366,13 @@ export default function GestionFormations() {
       alert(`La formation a été ${mapStatus(nouveauStatut).toLowerCase()}.`);
     } catch (err) {
       console.error("Erreur lors de la mise à jour:", err);
-      alert("Erreur lors de la mise à jour de la formation.");
+      alert(err.message || "Erreur lors de la mise à jour de la formation.");
     }
   };
 
-  // Actions des boutons
   const handleAccepter = (id) => updateStatut(id, 'accepte');
   const handleRefuser = (id) => updateStatut(id, 'refuse');
 
-  // Rendu du statut avec l'icône appropriée
   const renderStatus = (status) => {
     const displayStatus = mapStatus(status);
     
@@ -404,17 +408,12 @@ export default function GestionFormations() {
 
   return (
     <>
-      {/* Injection du CSS encapsulé */}
       <style>{encapsulatedStyles}</style>
       
       <div className="gf-container">
-        {/* En-tête et recherche */}
         <div className="gf-header-section">
-          <h1 className="gf-title">
-            Gestion des Formations
-          </h1>
+          <h1 className="gf-title">Gestion des Formations</h1>
           
-          {/* Barre de recherche */}
           <div className="gf-search-container">
             <div className="gf-search-icon">
               <Search size={18} />
@@ -429,14 +428,10 @@ export default function GestionFormations() {
           </div>
         </div>
 
-        {/* Affichage des erreurs */}
         {error && (
-          <div className="gf-error">
-            {error}
-          </div>
+          <div className="gf-error">{error}</div>
         )}
 
-        {/* Tableau des formations */}
         <div className="gf-table-container">
           <table className="gf-table">
             <thead>
@@ -509,7 +504,6 @@ export default function GestionFormations() {
           </table>
         </div>
         
-        {/* Information sur les résultats */}
         <div className="gf-footer">
           Affichage de {formationsFiltrees.length} sur {formations.length} formations
         </div>
