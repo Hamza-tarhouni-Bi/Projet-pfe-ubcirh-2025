@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
-import { Search, AlertCircle, Check, X, Eye } from "lucide-react";
+import { Search, AlertCircle, Check, X } from "lucide-react";
 import axios from "axios";
 
-// CSS encapsulé avec préfixe "gf-" (Gestion Formations)
 const encapsulatedStyles = `
   .gf-container {
     background: white;
@@ -243,158 +242,109 @@ const encapsulatedStyles = `
     padding: 1rem;
     color: #6b7280;
   }
+
+  .gf-id {
+    font-size: 0.75rem;
+    color: #6b7280;
+    font-family: monospace;
+  }
 `;
 
-export default function GestionFormations() {
-  const [formations, setFormations] = useState([]);
-  const [formationsFiltrees, setFormationsFiltrees] = useState([]);
-  const [recherche, setRecherche] = useState("");
-  const [error, setError] = useState(null);
+const GestionFormations = () => {
+  const [demandes, setDemandes] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchFormations = async () => {
+    const fetchDemandes = async () => {
       try {
         const response = await axios.get('/alldemandeformation');
-        const formattedData = response.data.map(item => ({
-          _id: item._id,
-          nom: item.nom,
-          prenom: item.prenom,
-          titre: item.nomFormation,
-          idFormation: item.idFormation._id,
-          statut: item.statut.toLowerCase().replace(' ', '_'),
-          dateDemande: item.dateDemande
-        }));
-        
-        setFormations(formattedData);
-        setFormationsFiltrees(formattedData);
-        setLoading(false);
+        setDemandes(response.data);
       } catch (err) {
-        console.error("Erreur lors du chargement des formations:", err);
-        setError("Erreur lors du chargement des formations");
+        setError("Erreur lors du chargement des demandes");
+        console.error(err);
+      } finally {
         setLoading(false);
       }
     };
 
-    fetchFormations();
+    fetchDemandes();
   }, []);
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('fr-FR');
-  };
+  const filteredDemandes = demandes.filter(demande => {
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      demande.nom.toLowerCase().includes(searchLower) ||
+      demande.prenom.toLowerCase().includes(searchLower) ||
+      demande.nomFormation.toLowerCase().includes(searchLower) ||
+      demande._id.toLowerCase().includes(searchLower)
+    );
+  });
 
-  const filtrerFormations = (terme) => {
-    setRecherche(terme);
-    if (!terme.trim()) {
-      setFormationsFiltrees(formations);
-      return;
-    }
-    
-    const termeLower = terme.toLowerCase();
-    const resultats = formations.filter(formation => {
-      return (
-        formation.nom.toLowerCase().includes(termeLower) ||
-        formation.prenom.toLowerCase().includes(termeLower) ||
-        formation.titre.toLowerCase().includes(termeLower)
-      );
-    });
-    
-    setFormationsFiltrees(resultats);
-  };
-
-  const mapStatus = (status) => {
-    switch (status) {
-      case 'accepte':
-      case 'approuvée':
-        return 'Accepté';
-      case 'en_cours':
-      case 'en_attente':
-        return 'En cours';
-      case 'refuse':
-      case 'rejetée':
-        return 'Refusé';
-      default:
-        return status;
-    }
-  };
-
-  const updateStatut = async (id, nouveauStatut) => {
+  const updateStatut = async (_id, newStatus) => {
     try {
-      const backendStatut = nouveauStatut === 'accepte' ? 'Approuvée' : 
-                          nouveauStatut === 'refuse' ? 'Rejetée' : 'En attente';
-      
-      const demande = formations.find(f => f._id === id);
-      if (!demande) {
-        throw new Error("Demande non trouvée");
-      }
+      const statusMap = {
+        accepte: 'Approuvée',
+        refuse: 'Rejetée',
+        en_cours: 'En attente'
+      };
 
-      await axios.put(`/demandeformation/${id}`, { statut: backendStatut });
-      
-      if (nouveauStatut === 'accepte') {
+      const backendStatus = statusMap[newStatus];
+      if (!backendStatus) throw new Error("Statut invalide");
+
+      // Trouver la demande complète
+      const demande = demandes.find(d => d._id === _id);
+      if (!demande) throw new Error("Demande introuvable");
+
+      // Mettre à jour le statut de la demande
+      await axios.put(`/updatedemandeformation/${_id}`, { statut: backendStatus });
+
+      // Si la demande est acceptée, incrémenter le nombre d'inscrits
+      if (newStatus === 'accepte' && demande.idFormation) {
         try {
-          await axios.put(`/updateformation/${demande.idFormation}`, {
-            statut: 'Acceptée',
-            $inc: { nbinscrits: 1 }
+          await axios.put(`/updatenbinscrit/${demande.idFormation}`, {
+            action: 'increment'
           });
         } catch (err) {
-          console.error("Erreur lors de la mise à jour de la formation:", err);
-          throw new Error("La demande a été acceptée mais la formation n'a pas pu être mise à jour");
+          console.error("Erreur lors de la mise à jour du nombre d'inscrits:", err);
+          throw new Error("La demande a été acceptée mais l'incrémentation du nombre d'inscrits a échoué");
         }
       }
 
-      const formationsUpdated = formations.map(formation => {
-        if (formation._id === id) {
-          return { ...formation, statut: nouveauStatut };
-        }
-        return formation;
-      });
-      
-      setFormations(formationsUpdated);
-      setFormationsFiltrees(
-        formationsUpdated.filter(formation => {
-          if (recherche.trim() === "") return true;
-          const termeLower = recherche.toLowerCase();
-          return (
-            formation.nom.toLowerCase().includes(termeLower) ||
-            formation.prenom.toLowerCase().includes(termeLower) ||
-            formation.titre.toLowerCase().includes(termeLower)
-          );
-        })
-      );
-      
-      alert(`La formation a été ${mapStatus(nouveauStatut).toLowerCase()}.`);
+      // Mettre à jour le state
+      setDemandes(prev => prev.map(item => 
+        item._id === _id ? { ...item, statut: backendStatus } : item
+      ));
+
+      alert(`Statut mis à jour avec succès !`);
     } catch (err) {
-      console.error("Erreur lors de la mise à jour:", err);
-      alert(err.message || "Erreur lors de la mise à jour de la formation.");
+      console.error("Erreur de mise à jour:", err);
+      alert("Échec de la mise à jour: " + (err.response?.data?.message || err.message));
     }
   };
 
-  const handleAccepter = (id) => updateStatut(id, 'accepte');
-  const handleRefuser = (id) => updateStatut(id, 'refuse');
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('fr-FR');
+  };
 
-  const renderStatus = (status) => {
-    const displayStatus = mapStatus(status);
-    
+  const renderStatusBadge = (status) => {
     switch (status) {
-      case "accepte":
-      case "approuvée":
+      case 'Approuvée':
         return (
           <div className="gf-status-badge gf-status-accepte">
             <Check size={14} />
             <span>Accepté</span>
           </div>
         );
-      case "en_cours":
-      case "en_attente":
+      case 'En attente':
         return (
           <div className="gf-status-badge gf-status-en-cours">
             <AlertCircle size={14} />
             <span>En cours</span>
           </div>
         );
-      case "refuse":
-      case "rejetée":
+      case 'Rejetée':
         return (
           <div className="gf-status-badge gf-status-refuse">
             <X size={14} />
@@ -402,7 +352,7 @@ export default function GestionFormations() {
           </div>
         );
       default:
-        return null;
+        return <div>{status}</div>;
     }
   };
 
@@ -412,7 +362,7 @@ export default function GestionFormations() {
       
       <div className="gf-container">
         <div className="gf-header-section">
-          <h1 className="gf-title">Gestion des Formations</h1>
+          <h1 className="gf-title">Gestion des Demandes de Formation</h1>
           
           <div className="gf-search-container">
             <div className="gf-search-icon">
@@ -421,93 +371,95 @@ export default function GestionFormations() {
             <input
               type="text"
               className="gf-search-input"
-              placeholder="Rechercher par nom, prénom ou titre de formation..."
-              value={recherche}
-              onChange={(e) => filtrerFormations(e.target.value)}
+              placeholder="Rechercher par ID, nom, prénom ou formation..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
         </div>
 
-        {error && (
-          <div className="gf-error">{error}</div>
-        )}
-
-        <div className="gf-table-container">
-          <table className="gf-table">
-            <thead>
-              <tr>
-                <th className="gf-th">Nom</th>
-                <th className="gf-th">Prénom</th>
-                <th className="gf-th">Titre de Formation</th>
-                <th className="gf-th">Statut</th>
-                <th className="gf-th">Date de demande</th>
-                <th className="gf-th">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
+        {loading ? (
+          <div className="gf-loading">Chargement en cours...</div>
+        ) : error ? (
+          <div className="gf-loading" style={{ color: '#b91c1c' }}>{error}</div>
+        ) : (
+          <div className="gf-table-container">
+            <table className="gf-table">
+              <thead>
                 <tr>
-                  <td colSpan="6" className="gf-td gf-loading">
-                    Chargement en cours...
-                  </td>
+                  <th className="gf-th">ID</th>
+                  <th className="gf-th">Nom</th>
+                  <th className="gf-th">Prénom</th>
+                  <th className="gf-th">Formation</th>
+                  <th className="gf-th">Statut</th>
+                  <th className="gf-th">Date</th>
+                  <th className="gf-th">Actions</th>
                 </tr>
-              ) : formationsFiltrees.length === 0 ? (
-                <tr>
-                  <td colSpan="6" className="gf-td" style={{ textAlign: 'center' }}>
-                    {recherche ? "Aucune formation ne correspond à votre recherche" : "Aucune formation trouvée"}
-                  </td>
-                </tr>
-              ) : (
-                formationsFiltrees.map((formation) => (
-                  <tr key={formation._id} className="gf-tr">
-                    <td className="gf-td">
-                      <div className="gf-nom">{formation.nom}</div>
+              </thead>
+              <tbody>
+                {filteredDemandes.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="gf-td" style={{ textAlign: 'center' }}>
+                      Aucune demande trouvée
                     </td>
-                    <td className="gf-td">
-                      <div className="gf-prenom">{formation.prenom}</div>
-                    </td>
-                    <td className="gf-td">
-                      <div className="gf-formation-titre">{formation.titre}</div>
-                    </td>
-                    <td className="gf-td">
-                      {renderStatus(formation.statut)}
-                    </td>
-                    <td className="gf-td">
-                      <div className="gf-date">{formatDate(formation.dateDemande)}</div>
-                    </td>
-                    <td className="gf-td">
-                      <div className="gf-actions">
-                        {(formation.statut === "en_cours" || formation.statut === "en_attente") && (
-                          <>
-                            <button 
-                              className="gf-action-button gf-action-button-accepter" 
-                              onClick={() => handleAccepter(formation._id)}
+                  </tr>
+                ) : (
+                  filteredDemandes.map(demande => (
+                    <tr key={demande._id} className="gf-tr">
+                      <td className="gf-td">
+                        <div className="gf-id" title={demande._id}>
+                          {demande._id.substring(0, 8)}...
+                        </div>
+                      </td>
+                      <td className="gf-td">
+                        <div className="gf-nom">{demande.nom}</div>
+                      </td>
+                      <td className="gf-td">
+                        <div className="gf-prenom">{demande.prenom}</div>
+                      </td>
+                      <td className="gf-td">
+                        <div className="gf-formation-titre">{demande.nomFormation}</div>
+                      </td>
+                      <td className="gf-td">
+                        {renderStatusBadge(demande.statut)}
+                      </td>
+                      <td className="gf-td">
+                        <div className="gf-date">{formatDate(demande.dateDemande)}</div>
+                      </td>
+                      <td className="gf-td">
+                        {demande.statut === 'En attente' && (
+                          <div className="gf-actions">
+                            <button
+                              className="gf-action-button gf-action-button-accepter"
+                              onClick={() => updateStatut(demande._id, 'accepte')}
                               title="Accepter"
                             >
                               <Check size={16} />
                             </button>
-                            <button 
-                              className="gf-action-button gf-action-button-refuser" 
-                              onClick={() => handleRefuser(formation._id)}
+                            <button
+                              className="gf-action-button gf-action-button-refuser"
+                              onClick={() => updateStatut(demande._id, 'refuse')}
                               title="Refuser"
                             >
                               <X size={16} />
                             </button>
-                          </>
+                          </div>
                         )}
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
         
         <div className="gf-footer">
-          Affichage de {formationsFiltrees.length} sur {formations.length} formations
+          {!loading && !error && `Affichage de ${filteredDemandes.length} demandes sur ${demandes.length}`}
         </div>
       </div>
     </>
   );
-}
+};
+
+export default GestionFormations;

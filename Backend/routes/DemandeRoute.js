@@ -45,6 +45,7 @@ const upload = multer({
 // Routes pour les demandes de formation
 router.post('/adddemandeformation', requireAuthPersonnel, DemandeFormationCtrl.addDemandeFormation);
 router.get('/alldemandeformation', requireAuthPersonnel, DemandeFormationCtrl.getDemandeFormation);
+router.put('/updatedemandeformation/:id', requireAuthPersonnel, DemandeFormationCtrl.updateStatutDemande);
 
 // Routes pour les demandes d'avance
 router.post('/adddemandeavance', requireAuthPersonnel, DemandeAvanceCtrl.addDemandeAvance);

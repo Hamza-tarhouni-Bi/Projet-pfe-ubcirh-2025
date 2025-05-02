@@ -56,3 +56,37 @@ module.exports.getDemandeFormation = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+// Mettre à jour le statut d'une demande de formation
+exports.updateStatutDemande = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { statut } = req.body;
+
+    // Validation simple
+    if (!['En attente', 'Approuvée', 'Rejetée'].includes(statut)) {
+      return res.status(400).json({ message: "Statut invalide" });
+    }
+
+    const updatedDemande = await DemandeFormation.findByIdAndUpdate(
+      id,
+      { statut },
+      { new: true }
+    );
+
+    if (!updatedDemande) {
+      return res.status(404).json({ message: "Demande non trouvée" });
+    }
+
+    res.status(200).json({
+      message: "Statut mis à jour avec succès",
+      demande: updatedDemande
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Erreur serveur",
+      error: error.message
+    });
+  }
+};
+

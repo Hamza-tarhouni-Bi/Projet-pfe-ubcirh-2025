@@ -63,3 +63,32 @@ module.exports.deleteFormation = async (req, res) => {
       res.status(500).json({ error: error.message });
     }
   };
+  module.exports.updateNbInscrits = async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { action } = req.body; // 'increment' ou 'decrement'
+  
+      let update = {};
+      if (action === 'increment') {
+        update = { $inc: { nbinscrits: 1 } };
+      } else if (action === 'decrement') {
+        update = { $inc: { nbinscrits: -1 } };
+      } else {
+        throw new Error("Action must be 'increment' or 'decrement'");
+      }
+  
+      const updatedFormation = await formationModal.findByIdAndUpdate(
+        id,
+        update,
+        { new: true }
+      );
+  
+      if (!updatedFormation) {
+        throw new Error("Formation not found");
+      }
+  
+      res.status(200).json(updatedFormation);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  };
