@@ -13,7 +13,7 @@ const DemandeFormationSchema = new mongoose.Schema({
   },
   email:{
     type:String,
-   // required:true
+    required:true
   },
   nomFormation: {
     type: String,

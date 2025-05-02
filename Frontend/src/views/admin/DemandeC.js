@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
-import { Search, AlertCircle, Check, X, Eye } from "lucide-react";
+import { Search, AlertCircle, CheckCircle2, XCircle, Eye, Filter, ChevronDown, Clock, Check, X } from "lucide-react";
 
-// CSS encapsulé avec préfixe "gdc-" (Gestion Demandes Congé)
 const encapsulatedStyles = `
   .gdc-container {
     background: white;
@@ -24,9 +23,15 @@ const encapsulatedStyles = `
     color: #1f2937;
   }
   
+  .gdc-search-filter-container {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  
   .gdc-search-container {
     position: relative;
-    margin-bottom: 1rem;
+    flex-grow: 1;
   }
   
   .gdc-search-icon {
@@ -50,6 +55,31 @@ const encapsulatedStyles = `
     outline: none;
     border-color: #14b8a6;
     box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.2);
+  }
+  
+  .gdc-filter-container {
+    position: relative;
+    min-width: 180px;
+  }
+  
+  .gdc-filter-select {
+    appearance: none;
+    width: 100%;
+    padding: 0.5rem 2.5rem 0.5rem 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    background-color: white;
+    font-size: 0.875rem;
+    cursor: pointer;
+  }
+  
+  .gdc-filter-icon {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+    pointer-events: none;
   }
   
   .gdc-table-container {
@@ -92,12 +122,6 @@ const encapsulatedStyles = `
     font-size: 0.875rem;
     font-weight: 500;
     color: #111827;
-  }
-  
-  .gdc-employee-dept {
-    font-size: 0.75rem;
-    color: #6b7280;
-    margin-top: 0.25rem;
   }
   
   .gdc-period {
@@ -144,8 +168,8 @@ const encapsulatedStyles = `
   .gdc-status-badge {
     display: flex;
     align-items: center;
-    gap: 0.25rem;
-    padding: 0.25rem 0.5rem;
+    gap: 0.5rem;
+    padding: 0.375rem 0.75rem;
     border-radius: 9999px;
     font-size: 0.75rem;
     font-weight: 500;
@@ -153,18 +177,18 @@ const encapsulatedStyles = `
   }
   
   .gdc-status-approved {
-    background-color: #dcfce7;
-    color: #166534;
+    background-color: #ecfdf5;
+    color: #059669;
   }
   
   .gdc-status-pending {
-    background-color: #fef3c7;
-    color: #92400e;
+    background-color: #fffbeb;
+    color: #d97706;
   }
   
   .gdc-status-rejected {
-    background-color: #fee2e2;
-    color: #b91c1c;
+    background-color: #fef2f2;
+    color: #dc2626;
   }
   
   .gdc-view-button {
@@ -187,119 +211,41 @@ const encapsulatedStyles = `
     border-color: #9ca3af;
   }
   
-  .gdc-view-button:focus {
-    outline: none;
-    border-color: #14b8a6;
-    ring: 2px solid #14b8a6;
-  }
-  
-  .gdc-motif-popup {
-    position: absolute;
-    z-index: 10;
-    margin-top: 0.5rem;
-    width: 18rem;
-    background-color: white;
-    border: 1px solid #e5e7eb;
-    border-radius: 0.375rem;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    padding: 1rem;
-    font-size: 0.875rem;
-    color: #374151;
-  }
-  
-  .gdc-motif-title {
-    font-size: 0.875rem;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-    color: #111827;
-  }
-  
-  .gdc-motif-text {
-    font-size: 0.875rem;
-    line-height: 1.25rem;
-    color: #4b5563;
-  }
-  
-  .gdc-response-title {
-    font-size: 0.875rem;
-    font-weight: 600;
-    margin-top: 0.75rem;
-    margin-bottom: 0.25rem;
-    color: #111827;
-  }
-  
-  .gdc-response-text {
-    font-style: italic;
-    font-size: 0.875rem;
-    line-height: 1.25rem;
-    color: #4b5563;
-  }
-  
-  .gdc-footer {
-    padding: 1rem;
-    background-color: #f9fafb;
-    border-top: 1px solid #e5e7eb;
-    font-size: 0.875rem;
-    color: #6b7280;
-  }
-  
-  /* Styles pour les actions */
-  .gdc-actions {
-    display: flex;
-    gap: 0.5rem;
-  }
-  
   .gdc-action-button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 1.75rem;
-    height: 1.75rem;
-    border-radius: 0.375rem;
-    color: #6b7280;
-    background-color: white;
-    border: 1px solid #e5e7eb;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 8px;
+    color: white;
+    border: none;
     cursor: pointer;
     transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   }
   
   .gdc-action-button:hover {
-    background-color: #f9fafb;
-    color: #111827;
-    border-color: #d1d5db;
-  }
-  
-  .gdc-action-button-edit:hover {
-    color: #2563eb;
-    background-color: #eff6ff;
-    border-color: #bfdbfe;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   }
   
   .gdc-action-button-approve {
-    color: #047857;
+    background-color: #10b981;
   }
   
   .gdc-action-button-approve:hover {
-    color: #047857;
-    background-color: #ecfdf5;
-    border-color: #a7f3d0;
+    background-color: #059669;
   }
   
   .gdc-action-button-reject {
-    color: #b91c1c;
+    background-color: #ef4444;
   }
   
   .gdc-action-button-reject:hover {
-    color: #dc2626;
-    background-color: #fef2f2;
-    border-color: #fecaca;
+    background-color: #dc2626;
   }
   
-  .gdc-action-button-more {
-    position: relative;
-  }
-  
-  /* Styles pour le modal */
   .gdc-modal-overlay {
     position: fixed;
     top: 0;
@@ -416,7 +362,6 @@ const encapsulatedStyles = `
     border-top: 1px solid #e5e7eb;
     display: flex;
     justify-content: flex-end;
-    gap: 0.5rem;
   }
   
   .gdc-modal-button {
@@ -439,16 +384,6 @@ const encapsulatedStyles = `
     border-color: #9ca3af;
   }
   
-  .gdc-modal-button-primary {
-    background-color: #14b8a6;
-    color: white;
-    border: 1px solid transparent;
-  }
-  
-  .gdc-modal-button-primary:hover {
-    background-color: #0d9488;
-  }
-
   .gdc-loading {
     display: flex;
     justify-content: center;
@@ -466,18 +401,83 @@ const encapsulatedStyles = `
     margin: 1rem;
     text-align: center;
   }
+
+  .gdc-footer {
+    padding: 1rem 1.5rem;
+    background-color: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+    font-size: 0.875rem;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-radius: 0 0 8px 8px;
+  }
+
+  .gdc-count {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    color: #334155;
+  }
+
+  .gdc-count-icon {
+    color: #14b8a6;
+  }
+
+  /* Toast styles */
+  .gdc-toast-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+  }
+
+  .gdc-toast {
+    padding: 12px 24px;
+    border-radius: 8px;
+    color: white;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    animation: slideIn 0.3s ease-out;
+    margin-bottom: 10px;
+  }
+
+  .gdc-toast-success {
+    background-color: #10b981;
+  }
+
+  .gdc-toast-error {
+    background-color: #ef4444;
+  }
+
+  @keyframes slideIn {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
 `;
 
 export default function GestionConges() {
   const [demandes, setDemandes] = useState([]);
   const [demandesFiltrees, setDemandesFiltrees] = useState([]);
   const [recherche, setRecherche] = useState("");
+  const [filtreStatut, setFiltreStatut] = useState("Tous");
   const [demandeSelected, setDemandeSelected] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [toasts, setToasts] = useState([]);
 
-  // Charger les demandes depuis l'API
   useEffect(() => {
     const fetchDemandes = async () => {
       try {
@@ -498,14 +498,31 @@ export default function GestionConges() {
     fetchDemandes();
   }, []);
 
-  // Formater la date pour l'affichage
+  useEffect(() => {
+    let resultats = demandes;
+    
+    if (recherche.trim()) {
+      const termeLower = recherche.toLowerCase();
+      resultats = resultats.filter(demande => 
+        (demande.nom && demande.nom.toLowerCase().includes(termeLower)) ||
+        (demande.prenom && demande.prenom.toLowerCase().includes(termeLower)) ||
+        (demande.type && demande.type.toLowerCase().includes(termeLower))
+      );
+    }
+    
+    if (filtreStatut !== "Tous") {
+      resultats = resultats.filter(demande => demande.statut === filtreStatut);
+    }
+    
+    setDemandesFiltrees(resultats);
+  }, [recherche, filtreStatut, demandes]);
+
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);
     return date.toLocaleDateString('fr-FR');
   };
 
-  // Calculer la période entre deux dates
   const calculerPeriode = (dateDebut, dateFin) => {
     if (!dateDebut || !dateFin) return 'N/A';
     
@@ -517,152 +534,86 @@ export default function GestionConges() {
     return `${diffDays} jour${diffDays > 1 ? 's' : ''}`;
   };
 
-  // Filtrage des demandes basé sur la recherche
-  const filtrerDemandes = (terme) => {
-    setRecherche(terme);
-    if (!terme.trim()) {
-      setDemandesFiltrees(demandes);
-      return;
-    }
+  const showToast = (message, type = 'success') => {
+    const id = Date.now();
+    const newToast = { id, message, type };
     
-    const termeLower = terme.toLowerCase();
-    const resultats = demandes.filter(demande => {
-      return (
-        (demande.nom && demande.nom.toLowerCase().includes(termeLower)) ||
-        (demande.prenom && demande.prenom.toLowerCase().includes(termeLower)) ||
-        (demande.type && demande.type.toLowerCase().includes(termeLower))
-      );
-    });
+    setToasts(prev => [...prev, newToast]);
     
-    setDemandesFiltrees(resultats);
+    setTimeout(() => {
+      removeToast(id);
+    }, 3000);
   };
 
-  // Ouvrir le modal avec les détails de la demande
+  const removeToast = (id) => {
+    setToasts(prev => prev.filter(toast => toast.id !== id));
+  };
+
   const ouvrirModal = (demande) => {
     setDemandeSelected(demande);
     setModalVisible(true);
   };
 
-  // Fermer le modal
   const fermerModal = () => {
     setModalVisible(false);
     setDemandeSelected(null);
   };
 
-  // Fermer le modal si on clique à l'extérieur
-  useEffect(() => {
-    const handleEscape = (e) => {
-      if (e.key === 'Escape') {
-        fermerModal();
-      }
-    };
-
-    window.addEventListener('keydown', handleEscape);
-    return () => {
-      window.removeEventListener('keydown', handleEscape);
-    };
-  }, []);
-
-  // Actions des boutons 
-  const handleApprove = async (id) => {
+  const handleStatusUpdate = async (id, newStatus) => {
     try {
-      const response = await fetch(`/demandeConge/${id}/approve`, {
-        method: 'PUT'
+      const response = await fetch(`/updatedemandeconge/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ statut: newStatus })
       });
       
-      if (!response.ok) {
-        throw new Error('Erreur lors de l\'approbation');
-      }
+      if (!response.ok) throw new Error('Échec de la mise à jour');
       
-      // Mise à jour de l'état local
       const demandesUpdated = demandes.map(demande => {
         if (demande._id === id) {
-          return { ...demande, statut: 'Approuvée' };
+          return { ...demande, statut: newStatus };
         }
         return demande;
       });
       
       setDemandes(demandesUpdated);
-      setDemandesFiltrees(
-        demandesUpdated.filter(demande => {
-          if (recherche.trim() === "") return true;
-          
-          const termeLower = recherche.toLowerCase();
-          return (
-            (demande.nom && demande.nom.toLowerCase().includes(termeLower)) ||
-            (demande.prenom && demande.prenom.toLowerCase().includes(termeLower)) ||
-            (demande.type && demande.type.toLowerCase().includes(termeLower))
-          );
-        })
-      );
-      
-      alert(`La demande de congé a été approuvée.`);
+      showToast(`Demande ${newStatus === 'Approuvée' ? 'approuvée' : 'refusée'}`, 'success');
     } catch (err) {
-      console.error("Erreur lors de l'approbation:", err);
-      alert("Erreur lors de l'approbation de la demande.");
+      showToast('Erreur lors de la mise à jour', 'error');
+      console.error(err);
     }
   };
 
-  const handleReject = async (id) => {
-    try {
-      const response = await fetch(`/demandeConge/${id}/reject`, {
-        method: 'PUT'
-      });
-      
-      if (!response.ok) {
-        throw new Error('Erreur lors du refus');
-      }
-      
-      // Mise à jour de l'état local
-      const demandesUpdated = demandes.map(demande => {
-        if (demande._id === id) {
-          return { ...demande, statut: 'Rejetée' };
-        }
-        return demande;
-      });
-      
-      setDemandes(demandesUpdated);
-      setDemandesFiltrees(
-        demandesUpdated.filter(demande => {
-          if (recherche.trim() === "") return true;
-          
-          const termeLower = recherche.toLowerCase();
-          return (
-            (demande.nom && demande.nom.toLowerCase().includes(termeLower)) ||
-            (demande.prenom && demande.prenom.toLowerCase().includes(termeLower)) ||
-            (demande.type && demande.type.toLowerCase().includes(termeLower))
-          );
-        })
-      );
-      
-      alert(`La demande de congé a été refusée.`);
-    } catch (err) {
-      console.error("Erreur lors du refus:", err);
-      alert("Erreur lors du refus de la demande.");
-    }
+  const handleApprove = (id) => {
+    handleStatusUpdate(id, 'Approuvée');
   };
 
-  // Rendu du statut avec l'icône appropriée
+  const handleReject = (id) => {
+    handleStatusUpdate(id, 'Rejetée');
+  };
+
   const renderStatus = (status) => {
     switch (status) {
       case "Approuvée":
         return (
           <div className="gdc-status-badge gdc-status-approved">
-            <Check size={14} />
+            <CheckCircle2 size={16} />
             <span>Approuvé</span>
           </div>
         );
       case "En attente":
         return (
           <div className="gdc-status-badge gdc-status-pending">
-            <AlertCircle size={14} />
+            <Clock size={16} />
             <span>En attente</span>
           </div>
         );
       case "Rejetée":
         return (
           <div className="gdc-status-badge gdc-status-rejected">
-            <X size={14} />
+            <XCircle size={16} />
             <span>Refusé</span>
           </div>
         );
@@ -671,7 +622,6 @@ export default function GestionConges() {
     }
   };
 
-  // Rendu du type de congé avec le badge approprié
   const renderTypeConge = (type) => {
     switch (type) {
       case "Annuel":
@@ -718,39 +668,52 @@ export default function GestionConges() {
 
   return (
     <>
-      {/* Injection du CSS encapsulé */}
       <style>{encapsulatedStyles}</style>
       
       <div className="gdc-container">
-        {/* En-tête et recherche */}
         <div className="gdc-header-section">
           <h1 className="gdc-title">
             Gestion des Demandes de Congé
           </h1>
           
-          {/* Barre de recherche */}
-          <div className="gdc-search-container">
-            <div className="gdc-search-icon">
-              <Search size={18} />
+          <div className="gdc-search-filter-container">
+            <div className="gdc-search-container">
+              <div className="gdc-search-icon">
+                <Search size={18} />
+              </div>
+              <input
+                type="text"
+                className="gdc-search-input"
+                placeholder="Rechercher par nom, prénom ou type..."
+                value={recherche}
+                onChange={(e) => setRecherche(e.target.value)}
+              />
             </div>
-            <input
-              type="text"
-              className="gdc-search-input"
-              placeholder="Rechercher par nom, prénom ou type..."
-              value={recherche}
-              onChange={(e) => filtrerDemandes(e.target.value)}
-            />
+            
+            <div className="gdc-filter-container">
+              <select
+                className="gdc-filter-select"
+                value={filtreStatut}
+                onChange={(e) => setFiltreStatut(e.target.value)}
+              >
+                <option value="Tous">Tous les statuts</option>
+                <option value="En attente">En attente</option>
+                <option value="Approuvée">Approuvée</option>
+                <option value="Rejetée">Rejetée</option>
+              </select>
+              <div className="gdc-filter-icon">
+                <Filter size={18} />
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Affichage des erreurs */}
         {error && (
           <div className="gdc-error">
             {error}
           </div>
         )}
 
-        {/* Tableau des demandes */}
         <div className="gdc-table-container">
           <table className="gdc-table">
             <thead>
@@ -770,7 +733,7 @@ export default function GestionConges() {
               {demandesFiltrees.length === 0 ? (
                 <tr>
                   <td colSpan="9" className="gdc-td" style={{ textAlign: 'center' }}>
-                    {loading ? 'Chargement...' : 'Aucune demande de congé trouvée'}
+                    Aucune demande de congé trouvée
                   </td>
                 </tr>
               ) : (
@@ -788,17 +751,17 @@ export default function GestionConges() {
                     </td>
                     <td className="gdc-td">
                       <div className="gdc-date">
-                        {formatDate(demande.dateDebut)}
+                        {formatDate(demande.DateDebut)}
                       </div>
                     </td>
                     <td className="gdc-td">
                       <div className="gdc-date">
-                        {formatDate(demande.dateFin)}
+                        {formatDate(demande.DateFin)}
                       </div>
                     </td>
                     <td className="gdc-td">
                       <div className="gdc-period">
-                        {calculerPeriode(demande.dateDebut, demande.dateFin)}
+                        {calculerPeriode(demande.DateDebut, demande.DateFin)}
                       </div>
                     </td>
                     <td className="gdc-td">
@@ -845,13 +808,15 @@ export default function GestionConges() {
           </table>
         </div>
         
-        {/* Information sur les résultats */}
         <div className="gdc-footer">
-          Affichage de {demandesFiltrees.length} sur {demandes.length} demandes de congé
+          <div className="gdc-count">
+            <CheckCircle2 className="gdc-count-icon" size={16} />
+            <span>Affichage de {demandesFiltrees.length} sur {demandes.length} demandes</span>
+          </div>
+          
         </div>
       </div>
 
-      {/* Modal pour afficher le détail de la demande */}
       {modalVisible && demandeSelected && (
         <div className="gdc-modal-overlay" onClick={fermerModal}>
           <div className="gdc-modal" onClick={(e) => e.stopPropagation()}>
@@ -883,16 +848,16 @@ export default function GestionConges() {
                 </div>
                 <div className="gdc-modal-info-item">
                   <span className="gdc-modal-info-label">Date début</span>
-                  <span className="gdc-modal-info-value">{formatDate(demandeSelected.dateDebut)}</span>
+                  <span className="gdc-modal-info-value">{formatDate(demandeSelected.DateDebut)}</span>
                 </div>
                 <div className="gdc-modal-info-item">
                   <span className="gdc-modal-info-label">Date fin</span>
-                  <span className="gdc-modal-info-value">{formatDate(demandeSelected.dateFin)}</span>
+                  <span className="gdc-modal-info-value">{formatDate(demandeSelected.DateFin)}</span>
                 </div>
                 <div className="gdc-modal-info-item">
                   <span className="gdc-modal-info-label">Période</span>
                   <span className="gdc-modal-info-value">
-                    {calculerPeriode(demandeSelected.dateDebut, demandeSelected.dateFin)}
+                    {calculerPeriode(demandeSelected.DateDebut, demandeSelected.DateFin)}
                   </span>
                 </div>
                 <div className="gdc-modal-info-item">
@@ -920,42 +885,23 @@ export default function GestionConges() {
               <button className="gdc-modal-button gdc-modal-button-secondary" onClick={fermerModal}>
                 Fermer
               </button>
-              {demandeSelected.statut === "En attente" && (
-                <>
-                  <button 
-                    className="gdc-modal-button" 
-                    onClick={() => {
-                      handleReject(demandeSelected._id);
-                      fermerModal();
-                    }}
-                    style={{ 
-                      backgroundColor: "#fee2e2", 
-                      color: "#b91c1c",
-                      borderColor: "#fecaca" 
-                    }}
-                  >
-                    Refuser
-                  </button>
-                  <button 
-                    className="gdc-modal-button" 
-                    onClick={() => {
-                      handleApprove(demandeSelected._id);
-                      fermerModal();
-                    }}
-                    style={{ 
-                      backgroundColor: "#dcfce7", 
-                      color: "#166534",
-                      borderColor: "#86efac" 
-                    }}
-                  >
-                    Approuver
-                  </button>
-                </>
-              )}
             </div>
           </div>
         </div>
       )}
+
+      <div className="gdc-toast-container">
+        {toasts.map(toast => (
+          <div 
+            key={toast.id} 
+            className={`gdc-toast gdc-toast-${toast.type}`}
+            onClick={() => removeToast(toast.id)}
+          >
+            {toast.type === 'success' ? <Check size={18} /> : <X size={18} />}
+            {toast.message}
+          </div>
+        ))}
+      </div>
     </>
   );
 }

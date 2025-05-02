@@ -18,11 +18,11 @@ const DemandeCongeSchema = new mongoose.Schema({
   },
   DateDebut: {
     type: Date,
-    required: true
+    required: [true, 'La date de début est obligatoire']
   },
   DateFin: {
     type: Date,
-    required: true
+    required: [true, 'La date de fin est obligatoire']
   },
   Duree: {
     type: Number
@@ -32,19 +32,17 @@ const DemandeCongeSchema = new mongoose.Schema({
     enum: ['En attente', 'Approuvée', 'Rejetée'],
     default: 'En attente'
   },
-  type: {
-    type: String,
-    required: [true, 'Le type est obligatoire']
-  },
+  
   motif: {
     type: String,
     required: [true, 'Le motif est obligatoire']
   }
+ 
 }, {
   timestamps: true
 });
 
-// ✅ Middleware pour calculer la durée automatiquement
+// Middleware pour calculer la durée automatiquement
 DemandeCongeSchema.pre('save', function (next) {
   if (this.DateDebut && this.DateFin) {
     const diffTime = this.DateFin.getTime() - this.DateDebut.getTime();

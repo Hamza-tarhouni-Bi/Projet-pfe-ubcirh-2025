@@ -13,6 +13,7 @@ function CardDemandeFormation() {
   const [confirmationMessage, setConfirmationMessage] = useState('');
   const [userInfo, setUserInfo] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [demandesEnvoyees, setDemandesEnvoyees] = useState([]);
 
   // Récupérer les informations de l'utilisateur connecté
   useEffect(() => {
@@ -81,6 +82,10 @@ function CardDemandeFormation() {
     return new Date(dateString).toLocaleDateString('fr-FR', options);
   };
 
+  const isFormationDemandee = (formationId) => {
+    return demandesEnvoyees.includes(formationId);
+  };
+
   const handleRequestFormation = async (formation) => {
     if (!userInfo) {
       setError("Veuillez vous reconnecter");
@@ -98,14 +103,17 @@ function CardDemandeFormation() {
         prenom: userInfo.prenom || '',
         email: userInfo.email || '',
         nomFormation: formation.titre || '',
-        idFormation: formation.id || '',  // Added formation ID
-        idUser: userInfo._id || ''        // Added user ID if needed
+        idFormation: formation.id || '',
+        idUser: userInfo._id || ''
       }, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
+      
+      // Ajouter l'id de la formation à la liste des demandes envoyées
+      setDemandesEnvoyees(prev => [...prev, formation.id]);
       
       setConfirmationMessage(`Demande envoyée pour "${formation.titre}" !`);
       setShowConfirmation(true);
@@ -193,11 +201,13 @@ function CardDemandeFormation() {
               
               <div className="formation-footer">
                 <button 
-                  className="request-btn"
+                  className={`request-btn ${isFormationDemandee(formation.id) ? 'demande-envoyee' : ''}`}
                   onClick={() => handleRequestFormation(formation)}
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || isFormationDemandee(formation.id)}
                 >
-                  {isSubmitting ? 'Envoi en cours...' : 'Demander cette formation'}
+                  {isSubmitting ? 'Envoi en cours...' : 
+                   isFormationDemandee(formation.id) ? 'Demande envoyée' : 
+                   'Demander cette formation'}
                 </button>
               </div>
             </div>
@@ -432,12 +442,13 @@ function CardDemandeFormation() {
           background-color: #1d4ed8;
         }
         
-        .request-btn.disabled {
+        .request-btn.disabled, 
+        .request-btn:disabled {
           background-color: #9ca3af;
           cursor: not-allowed;
         }
         
-        .request-btn:disabled {
+        .request-btn.demande-envoyee {
           background-color: #9ca3af;
           cursor: not-allowed;
         }
@@ -547,63 +558,6 @@ function CardDemandeFormation() {
         .toast-content p {
           margin: 0;
           flex-grow: 1;
-        }
-
-        /* Historique des demandes */
-        .demandes-section {
-          background-color: white;
-          border-radius: 12px;
-          padding: 20px;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-          margin-top: 40px;
-        }
-
-        .demandes-section h2 {
-          color: #1e40af;
-          margin-top: 0;
-          margin-bottom: 20px;
-          font-size: 1.5rem;
-        }
-
-        .demandes-list table {
-          width: 100%;
-          border-collapse: collapse;
-        }
-
-        .demandes-list th {
-          text-align: left;
-          padding: 12px;
-          border-bottom: 2px solid #e5e7eb;
-          color: #4b5563;
-          font-weight: 600;
-        }
-
-        .demandes-list td {
-          padding: 12px;
-          border-bottom: 1px solid #e5e7eb;
-        }
-
-        .status-badge {
-          display: inline-block;
-          padding: 4px 8px;
-          border-radius: 999px;
-          font-size: 0.8rem;
-          font-weight: 500;
-        }
-
-        .status-badge.en-attente {
-          background-color: #fef3c7;
-          color: #92400e;
-        }
-
-        .status-badge.approuvée {
-          background-color: #d1fae5;
-          color: #065f46;
-        }
-
-        .status-badge.rejetée {
-          background-color: #fee2e2;
-          color: #b91c1c;
         }
 
         /* Animations */

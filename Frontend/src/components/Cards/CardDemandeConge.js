@@ -1,28 +1,161 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 const CardDemandeConge = () => {
+  // États
   const [formData, setFormData] = useState({
-    startDate: '',
-    endDate: '',
-    reason: '',
-    type: 'congé payé',
-    notes: '',
-    medicalFile: null
+    DateDebut: '',
+    DateFin: '',
+    motif: '',
+    statut: 'En attente',
   });
   
-  const [fileName, setFileName] = useState('');
-  const fileInputRef = useRef(null);
-  const [showConfirmation, setShowConfirmation] = useState(false);
-  const [confirmationMessage, setConfirmationMessage] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [token, setToken] = useState('');
   const [userData, setUserData] = useState({
     nom: '',
     prenom: '',
     email: '',
-    soldedeconge: 0
+    soldeConge: 0
   });
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [confirmationMessage, setConfirmationMessage] = useState('');
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
+  const [alertType, setAlertType] = useState('');
 
-  // Styles (identique à votre version originale)
+  useEffect(() => {
+    // Récupérer les données utilisateur depuis localStorage
+    const userDataStr = localStorage.getItem('userData');
+    
+    if (userDataStr) {
+      try {
+        // Correction du format JSON malformé
+        const fixedJson = userDataStr
+          .replace(/"nom":/g, '"nom":')
+          .replace(/"prénom":/g, '"prenom":')
+          .replace(/"email":/g, '"email":')
+          .replace(/'/g, '"');
+
+        const parsedData = JSON.parse(fixedJson);
+        
+        setUserData({
+          nom: parsedData.nom || '',
+          prenom: parsedData.prenom || parsedData['prénom'] || '',
+          email: parsedData.email || '',
+          soldeConge: parsedData.soldedeconge || 0
+        });
+
+        // Récupérer le token
+        const authToken = localStorage.getItem('authToken') || 
+                         localStorage.getItem('token') || 
+                         localStorage.getItem('jwt');
+        if (authToken) {
+          setToken(authToken);
+        }
+      } catch (e) {
+        console.error("Erreur de parsing userData:", e);
+        setShowAlert(true);
+        setAlertType('error');
+        setAlertMessage("Erreur de lecture de vos données utilisateur");
+      }
+    } else {
+      console.warn("Aucune donnée utilisateur trouvée");
+      setShowAlert(true);
+      setAlertType('error');
+      setAlertMessage("Impossible de récupérer vos informations. Veuillez vous reconnecter.");
+    }
+  }, []);
+
+  const calculateDays = () => {
+    if (!formData.DateDebut || !formData.DateFin) return 0;
+
+    const start = new Date(formData.DateDebut);
+    const end = new Date(formData.DateFin);
+    
+    if (start > end) {
+      setShowAlert(true);
+      setAlertType('error');
+      setAlertMessage('La date de début ne peut pas être après la date de fin.');
+      return 0;
+    }
+
+    const diffTime = Math.abs(end - start);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    return diffDays;
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prevData) => ({
+      ...prevData,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    if (!formData.DateDebut || !formData.DateFin || !formData.motif) {
+      setShowAlert(true);
+      setAlertType('error');
+      setAlertMessage('Tous les champs obligatoires doivent être remplis');
+      setLoading(false);
+      return;
+    }
+
+    const joursDemandes = calculateDays();
+    
+    // Vérification du solde de congé
+    if (joursDemandes > userData.soldeConge) {
+      setShowAlert(true);
+      setAlertType('error');
+      setAlertMessage(`Votre solde de congé (${userData.soldeConge} jours) est insuffisant pour cette demande (${joursDemandes} jours)`);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const requestData = {
+        ...formData,
+        ...userData,
+        joursDemandes: joursDemandes
+      };
+
+      const response = await axios.post('/adddemandeconge', requestData, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      setConfirmationMessage(response.data.message || 'Votre demande de congé a été soumise avec succès');
+      setShowConfirmation(true);
+      
+      // Réinitialiser le formulaire après succès
+      setFormData({
+        DateDebut: '',
+        DateFin: '',
+        motif: '',
+        statut: 'En attente'
+      });
+
+      // Masquer la confirmation après 5 secondes
+      setTimeout(() => {
+        setShowConfirmation(false);
+      }, 5000);
+
+    } catch (error) {
+      console.error('Erreur:', error.response?.data || error.message);
+      setShowAlert(true);
+      setAlertType('error');
+      setAlertMessage(error.response?.data?.message || 'Une erreur s\'est produite lors de la soumission de votre demande');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const styles = {
     container: {
       backgroundColor: '#f0f4f8',
@@ -92,6 +225,42 @@ const CardDemandeConge = () => {
       color: '#64748b',
       margin: '0'
     },
+    userInfoBox: {
+      backgroundColor: '#f8fafc',
+      borderRadius: '8px',
+      padding: '20px',
+      marginBottom: '25px',
+      border: '1px solid #e2e8f0',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+    },
+    userInfoTitle: {
+      fontSize: '16px',
+      fontWeight: '600',
+      color: '#334155',
+      marginBottom: '15px',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '10px'
+    },
+    userInfoContent: {
+      display: 'grid',
+      gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+      gap: '15px'
+    },
+    userInfoItem: {
+      marginBottom: '5px'
+    },
+    userInfoLabel: {
+      fontSize: '14px',
+      color: '#64748b',
+      fontWeight: '500',
+      marginBottom: '3px'
+    },
+    userInfoValue: {
+      fontSize: '15px',
+      color: '#1e293b',
+      fontWeight: '600'
+    },
     formGroup: {
       marginBottom: '20px'
     },
@@ -117,34 +286,6 @@ const CardDemandeConge = () => {
       gap: '20px',
       marginBottom: '20px'
     },
-    selectContainer: {
-      position: 'relative'
-    },
-    select: {
-      width: '100%',
-      padding: '12px 14px',
-      border: '1px solid #e2e8f0',
-      borderRadius: '8px',
-      fontSize: '15px',
-      boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
-      transition: 'all 0.2s ease',
-      appearance: 'none',
-      paddingRight: '40px',
-      backgroundColor: '#ffffff'
-    },
-    selectArrow: {
-      position: 'absolute',
-      right: '15px',
-      top: '50%',
-      transform: 'translateY(-50%)',
-      color: '#64748b',
-      pointerEvents: 'none',
-      width: '12px',
-      height: '12px',
-      borderLeft: '2px solid #64748b',
-      borderBottom: '2px solid #64748b',
-      transform: 'translateY(-70%) rotate(-45deg)'
-    },
     congeInfoTag: {
       display: 'block',
       fontSize: '14px',
@@ -163,24 +304,35 @@ const CardDemandeConge = () => {
       resize: 'vertical'
     },
     alert: {
-      backgroundColor: '#e0f2fe',
-      borderRadius: '8px',
-      padding: '14px',
+      padding: '15px',
+      borderRadius: '6px',
       marginBottom: '20px',
       display: 'flex',
       alignItems: 'center',
-      gap: '10px',
-      boxShadow: '0 1px 2px rgba(0,0,0,0.04)'
+      justifyContent: 'space-between',
+      transition: 'opacity 0.3s',
+      opacity: 1
     },
-    alertIcon: {
-      color: '#0369a1',
-      fontSize: '18px'
+    alertError: {
+      backgroundColor: '#fee2e2',
+      color: '#b91c1c',
+      borderLeft: '4px solid #b91c1c'
     },
-    alertText: {
-      color: '#0369a1',
-      fontSize: '15px',
-      fontWeight: '500',
-      margin: '0'
+    alertSuccess: {
+      backgroundColor: '#dcfce7',
+      color: '#16a34a',
+      borderLeft: '4px solid #16a34a'
+    },
+    alertContent: {
+      flex: 1
+    },
+    alertClose: {
+      backgroundColor: 'transparent',
+      border: 'none',
+      cursor: 'pointer',
+      fontSize: '18px',
+      color: 'inherit',
+      padding: '0 10px'
     },
     buttonContainer: {
       marginTop: '25px'
@@ -198,62 +350,9 @@ const CardDemandeConge = () => {
       transition: 'all 0.2s ease',
       boxShadow: '0 2px 5px rgba(37, 99, 235, 0.3)'
     },
-    fileInputContainer: {
-      position: 'relative',
-      display: 'flex',
-      flexDirection: 'column',
-      width: '100%'
-    },
-    fileInput: {
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      opacity: 0,
-      width: '100%',
-      height: '100%',
-      cursor: 'pointer'
-    },
-    fileInputLabel: {
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '12px 14px',
-      border: '1px dashed #3b82f6',
-      borderRadius: '8px',
-      backgroundColor: '#f1f5f9',
-      color: '#475569',
-      fontSize: '15px',
-      cursor: 'pointer',
-      transition: 'all 0.2s ease',
-      minHeight: '50px'
-    },
-    selectedFile: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: '10px',
-      marginTop: '10px',
-      padding: '10px',
-      backgroundColor: '#f1f5f9',
-      borderRadius: '6px',
-      fontSize: '14px'
-    },
-    fileIcon: {
-      fontSize: '20px',
-      color: '#3b82f6'
-    },
-    fileInfo: {
-      flex: 1,
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      whiteSpace: 'nowrap'
-    },
-    removeButton: {
-      background: 'none',
-      border: 'none',
-      color: '#ef4444',
-      cursor: 'pointer',
-      fontSize: '16px',
-      padding: '0 5px'
+    buttonDisabled: {
+      backgroundColor: '#93c5fd',
+      cursor: 'not-allowed'
     },
     toastMessage: {
       position: 'fixed',
@@ -263,8 +362,8 @@ const CardDemandeConge = () => {
       backgroundColor: '#34d399',
       color: 'white',
       borderRadius: '12px',
-      padding: '5px',
-      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+      padding: '15px 20px',
+      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
       zIndex: '1000',
       animation: 'slideUp 0.3s ease, fadeOut 0.5s ease 2.5s',
       minWidth: '300px',
@@ -273,199 +372,27 @@ const CardDemandeConge = () => {
     toastContent: {
       display: 'flex',
       alignItems: 'center',
-      gap: '12px',
-      padding: '15px 20px'
-    },
-    toastIcon: {
-      fontSize: '1.2rem',
-      backgroundColor: 'white',
-      color: '#34d399',
-      width: '30px',
-      height: '30px',
-      borderRadius: '50%',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      flexShrink: '0'
+      gap: '15px'
     }
   };
 
-  // Types de congés avec des icônes (mis à jour avec le solde réel)
-  const congeTypes = [
-    {
-      type: 'congé payé',
-      title: 'Congé Payé Standard',
-      description: 'Congé annuel rémunéré',
-      remainingDays: userData.soldedeconge,
-      icon: '🏖️'
-    },
-    {
-      type: 'rtt',
-      title: 'RTT',
-      description: 'Réduction du temps de travail',
-      remainingDays: 8,
-      icon: '⏱️'
-    },
-    {
-      type: 'congé maladie',
-      title: 'Congé Maladie',
-      description: 'Absence pour raison médicale',
-      remainingDays: 'Illimité',
-      icon: '🏥'
-    },
-    {
-      type: 'congé parental',
-      title: 'Congé Parental',
-      description: 'Congé pour s\'occuper d\'un enfant',
-      remainingDays: 'Selon droits',
-      icon: '👶'
-    },
-    {
-      type: 'congé familial',
-      title: 'Événement Familial',
-      description: 'Mariage, naissance, décès',
-      remainingDays: 'Selon événement',
-      icon: '👪'
-    },
-    {
-      type: 'congé sans solde',
-      title: 'Congé Sans Solde',
-      description: 'Absence autorisée non rémunérée',
-      remainingDays: 'Illimité',
-      icon: '📅'
-    },
-    {
-      type: 'télétravail',
-      title: 'Télétravail Exceptionnel',
-      description: 'Journée de travail à distance',
-      remainingDays: 'Selon accord',
-      icon: '🏠'
-    }
-  ];
-
-  // Récupération des données utilisateur depuis le token
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      try {
-        const decoded = JSON.parse(atob(token.split('.')[1]));
-        setUserData({
-          nom: decoded.nom,
-          prenom: decoded.prenom,
-          email: decoded.email,
-          soldedeconge: decoded.soldedeconge || 0
-        });
-      } catch (error) {
-        console.error("Erreur de décodage du token", error);
-      }
-    }
-  }, []);
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prevData => ({
-      ...prevData,
-      [name]: value
-    }));
-  };
-  
-  const handleFileChange = (e) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setFormData(prev => ({
-        ...prev,
-        medicalFile: file
-      }));
-      setFileName(file.name);
-    }
-  };
-  
-  const removeFile = () => {
-    setFormData(prev => ({
-      ...prev,
-      medicalFile: null
-    }));
-    setFileName('');
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
-  
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    // Validation
-    if (formData.type === 'congé maladie' && !formData.medicalFile) {
-      alert('Veuillez joindre votre justificatif médical');
-      return;
-    }
-  
-    const daysRequested = calculateDays();
-    
-    try {
-      const token = localStorage.getItem('token');
-      const formDataToSend = new FormData();
-      
-      // Ajoutez les champs nécessaires
-      formDataToSend.append('startDate', formData.startDate);
-      formDataToSend.append('endDate', formData.endDate);
-      formDataToSend.append('type', formData.type);
-      formDataToSend.append('reason', formData.reason || '');
-      formDataToSend.append('notes', formData.notes || '');
-      
-      if (formData.medicalFile) {
-        formDataToSend.append('medicalFile', formData.medicalFile);
-      }
-  
-      const response = await axios.post(
-        '/adddemandeconge', 
-        formDataToSend,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-            'Authorization': `Bearer ${token}`
-          }
-        }
-      );
-  
-      // Succès
-      setConfirmationMessage(`Demande de ${formData.type} du ${formData.startDate} au ${formData.endDate} enregistrée !`);
-      setShowConfirmation(true);
-      
-      // Réinitialisation
-      setFormData({
-        startDate: '',
-        endDate: '',
-        reason: '',
-        type: 'congé payé',
-        notes: '',
-        medicalFile: null
-      });
-      setFileName('');
-  
-    } catch (error) {
-      console.error('Erreur:', error);
-      const errorMessage = error.response?.data?.message || "Erreur lors de la soumission";
-      alert(errorMessage);
-    }
-  };
-  
-  const calculateDays = () => {
-    if (!formData.startDate || !formData.endDate) return 0;
-    
-    const start = new Date(formData.startDate);
-    const end = new Date(formData.endDate);
-    const diffTime = Math.abs(end - start);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-    
-    return diffDays;
+  const Alert = ({ type, message, onClose }) => {
+    return (
+      <div style={{
+        ...styles.alert,
+        ...(type === 'error' ? styles.alertError : styles.alertSuccess)
+      }}>
+        <div style={styles.alertContent}>
+          <span style={styles.alertIcon}>
+            {type === 'error' ? '⚠️' : '✅'}
+          </span>
+          {message}
+        </div>
+        <button style={styles.alertClose} onClick={onClose}>×</button>
+      </div>
+    );
   };
 
-  // Trouver les informations du type de congé sélectionné
-  const selectedCongeType = congeTypes.find(conge => conge.type === formData.type);
-  const isMaladieType = formData.type === 'congé maladie';
-  const needsJustification = ['congé maladie', 'congé familial'].includes(formData.type);
-  
   return (
     <div style={styles.container}>
       <div style={styles.mainContent}>
@@ -474,198 +401,121 @@ const CardDemandeConge = () => {
             Demande de Congé
             <span style={styles.titleAfter}></span>
           </h1>
-          <p style={styles.subtitle}>Bonjour {userData.prenom} {userData.nom}, découvrez et soumettez vos demandes de congés en quelques clics</p>
+          <p style={styles.subtitle}>Remplissez les informations ci-dessous pour soumettre votre demande de congé.</p>
         </div>
-
         <div style={styles.formContainer}>
           <div style={styles.formHeader}>
-            <h2 style={styles.formTitle}>Formulaire de demande de congé</h2>
-            <p style={styles.formDescription}>Veuillez remplir tous les champs obligatoires</p>
+            <h2 style={styles.formTitle}>Détails de votre demande de congé</h2>
+            <p style={styles.formDescription}>
+              Veuillez remplir tous les champs nécessaires avant de soumettre votre demande.
+            </p>
           </div>
-          
-          <form onSubmit={handleSubmit}>
-            <div style={styles.formGroup}>
-              <label style={styles.label} htmlFor="type">
-                Type de congé
-              </label>
-              <div style={styles.selectContainer}>
-                <select
-                  id="type"
-                  name="type"
-                  value={formData.type}
-                  onChange={handleChange}
-                  style={styles.select}
-                  required
-                >
-                  {congeTypes.map((conge, index) => (
-                    <option key={index} value={conge.type}>
-                      {conge.icon} {conge.title}
-                    </option>
-                  ))}
-                </select>
-                <div style={styles.selectArrow}></div>
-              </div>
-              <span style={styles.congeInfoTag}>
-                {selectedCongeType?.description} - 
-                {typeof selectedCongeType?.remainingDays === 'number' 
-                  ? ` ${selectedCongeType.remainingDays} jours disponibles` 
-                  : ` ${selectedCongeType?.remainingDays}`}
-              </span>
+
+          {/* Section d'affichage des informations utilisateur */}
+          <div style={styles.userInfoBox}>
+            <div style={styles.userInfoTitle}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z" fill="#3B82F6"/>
+                <path d="M12 14C7.58172 14 4 17.5817 4 22H20C20 17.5817 16.4183 14 12 14Z" fill="#3B82F6"/>
+              </svg>
+              <span>Vos informations</span>
             </div>
-            
-            {isMaladieType ? (
-              <div style={styles.formGroup}>
-                <label style={styles.label} htmlFor="medicalFile">
-                  Justificatif médical *
-                </label>
-                <div style={styles.fileInputContainer}>
-                  <label style={styles.fileInputLabel} htmlFor="medicalFile">
-                    {formData.medicalFile ? 'Changer de fichier' : 'Joindre votre justificatif médical'}
-                  </label>
-                  <input
-                    type="file"
-                    id="medicalFile"
-                    ref={fileInputRef}
-                    style={styles.fileInput}
-                    accept=".pdf,.jpg,.jpeg,.png"
-                    onChange={handleFileChange}
-                    required
-                  />
-                </div>
-                {formData.medicalFile && (
-                  <div style={styles.selectedFile}>
-                    <span style={styles.fileIcon}>📄</span>
-                    <span style={styles.fileInfo}>{fileName}</span>
-                    <button 
-                      type="button" 
-                      style={styles.removeButton}
-                      onClick={removeFile}
-                    >
-                      ✕
-                    </button>
-                  </div>
-                )}
+            <div style={styles.userInfoContent}>
+              <div style={styles.userInfoItem}>
+                <div style={styles.userInfoLabel}>Nom</div>
+                <div style={styles.userInfoValue}>{userData.nom || 'Non renseigné'}</div>
               </div>
-            ) : (
-              <div style={styles.formGroup}>
-                <label style={styles.label} htmlFor="reason">
-                  Motif {needsJustification && '*'}
-                </label>
-                <input
-                  type="text"
-                  id="reason"
-                  name="reason"
-                  value={formData.reason}
-                  onChange={handleChange}
-                  style={styles.input}
-                  placeholder={needsJustification 
-                    ? "Précisez le motif (obligatoire)" 
-                    : "Précisez le motif de votre demande (facultatif)"}
-                  required={needsJustification}
-                />
+              <div style={styles.userInfoItem}>
+                <div style={styles.userInfoLabel}>Prénom</div>
+                <div style={styles.userInfoValue}>{userData.prenom || 'Non renseigné'}</div>
               </div>
-            )}
-            
+              <div style={styles.userInfoItem}>
+                <div style={styles.userInfoLabel}>Email</div>
+                <div style={styles.userInfoValue}>{userData.email || 'Non renseigné'}</div>
+              </div>
+              <div style={styles.userInfoItem}>
+                <div style={styles.userInfoLabel}>Solde de congé</div>
+                <div style={styles.userInfoValue}>{userData.soldeConge} jours disponibles</div>
+              </div>
+            </div>
+          </div>
+
+          {showAlert && (
+            <Alert 
+              type={alertType} 
+              message={alertMessage}
+              onClose={() => setShowAlert(false)}
+            />
+          )}
+
+          <form onSubmit={handleSubmit}>
             <div style={styles.formGrid}>
               <div style={styles.formGroup}>
-                <label style={styles.label} htmlFor="startDate">
-                  Date de début
-                </label>
+                <label style={styles.label}>Date de début</label>
                 <input
                   type="date"
-                  id="startDate"
-                  name="startDate"
-                  value={formData.startDate}
-                  onChange={handleChange}
+                  name="DateDebut"
+                  value={formData.DateDebut}
+                  onChange={handleInputChange}
                   style={styles.input}
                   required
                 />
               </div>
-              
               <div style={styles.formGroup}>
-                <label style={styles.label} htmlFor="endDate">
-                  Date de fin
-                </label>
+                <label style={styles.label}>Date de fin</label>
                 <input
                   type="date"
-                  id="endDate"
-                  name="endDate"
-                  value={formData.endDate}
-                  onChange={handleChange}
+                  name="DateFin"
+                  value={formData.DateFin}
+                  onChange={handleInputChange}
                   style={styles.input}
                   required
                 />
+                <div style={styles.congeInfoTag}>
+                  Nombre de jours demandés: {calculateDays()} / Solde disponible: {userData.soldeConge}
+                </div>
               </div>
             </div>
-            
-            {formData.startDate && formData.endDate && (
-              <div style={styles.alert}>
-                <span style={styles.alertIcon}>ℹ️</span>
-                <p style={styles.alertText}>
-                  Durée: <strong>{calculateDays()} jours</strong>
-                  {formData.type === 'congé payé' && (
-                    <span> - Solde restant: {userData.soldedeconge - calculateDays()} jours</span>
-                  )}
-                </p>
-              </div>
-            )}
-            
             <div style={styles.formGroup}>
-              <label style={styles.label} htmlFor="notes">
-                Notes complémentaires
-              </label>
+              <label style={styles.label}>Motif de congé</label>
               <textarea
-                id="notes"
-                name="notes"
-                value={formData.notes}
-                onChange={handleChange}
+                name="motif"
+                value={formData.motif}
+                onChange={handleInputChange}
                 style={styles.textarea}
-                placeholder="Informations additionnelles (facultatif)"
+                placeholder="Veuillez décrire le motif de votre demande de congé..."
+                required
               />
             </div>
-            
             <div style={styles.buttonContainer}>
-              <button type="submit" style={styles.button}>
-                Soumettre la demande
+              <button
+                type="submit"
+                style={{
+                  ...styles.button,
+                  ...(loading ? styles.buttonDisabled : {})
+                }}
+                disabled={loading}
+              >
+                {loading ? 'Soumission en cours...' : 'Soumettre la demande'}
               </button>
             </div>
           </form>
         </div>
-      </div>
-
-      {/* Toast de confirmation */}
-      {showConfirmation && (
-        <div style={styles.toastMessage}>
-          <div style={styles.toastContent}>
-            <span style={styles.toastIcon}>✓</span>
-            <p>{confirmationMessage}</p>
+        
+        {showConfirmation && (
+          <div style={styles.toastMessage}>
+            <div style={styles.toastContent}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              <div>
+                <strong>Succès! </strong>
+                {confirmationMessage}
+              </div>
+            </div>
           </div>
-        </div>
-      )}
-
-      <style>
-        {`
-        @keyframes slideUp {
-          from {
-            transform: translate(-50%, 100%);
-            opacity: 0;
-          }
-          to {
-            transform: translate(-50%, 0);
-            opacity: 1;
-          }
-        }
-
-        @keyframes fadeOut {
-          from {
-            opacity: 1;
-          }
-          to {
-            opacity: 0;
-          }
-        }
-        `}
-      </style>
+        )}
+      </div>
     </div>
   );
 };
