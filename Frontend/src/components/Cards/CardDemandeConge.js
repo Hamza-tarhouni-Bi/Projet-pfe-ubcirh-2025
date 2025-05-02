@@ -16,7 +16,8 @@ const CardDemandeConge = () => {
     nom: '',
     prenom: '',
     email: '',
-    soldeConge: 0
+    soldeConge: 0,
+    idpersonnel: ''
   });
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [confirmationMessage, setConfirmationMessage] = useState('');
@@ -43,7 +44,8 @@ const CardDemandeConge = () => {
           nom: parsedData.nom || '',
           prenom: parsedData.prenom || parsedData['prénom'] || '',
           email: parsedData.email || '',
-          soldeConge: parsedData.soldedeconge || 0
+          soldeConge: parsedData.soldedeconge || 0,
+          idpersonnel: parsedData._id || '' // Ajout de l'ID du personnel
         });
 
         // Récupérer le token
@@ -119,7 +121,11 @@ const CardDemandeConge = () => {
     try {
       const requestData = {
         ...formData,
-        ...userData,
+        nom: userData.nom,
+        prenom: userData.prenom,
+        email: userData.email,
+        soldeConge: userData.soldeConge,
+        idpersonnel: userData.idpersonnel, // Inclusion de l'ID du personnel
         joursDemandes: joursDemandes
       };
 
@@ -432,6 +438,10 @@ const CardDemandeConge = () => {
               <div style={styles.userInfoItem}>
                 <div style={styles.userInfoLabel}>Email</div>
                 <div style={styles.userInfoValue}>{userData.email || 'Non renseigné'}</div>
+              </div>
+              <div style={styles.userInfoItem}>
+                <div style={styles.userInfoLabel}>ID Personnel</div>
+                <div style={styles.userInfoValue}>{userData.idpersonnel || 'Non renseigné'}</div>
               </div>
               <div style={styles.userInfoItem}>
                 <div style={styles.userInfoLabel}>Solde de congé</div>

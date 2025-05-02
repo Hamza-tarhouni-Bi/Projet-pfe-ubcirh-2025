@@ -3,10 +3,10 @@ const { sendUpdateDemandeCongeEmail } = require('../utiles/SendUpdateDc');
 
 exports.addDemandeConge = async (req, res) => {
   try {
-    const { nom, prenom, email,DateDebut,DateFin,statut,motif } = req.body;
+    const { idpersonnel,nom, prenom, email,DateDebut,DateFin,statut,motif } = req.body;
 
     // Validation simple des champs requis
-    if (!nom || !prenom || !email || !DateDebut ||!DateFin ||!motif||!statut) {
+    if (!idpersonnel||!nom || !prenom || !email || !DateDebut ||!DateFin ||!motif||!statut) {
       return res.status(400).json({ message: "Tous les champs sont requis" });
     }
 
@@ -17,7 +17,7 @@ exports.addDemandeConge = async (req, res) => {
     }
 
     const nouvelleDemande = new DemandeConge({
-      nom, prenom, email,DateDebut,DateFin,motif,statut
+      idpersonnel,nom, prenom, email,DateDebut,DateFin,motif,statut
     });
 
     await nouvelleDemande.save();
@@ -56,7 +56,7 @@ module.exports.getDemandeConge = async (req, res) => {
       }
   
       // Liste des champs autorisés à être mis à jour
-      const allowedUpdates = ['nom', 'prenom', 'email', 'DateDebut', 'DateFin', 'statut', 'motif'];
+      const allowedUpdates = [ 'DateDebut', 'DateFin', 'statut', 'motif'];
       const requestedUpdates = Object.keys(updateData);
       
       // Vérifier si tous les champs demandés sont autorisés

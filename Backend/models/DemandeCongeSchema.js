@@ -1,6 +1,9 @@
 const mongoose = require('mongoose');
 
 const DemandeCongeSchema = new mongoose.Schema({
+  idpersonnel:{
+    type: String,
+  },
   nom: {
     type: String,
     required: [true, 'Le nom est obligatoire'],
