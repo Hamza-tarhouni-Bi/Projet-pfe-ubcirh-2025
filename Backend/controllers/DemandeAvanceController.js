@@ -10,10 +10,24 @@ exports.addDemandeAvance = async (req, res) => {
       return res.status(400).json({ message: "Tous les champs sont requis" });
     }
 
-    // Vérification si l'email existe déjà (optionnel selon vos besoins)
-    const demandeExistante = await DemandeAvance.findOne({ email });
-    if (demandeExistante) {
-      return res.status(400).json({ message: "Une demande avec cet email existe déjà" });
+    // Obtenir la date actuelle
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+    // Vérifier si une demande existe déjà pour cet email dans le mois courant
+    const demandeExistanteCeMois = await DemandeAvance.findOne({
+      email,
+      createdAt: {
+        $gte: startOfMonth,
+        $lte: endOfMonth
+      }
+    });
+
+    if (demandeExistanteCeMois) {
+      return res.status(400).json({ 
+        message: "Vous avez déjà une demande d'avance ce mois-ci Merci de contacté le service Monétique" 
+      });
     }
 
     const nouvelleDemande = new DemandeAvance({
@@ -27,7 +41,10 @@ exports.addDemandeAvance = async (req, res) => {
     });
 
     await nouvelleDemande.save();
-    res.status(201).json({ message: "Demande créée avec succès", demande: nouvelleDemande });
+    res.status(201).json({ 
+      message: "Demande créée avec succès", 
+      demande: nouvelleDemande 
+    });
 
   } catch (error) {
     console.error(error);

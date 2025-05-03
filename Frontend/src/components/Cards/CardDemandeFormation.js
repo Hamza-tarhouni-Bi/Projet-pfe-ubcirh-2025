@@ -14,6 +14,7 @@ function CardDemandeFormation() {
   const [userInfo, setUserInfo] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [demandesEnvoyees, setDemandesEnvoyees] = useState([]);
+  const [demandesApprouvees, setDemandesApprouvees] = useState([]);
 
   // Récupérer les informations de l'utilisateur connecté
   useEffect(() => {
@@ -68,13 +69,17 @@ function CardDemandeFormation() {
         }
       });
       
-      // Filtrer les demandes de l'utilisateur actuel avec statut "En attente"
+      // Séparer les demandes en attente et approuvées
       const userPendingDemandes = response.data.filter(
         demande => demande.idUser === userId && demande.statut === 'En attente'
       );
       
-      // Ajouter les idFormation correspondantes à demandesEnvoyees
+      const userApprovedDemandes = response.data.filter(
+        demande => demande.idUser === userId && demande.statut === 'Approuvée'
+      );
+      
       setDemandesEnvoyees(userPendingDemandes.map(d => d.idFormation));
+      setDemandesApprouvees(userApprovedDemandes.map(d => d.idFormation));
     } catch (err) {
       console.error("Erreur lors de la récupération des demandes:", err);
     }
@@ -84,7 +89,8 @@ function CardDemandeFormation() {
   useEffect(() => {
     let result = formations.filter(formation => 
       formation.statut === 'Programmée' && 
-      formation.inscrits < formation.places
+      formation.inscrits < formation.places &&
+      !demandesApprouvees.includes(formation.id) // Exclure les formations approuvées
     );
     
     if (searchTerm) {
@@ -95,7 +101,7 @@ function CardDemandeFormation() {
     }
     
     setFilteredFormations(result);
-  }, [formations, searchTerm]);
+  }, [formations, searchTerm, demandesApprouvees]);
 
   // Pagination
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -112,6 +118,10 @@ function CardDemandeFormation() {
     return demandesEnvoyees.includes(formationId);
   };
 
+  const isFormationApprouvee = (formationId) => {
+    return demandesApprouvees.includes(formationId);
+  };
+
   const handleRequestFormation = async (formation) => {
     if (!userInfo) {
       setError("Veuillez vous reconnecter");
@@ -120,8 +130,8 @@ function CardDemandeFormation() {
       return;
     }
 
-    if (isFormationDemandee(formation.id)) {
-      setError("Vous avez déjà une demande en attente pour cette formation");
+    if (isFormationDemandee(formation.id) || isFormationApprouvee(formation.id)) {
+      setError("Vous avez déjà une demande pour cette formation");
       setShowConfirmation(true);
       setTimeout(() => setShowConfirmation(false), 3000);
       return;
@@ -157,7 +167,6 @@ function CardDemandeFormation() {
       setShowConfirmation(true);
       setTimeout(() => setShowConfirmation(false), 3000);
       
-      // Si l'erreur concerne une demande existante, mettez à jour demandesEnvoyees
       if (errorMessage.includes("déjà une demande en attente")) {
         setDemandesEnvoyees(prev => [...prev, formation.id]);
       }
@@ -238,11 +247,15 @@ function CardDemandeFormation() {
               
               <div className="formation-footer">
                 <button 
-                  className={`request-btn ${isFormationDemandee(formation.id) ? 'demande-envoyee' : ''}`}
+                  className={`request-btn ${
+                    isFormationApprouvee(formation.id) ? 'demande-approuvee' : 
+                    isFormationDemandee(formation.id) ? 'demande-envoyee' : ''
+                  }`}
                   onClick={() => handleRequestFormation(formation)}
-                  disabled={isSubmitting || isFormationDemandee(formation.id)}
+                  disabled={isSubmitting || isFormationDemandee(formation.id) || isFormationApprouvee(formation.id)}
                 >
                   {isSubmitting ? 'Envoi en cours...' : 
+                   isFormationApprouvee(formation.id) ? 'Inscription confirmée' :
                    isFormationDemandee(formation.id) ? 'Demande en attente' : 
                    'Demander cette formation'}
                 </button>
@@ -427,6 +440,7 @@ function CardDemandeFormation() {
           border: none;
           border-radius: 6px;
           cursor: pointer;
+          transition: background-color 0.2s;
         }
 
         .request-btn:hover:not(:disabled) {
@@ -439,7 +453,11 @@ function CardDemandeFormation() {
         }
 
         .request-btn.demande-envoyee {
-          background-color: #9ca3af;
+          background-color: #f59e0b;
+        }
+
+        .request-btn.demande-approuvee {
+          background-color: #10b981;
         }
 
         /* Pagination */
@@ -457,6 +475,11 @@ function CardDemandeFormation() {
           border: 1px solid #d1d5db;
           border-radius: 6px;
           cursor: pointer;
+          transition: background-color 0.2s;
+        }
+
+        .page-btn:hover:not(:disabled) {
+          background-color: #f3f4f6;
         }
 
         .page-btn:disabled {
@@ -554,6 +577,19 @@ function CardDemandeFormation() {
           border: none;
           border-radius: 4px;
           cursor: pointer;
+          transition: background-color 0.2s;
+        }
+
+        .retry-btn:hover {
+          background-color: #1d4ed8;
+        }
+
+        /* Aucune formation */
+        .no-formations {
+          text-align: center;
+          padding: 40px;
+          color: #6b7280;
+          grid-column: 1 / -1;
         }
       `}</style>
     </div>

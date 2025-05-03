@@ -1,15 +1,14 @@
 const DemandeFormation = require('../models/DemandeFormation');
+const { sendUpdateDemandeFormationEmail } = require('../utiles/SendUpdateDF.js');
 
 exports.addDemandeFormation = async (req, res) => {
   try {
     const { nom, prenom, email, nomFormation, idFormation, idUser } = req.body;
     
-    // Validation
     if (!nom || !prenom || !email || !nomFormation || !idFormation || !idUser) {
       return res.status(400).json({ message: "Tous les champs sont requis" });
     }
 
-    // Vérifier si l'utilisateur a déjà une demande en attente pour cette formation
     const demandeExistante = await DemandeFormation.findOne({ 
       idUser: idUser,
       idFormation: idFormation,
@@ -28,42 +27,31 @@ exports.addDemandeFormation = async (req, res) => {
       email,
       nomFormation,
       idFormation,
-      idUser,
-      statut: 'En attente'
+      idUser
     });
 
     await nouvelleDemande.save();
-    res.status(201).json({ 
-      message: "Demande créée avec succès",
-      demande: nouvelleDemande
-    });
+    res.status(201).json(nouvelleDemande);
     
-  } catch (error) {
-    res.status(500).json({ 
-      message: "Erreur serveur",
-      error: error.message 
-    });
-  }
-};
-module.exports.getDemandeFormation = async (req, res) => {
-  try {
-    const formationlist = await DemandeFormation.find().populate('idFormation');
-    if (!formationlist) {
-      throw new Error("Il n'y a aucune demande de formation");
-    }
-    res.status(200).json(formationlist);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 
-// Mettre à jour le statut d'une demande de formation
+exports.getDemandeFormation = async (req, res) => {
+  try {
+    const demandes = await DemandeFormation.find();
+    res.status(200).json(demandes);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 exports.updateStatutDemande = async (req, res) => {
   try {
     const { id } = req.params;
     const { statut } = req.body;
 
-    // Validation simple
     if (!['En attente', 'Approuvée', 'Rejetée'].includes(statut)) {
       return res.status(400).json({ message: "Statut invalide" });
     }
@@ -78,15 +66,17 @@ exports.updateStatutDemande = async (req, res) => {
       return res.status(404).json({ message: "Demande non trouvée" });
     }
 
-    res.status(200).json({
-      message: "Statut mis à jour avec succès",
-      demande: updatedDemande
-    });
+    // Envoi email sans attendre la réponse
+    sendUpdateDemandeFormationEmail(
+      updatedDemande.email,
+      updatedDemande.nom,
+      updatedDemande.prenom,
+      updatedDemande.nomFormation,
+      statut
+    ).catch(error => console.error("Erreur email:", error));
+
+    res.status(200).json(updatedDemande);
   } catch (error) {
-    res.status(500).json({
-      message: "Erreur serveur",
-      error: error.message
-    });
+    res.status(500).json({ error: error.message });
   }
 };
-
