@@ -17,5 +17,5 @@ router.put('/updatepersonnel/:id', uploadfile.single('image'), PersonnelControll
 router.post('/login', PersonnelController.login);
 
 router.post('/logout', requireAuthPersonnel, PersonnelController.logout);
-
+router.post('/forgot-password', PersonnelController.forgotPassword);
 module.exports = router;

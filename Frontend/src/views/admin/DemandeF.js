@@ -248,6 +248,46 @@ const encapsulatedStyles = `
     color: #6b7280;
     font-family: monospace;
   }
+
+  /* Toast styles */
+  .gf-toast-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+  }
+
+  .gf-toast {
+    padding: 12px 24px;
+    border-radius: 8px;
+    color: white;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    animation: slideIn 0.3s ease-out;
+    margin-bottom: 10px;
+  }
+
+  .gf-toast-success {
+    background-color: #10b981;
+  }
+
+  .gf-toast-error {
+    background-color: #ef4444;
+  }
+
+  @keyframes slideIn {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
 `;
 
 const GestionFormations = () => {
@@ -255,6 +295,22 @@ const GestionFormations = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [toasts, setToasts] = useState([]);
+
+  const showToast = (message, type = 'success') => {
+    const id = Date.now();
+    const newToast = { id, message, type };
+    
+    setToasts(prev => [...prev, newToast]);
+    
+    setTimeout(() => {
+      removeToast(id);
+    }, 3000);
+  };
+
+  const removeToast = (id) => {
+    setToasts(prev => prev.filter(toast => toast.id !== id));
+  };
 
   useEffect(() => {
     const fetchDemandes = async () => {
@@ -317,10 +373,10 @@ const GestionFormations = () => {
         item._id === _id ? { ...item, statut: backendStatus } : item
       ));
 
-      alert(`Statut mis à jour avec succès !`);
+      showToast(`Statut mis à jour avec succès ! Demande ${newStatus === 'accepte' ? 'acceptée' : 'refusée'}`);
     } catch (err) {
       console.error("Erreur de mise à jour:", err);
-      alert("Échec de la mise à jour: " + (err.response?.data?.message || err.message));
+      showToast("Échec de la mise à jour: " + (err.response?.data?.message || err.message), 'error');
     }
   };
 
@@ -457,6 +513,20 @@ const GestionFormations = () => {
         <div className="gf-footer">
           {!loading && !error && `Affichage de ${filteredDemandes.length} demandes sur ${demandes.length}`}
         </div>
+      </div>
+
+      {/* Toast notifications */}
+      <div className="gf-toast-container">
+        {toasts.map(toast => (
+          <div 
+            key={toast.id} 
+            className={`gf-toast gf-toast-${toast.type}`}
+            onClick={() => removeToast(toast.id)}
+          >
+            {toast.type === 'success' ? <Check size={18} /> : <X size={18} />}
+            {toast.message}
+          </div>
+        ))}
       </div>
     </>
   );

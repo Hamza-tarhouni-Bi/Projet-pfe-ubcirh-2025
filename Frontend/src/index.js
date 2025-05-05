@@ -12,7 +12,7 @@ import Admin from "layouts/Admin.js";
 import Auth from "layouts/Auth.js";
 //Auth
 import Signin from "views/auth/Signin";
-
+import Forget from"views/auth/Forget";
 
 
 
@@ -37,6 +37,7 @@ ReactDOM.render(
       <Route path="/auth" component={Auth} />
       <Route path="/test" component={Test} />
       <Route path="/postule" component={Postule} />
+      <Route path="/forget" component={Forget} />
 
 
 

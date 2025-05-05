@@ -70,21 +70,21 @@ const CardDemandeConge = () => {
   }, []);
 
   const calculateDays = () => {
-    if (!formData.DateDebut || !formData.DateFin) return 0;
+    if (!formData.DateDebut || !formData.DateFin) return { days: 0, error: '' };
 
     const start = new Date(formData.DateDebut);
     const end = new Date(formData.DateFin);
     
     if (start > end) {
-      setShowAlert(true);
-      setAlertType('error');
-      setAlertMessage('La date de début ne peut pas être après la date de fin.');
-      return 0;
+      return { 
+        days: 0, 
+        error: 'La date de fin ne peut pas être avant la date de début.' 
+      };
     }
 
     const diffTime = Math.abs(end - start);
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-    return diffDays;
+    return { days: diffDays, error: '' };
   };
 
   const handleInputChange = (e) => {
@@ -107,7 +107,15 @@ const CardDemandeConge = () => {
       return;
     }
 
-    const joursDemandes = calculateDays();
+    const { days: joursDemandes, error } = calculateDays();
+    
+    if (error) {
+      setShowAlert(true);
+      setAlertType('error');
+      setAlertMessage(error);
+      setLoading(false);
+      return;
+    }
     
     // Vérification du solde de congé
     if (joursDemandes > userData.soldeConge) {
@@ -482,7 +490,7 @@ const CardDemandeConge = () => {
                   required
                 />
                 <div style={styles.congeInfoTag}>
-                  Nombre de jours demandés: {calculateDays()} / Solde disponible: {userData.soldeConge}
+                  Nombre de jours demandés: {calculateDays().days} / Solde disponible: {userData.soldeConge}
                 </div>
               </div>
             </div>

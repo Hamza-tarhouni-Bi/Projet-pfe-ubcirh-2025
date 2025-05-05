@@ -50,7 +50,7 @@ router.put('/updatedemandeformation/:id', requireAuthPersonnel, DemandeFormation
 // Routes pour les demandes d'avance
 router.post('/adddemandeavance', requireAuthPersonnel, DemandeAvanceCtrl.addDemandeAvance);
 router.get('/alldemandeavance', requireAuthPersonnel, DemandeAvanceCtrl.getDemandeAvance);
-
+router.put('/updatedemandeAvance/:id',DemandeAvanceCtrl.updateDemandeAvance);
 // Routes pour les demandes de congé
 router.post('/adddemandeconge', 
   requireAuthPersonnel, 

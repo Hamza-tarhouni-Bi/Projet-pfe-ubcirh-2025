@@ -2,6 +2,9 @@ const personnelModal = require('../models/PersonnelSchema');
 const bcrypt = require("bcrypt");
 const { sendWelcomeEmail } = require('../utiles/emailService');
 const { sendUpdateEmail } = require('../utiles/updatemail');
+const { sendCurrentPasswordEmail } = require('../utiles/ForgetMail'); // Changé ici
+
+
 
 
 const path = require('path');
@@ -251,5 +254,38 @@ exports.logout = async (req, res) => {
     res.status(200).json("User successfully logged out");
   } catch (error) {
     res.status(500).json({message: error.message});
+  }
+};
+exports.forgotPassword = async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    const user = await personnelModal.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "Aucun compte associé à cet email" 
+      });
+    }
+
+    // Générer un nouveau mot de passe temporaire
+    const tempPassword = Math.random().toString(36).slice(-8);
+    user.tempPassword = tempPassword;
+    user.password = tempPassword; // Serra hashé par le pre-save
+    await user.save();
+
+    await sendCurrentPasswordEmail(user.email, user.nom, user.prenom, tempPassword);
+    
+    return res.json({
+      success: true,
+      message: "Email envoyé avec un mot de passe temporaire"
+    });
+
+  } catch (error) {
+    console.error('ForgotPassword error:', error);
+    return res.status(500).json({
+      success: false,
+      message: "Erreur serveur"
+    });
   }
 };
