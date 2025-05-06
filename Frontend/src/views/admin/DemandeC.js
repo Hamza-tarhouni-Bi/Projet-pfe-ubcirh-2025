@@ -774,7 +774,7 @@ export default function GestionConges() {
                 <th className="gdc-th">Date début</th>
                 <th className="gdc-th">Date fin</th>
                 <th className="gdc-th">Période</th>
-                <th className="gdc-th">Type</th>
+                
                 <th className="gdc-th">Statut</th>
                 <th className="gdc-th">Motif</th>
                 <th className="gdc-th">Actions</th>
@@ -815,9 +815,7 @@ export default function GestionConges() {
                         {calculerPeriode(demande.DateDebut, demande.DateFin)}
                       </div>
                     </td>
-                    <td className="gdc-td">
-                      {renderTypeConge(demande.type)}
-                    </td>
+                  
                     <td className="gdc-td">
                       {renderStatus(demande.statut)}
                     </td>
@@ -911,12 +909,7 @@ export default function GestionConges() {
                     {calculerPeriode(demandeSelected.DateDebut, demandeSelected.DateFin)}
                   </span>
                 </div>
-                <div className="gdc-modal-info-item">
-                  <span className="gdc-modal-info-label">Type</span>
-                  <span className="gdc-modal-info-value">
-                    {renderTypeConge(demandeSelected.type)}
-                  </span>
-                </div>
+               
                 <div className="gdc-modal-info-item">
                   <span className="gdc-modal-info-label">Statut</span>
                   <span className="gdc-modal-info-value">
@@ -941,18 +934,6 @@ export default function GestionConges() {
         </div>
       )}
 
-      <div className="gdc-toast-container">
-        {toasts.map(toast => (
-          <div 
-            key={toast.id} 
-            className={`gdc-toast gdc-toast-${toast.type}`}
-            onClick={() => removeToast(toast.id)}
-          >
-            {toast.type === 'success' ? <Check size={18} /> : <X size={18} />}
-            {toast.message}
-          </div>
-        ))}
-      </div>
     </>
   );
 }

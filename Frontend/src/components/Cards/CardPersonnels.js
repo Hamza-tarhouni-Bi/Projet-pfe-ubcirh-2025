@@ -135,7 +135,6 @@ const Toast = ({ message, type, onClose }) => {
 export default function GestionPersonnel() {
   // Données des employés
   const [employes, setEmployes] = useState([]);
-
   const [employesAffiches, setEmployesAffiches] = useState([]);
   const [recherche, setRecherche] = useState("");
   const [filtreType, setFiltreType] = useState("nom");
@@ -147,11 +146,9 @@ export default function GestionPersonnel() {
   const [employeDetails, setEmployeDetails] = useState(null);
   const [employeASupprimer, setEmployeASupprimer] = useState(null);
   const [toast, setToast] = useState({ affiche: false, message: "", type: "" });
-
-  //Etape1: Ajouter le state pour les départements
   const [departements, setDepartements] = useState([]);
-  
-  //Etape2: Charger les départements depuis le backend
+
+  // Charger les départements
   useEffect(() => {
     const fetchDepartements = async () => {
       try {
@@ -221,18 +218,17 @@ export default function GestionPersonnel() {
     setToast({ ...toast, affiche: false });
   };
 
-  // Dans ouvrirModal, quand vous passez un employé existant
+  // Ouvrir le modal d'ajout/modification
   const ouvrirModal = (employe = null) => {
     if (employe) {
-      // Adaptez les données pour correspondre à votre formulaire
       setEmployeActuel({
         _id: employe._id,
         nom: employe.nom,
         prenom: employe.prenom,
         email: employe.email,
-        telephone: employe.tel, // Notez: tel dans le backend devient telephone dans le frontend
+        telephone: employe.tel,
         departement: employe.departement,
-        sexe: employe.sexe.charAt(0).toUpperCase() + employe.sexe.slice(1), // Majuscule pour l'affichage
+        sexe: employe.sexe.charAt(0).toUpperCase() + employe.sexe.slice(1),
         salaire: employe.salaire,
         soldeConge: employe.soldedeconge || 30,
         password: employe.password || "",
@@ -293,12 +289,16 @@ export default function GestionPersonnel() {
     afficherToast("Mot de passe copié !", "success");
   };
 
-  // Charger la liste des employés dès le chargement du composant
+  // Charger la liste des employés
   useEffect(() => {
     const fetchEmployes = async () => {
       try {
         const response = await axios.get("/allpersonnel");
-        setEmployes(response.data);
+        // Filtrer pour exclure les DRH
+        const filteredEmployes = response.data.filter(employe => 
+          !employe.role || employe.role.toLowerCase() !== "drh"
+        );
+        setEmployes(filteredEmployes);
       } catch (error) {
         console.error("Erreur lors du chargement des employés:", error);
         afficherToast("Erreur lors du chargement des employés", "error");
@@ -310,7 +310,7 @@ export default function GestionPersonnel() {
 
   // Sauvegarder l'employé (ajout ou modification)
   const sauvegarderEmploye = async () => {
-    // Vérifier si tous les champs obligatoires sont remplis
+    // Validation des champs obligatoires
     if (
       !employeActuel.nom ||
       !employeActuel.prenom ||
@@ -329,7 +329,7 @@ export default function GestionPersonnel() {
     }
 
     try {
-      // Préparer les données pour l'envoi au backend
+      // Préparer les données pour l'envoi
       const employeData = {
         nom: employeActuel.nom,
         prenom: employeActuel.prenom,
@@ -343,23 +343,21 @@ export default function GestionPersonnel() {
       };
 
       if (employeActuel._id) {
-        const response = await axios.put(
-          `/updatepersonnel/${employeActuel._id}`,
-          employeData
-        );
-        if (response.status === 200) {
-          afficherToast("Employé modifié avec succès", "success");
-          
-        }
+        // Modification
+        await axios.put(`/updatepersonnel/${employeActuel._id}`, employeData);
+        afficherToast("Employé modifié avec succès", "success");
       } else {
-        const response = await axios.post("/addPersonnel", employeData);
-        if (response.status === 201) {
-          afficherToast("Employé ajouté avec succès", "success");
-        }
+        // Ajout
+        await axios.post("/addPersonnel", employeData);
+        afficherToast("Employé ajouté avec succès", "success");
       }
 
+      // Recharger les données
       const { data } = await axios.get("/allpersonnel");
-      setEmployes(data);
+      const filteredEmployes = data.filter(employe => 
+        !employe.role || employe.role.toLowerCase() !== "drh"
+      );
+      setEmployes(filteredEmployes);
       fermerModal();
     } catch (error) {
       console.error("Erreur:", error);
@@ -370,21 +368,22 @@ export default function GestionPersonnel() {
     }
   };
 
-  // Supprimer un employé après confirmation
+  // Supprimer un employé
   const confirmerSuppression = async () => {
     if (!employeASupprimer) return;
 
     try {
-      const response = await axios.delete(
-        `/deletepersonnel/${employeASupprimer._id}`
+      await axios.delete(`/deletepersonnel/${employeASupprimer._id}`);
+      
+      // Recharger les données
+      const { data } = await axios.get("/allpersonnel");
+      const filteredEmployes = data.filter(employe => 
+        !employe.role || employe.role.toLowerCase() !== "drh"
       );
-
-      if (response.status === 200) {
-        const { data } = await axios.get("/allpersonnel");
-        setEmployes(data);
-        afficherToast("Employé supprimé avec succès", "success");
-        fermerSuppressionModal();
-      }
+      setEmployes(filteredEmployes);
+      
+      afficherToast("Employé supprimé avec succès", "success");
+      fermerSuppressionModal();
     } catch (error) {
       console.error("Erreur lors de la suppression:", error);
       afficherToast(
@@ -414,11 +413,7 @@ export default function GestionPersonnel() {
                 <input
                   type="text"
                   placeholder={`Rechercher par ${
-                    filtreType === "nom"
-                      ? "nom"
-                      : filtreType === "telephone"
-                      ? "téléphone"
-                      : "ID"
+                    filtreType === "nom" ? "nom" : "ID"
                   }`}
                   value={recherche}
                   onChange={(e) => setRecherche(e.target.value)}

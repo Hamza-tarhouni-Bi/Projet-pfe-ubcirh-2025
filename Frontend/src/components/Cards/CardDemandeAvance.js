@@ -6,7 +6,7 @@ const CardDemandeAvance = () => {
     montant: '',
     motif: '',
     type: 'standard',
-    statut: 'En attente' // Ajout du statut par défaut
+    statut: 'En attente'
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -18,9 +18,10 @@ const CardDemandeAvance = () => {
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
   const [alertType, setAlertType] = useState('');
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [confirmationMessage, setConfirmationMessage] = useState('');
 
   useEffect(() => {
-    // Récupérer les données utilisateur depuis localStorage
     const userDataStr = localStorage.getItem('userData');
     
     if (userDataStr) {
@@ -29,7 +30,6 @@ const CardDemandeAvance = () => {
         setUserData(userData);
         setIsAuthenticated(!!userData.email);
         
-        // Récupérer le token
         const authToken = localStorage.getItem('authToken') || 
                          localStorage.getItem('token') || 
                          localStorage.getItem('jwt');
@@ -37,7 +37,6 @@ const CardDemandeAvance = () => {
           setToken(authToken);
         }
         
-        // Récupérer le salaire
         if (userData.salaire) {
           setUserSalaire(userData.salaire);
         } else {
@@ -79,7 +78,6 @@ const CardDemandeAvance = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Vérifier si le montant est supérieur au salaire
     if (parseFloat(formData.montant) > userSalaire) {
       setShowAlert(true);
       setAlertType('error');
@@ -87,7 +85,6 @@ const CardDemandeAvance = () => {
       return;
     }
     
-    // Vérifier si on a les données utilisateur nécessaires
     if (!userData) {
       setShowAlert(true);
       setAlertType('error');
@@ -99,17 +96,15 @@ const CardDemandeAvance = () => {
     setError(null);
     
     try {
-      // Préparer les données à envoyer
       const demandeData = {
         ...formData,
         nom: userData.nom || '',
         prenom: userData.prenom || '',
         email: userData.email || '',
         salaire: userSalaire,
-        statut: 'En attente' // Statut initial
+        statut: 'En attente'
       };
 
-      // Envoyer la demande au backend
       const response = await axios.post(
         '/adddemandeavance',
         demandeData,
@@ -123,17 +118,19 @@ const CardDemandeAvance = () => {
 
       if (response.data.success) {
         setSuccess(true);
-        setShowAlert(true);
-        setAlertType('success');
-        setAlertMessage('Votre demande a été soumise avec succès! Statut: En attente');
+        setConfirmationMessage('Votre demande d\'avance a été soumise avec succès! Statut: En attente');
+        setShowConfirmation(true);
         
-        // Réinitialiser le formulaire après succès
         setFormData({
           montant: '',
           motif: '',
           type: 'standard',
           statut: 'En attente'
         });
+
+        setTimeout(() => {
+          setShowConfirmation(false);
+        }, 5000);
       }
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Une erreur est survenue');
@@ -288,25 +285,25 @@ const CardDemandeAvance = () => {
       fontSize: '18px',
       color: 'inherit'
     },
-    statusIndicator: {
-      display: 'inline-block',
-      padding: '4px 8px',
+    toastMessage: {
+      position: 'fixed',
+      bottom: '30px',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      backgroundColor: '#34d399',
+      color: 'white',
       borderRadius: '12px',
-      fontSize: '12px',
-      fontWeight: '500',
-      marginLeft: '8px'
+      padding: '15px 20px',
+      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+      zIndex: '1000',
+      animation: 'slideUp 0.3s ease, fadeOut 0.5s ease 2.5s',
+      minWidth: '300px',
+      maxWidth: '600px'
     },
-    statusPending: {
-      backgroundColor: '#fef3c7',
-      color: '#d97706'
-    },
-    statusApproved: {
-      backgroundColor: '#dcfce7',
-      color: '#16a34a'
-    },
-    statusRejected: {
-      backgroundColor: '#fee2e2',
-      color: '#b91c1c'
+    toastContent: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '15px'
     }
   };
 
@@ -402,6 +399,20 @@ const CardDemandeAvance = () => {
           {loading ? 'Envoi en cours...' : 'Soumettre ma demande'}
         </button>
       </form>
+
+      {showConfirmation && (
+        <div style={styles.toastMessage}>
+          <div style={styles.toastContent}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9 12L11 14L15 10M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            <div>
+              <strong>Succès! </strong>
+              {confirmationMessage}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

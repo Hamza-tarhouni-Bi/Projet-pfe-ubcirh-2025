@@ -1,9 +1,9 @@
-const condidatureModal = require("../models/CondidatureSchema");
+const condidatureModel = require("../models/CondidatureSchema");
 const { sendAcceptedCandidatureEmail, sendRejectedCandidatureEmail } = require('../utiles/candidatureEmailService');
 
 module.exports.getCondidature = async (req, res) => {
   try {
-    const condidaturelist = await condidatureModal.find();
+    const condidaturelist = await condidatureModel.find();
     if (!condidaturelist) {
       return res.status(404).json({ message: "There is no condidature" });
     }
@@ -16,70 +16,84 @@ module.exports.getCondidature = async (req, res) => {
 
 module.exports.addCondidature = async (req, res) => {
   try {
-    // Validate required fields
-    const { nom, prenom, adresse, email, tel, posteId, posteTitle } = req.body;
-    
-    if (!nom || !prenom || !adresse || !email || !tel) {
-      return res.status(400).json({ message: "Missing required fields" });
+    // Debug: Afficher le contenu de req.body et req.file
+    console.log('Request Body:', req.body);
+    console.log('Uploaded File:', req.file);
+
+    // Vérification des champs requis avec des messages plus précis
+    if (!req.body.email) {
+      return res.status(400).json({
+        success: false,
+        message: "Le champ email est requis."
+      });
     }
-    
-    const condidatureData = { 
-      nom, 
-      prenom, 
-      adresse, 
-      email, 
-      tel,
-      posteId,
-      posteTitle
-    };
-    
-    // Check if file was uploaded
-    if (!req.file) {
-      return res.status(400).json({ message: "CV file is required" });
+
+    if (!req.body.posteId) {
+      return res.status(400).json({
+        success: false,
+        message: "L'ID du poste est requis."
+      });
     }
-    
-    // Add file path to data
-    condidatureData.cv = req.file.filename;
-    
-    // Create and save new candidate
-    const condidature = new condidatureModal(condidatureData);
-    const condidatureadded = await condidature.save();
-    
-    return res.status(201).json(condidatureadded);
-    
+
+    const { email, posteId, ...otherData } = req.body;
+
+    // Vérification de l'existence d'une candidature
+    const existingApplication = await condidatureModel.findOne({
+      email: email.toString().toLowerCase().trim(),
+      posteId: posteId
+    });
+
+    if (existingApplication) {
+      return res.status(400).json({
+        success: false,
+        message: "Vous avez déjà postulé à cette offre."
+      });
+    }
+
+    // Création de la nouvelle candidature
+    const newCandidature = new condidatureModel({
+      ...otherData,
+      email: email.toString().toLowerCase().trim(),
+      posteId: posteId,
+      cv: req.file?.filename || null,
+      status: 'pending'
+    });
+
+    await newCandidature.save();
+
+    return res.status(201).json({
+      success: true,
+      message: "Candidature enregistrée avec succès!"
+    });
+
   } catch (error) {
-    console.error("Error in addCondidature:", error);
-    // Handle duplicate email error specifically
-    if (error.code === 11000 && error.keyPattern && error.keyPattern.email) {
-      return res.status(400).json({ message: "Email already exists" });
-    }
-    return res.status(500).json({ message: error.message });
+    console.error("Erreur serveur:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Erreur serveur. Veuillez réessayer plus tard.",
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 };
 
-// Méthode mise à jour pour inclure l'envoi d'emails
 module.exports.updateCondidatureStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
     
-    // Vérifier que le statut est valide
     if (!['pending', 'accepted', 'rejected'].includes(status)) {
       return res.status(400).json({ message: "Invalid status value" });
     }
     
-    // Trouver la candidature avant la mise à jour pour avoir les infos complètes
-    const candidature = await condidatureModal.findById(id);
+    const candidature = await condidatureModel.findById(id);
     
     if (!candidature) {
       return res.status(404).json({ message: "Candidature not found" });
     }
     
-    // Mise à jour du statut
     candidature.status = status;
     const updatedCandidature = await candidature.save();
     
-    // Envoi d'email en fonction du nouveau statut
     try {
       if (status === 'accepted') {
         await sendAcceptedCandidatureEmail(
@@ -100,7 +114,6 @@ module.exports.updateCondidatureStatus = async (req, res) => {
       }
     } catch (emailError) {
       console.error("Erreur lors de l'envoi de l'email:", emailError);
-     
     }
     
     return res.status(200).json(updatedCandidature);
@@ -114,7 +127,7 @@ module.exports.updateCondidatureStatus = async (req, res) => {
 module.exports.deleteCondidature = async (req, res) => {
   try {
     const { id } = req.params;
-    const deleted = await condidatureModal.findByIdAndDelete(id);
+    const deleted = await condidatureModel.findByIdAndDelete(id);
     
     if (!deleted) {
       return res.status(404).json({ message: "Candidature not found" });

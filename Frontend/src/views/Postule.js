@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Navbar from "components/Navbars/IndexNavbar";
-import axios from "axios"; // Make sure axios is installed
+import axios from "axios";
 
 const Postule = () => {
   // State for job listings and search
@@ -41,7 +41,6 @@ const Postule = () => {
         setIsLoading(true);
         const response = await axios.get('/alloffre');
         
-        // Transform data to match our component's expected format
         const formattedJobs = response.data.map(job => ({
           id: job._id,
           title: job.titre,
@@ -131,7 +130,6 @@ const Postule = () => {
   // Handle date filter change
   const handleDateFilterChange = (newDateFilter) => {
     setDateFilter(newDateFilter);
-    // This will trigger the useEffect to apply filters
   };
 
   // Apply filters when dateFilter changes
@@ -145,7 +143,7 @@ const Postule = () => {
   const openApplicationModal = (job) => {
     setSelectedJob(job);
     setIsModalOpen(true);
-    setFileError(""); // Reset file error when opening modal
+    setFileError("");
     setFormData({
       prenom: "",
       nom: "",
@@ -153,8 +151,8 @@ const Postule = () => {
       email: "",
       tel: "",
       cv: "",
-      posteId: job.id, // Ajout de l'ID du poste
-      posteTitle: job.title // Ajout du titre du poste
+      posteId: job.id,
+      posteTitle: job.title
     });
     setSubmitSuccess(false);
     setSubmitError("");
@@ -165,7 +163,7 @@ const Postule = () => {
     setIsModalOpen(false);
     setSelectedJob(null);
     setFileName("Aucun fichier sélectionné");
-    setFileError(""); // Reset file error when closing modal
+    setFileError("");
   };
 
   // Handle input changes
@@ -179,15 +177,14 @@ const Postule = () => {
 
   // Handle file upload with PDF validation
   const handleFileChange = (e) => {
-    setFileError(""); // Reset error message
+    setFileError("");
     
     if (e.target.files.length > 0) {
       const file = e.target.files[0];
       
-      // Check if file is PDF
       if (file.type !== 'application/pdf') {
         setFileError("Erreur: Veuillez ne sélectionner que des fichiers PDF.");
-        e.target.value = ''; // Clear the file input
+        e.target.value = '';
         setFileName("Aucun fichier sélectionné");
         setFormData({
           ...formData,
@@ -222,19 +219,16 @@ const Postule = () => {
     try {
       setIsSubmitting(true);
       
-      // Create a FormData object to send the file
       const formDataToSend = new FormData();
       formDataToSend.append("nom", formData.nom);
       formDataToSend.append("prenom", formData.prenom);
       formDataToSend.append("adresse", formData.adresse);
       formDataToSend.append("email", formData.email);
       formDataToSend.append("tel", formData.tel);
-      // Ajouter l'ID et le titre du poste
       formDataToSend.append("posteId", formData.posteId); 
       formDataToSend.append("posteTitle", formData.posteTitle);
       formDataToSend.append("cv", formData.cv);
       
-      // Send the data to the backend
       const response = await axios.post('/addcondidature', formDataToSend, {
         headers: {
           'Content-Type': 'multipart/form-data'
@@ -243,26 +237,30 @@ const Postule = () => {
       
       setSubmitSuccess(true);
       
-      // Reset form after successful submission
       setTimeout(() => {
         closeModal();
       }, 2000);
       
     } catch (err) {
       console.error("Error submitting application:", err);
-      setSubmitError("Une erreur s'est produite lors de l'envoi de votre candidature. Veuillez réessayer.");
+      
+      // Vérification spécifique pour l'erreur de candidature existante
+      if (err.response && err.response.data && err.response.data.message === "Vous avez déjà postulé à cette offre.") {
+        setSubmitError("Vous avez déjà postulé à cette offre.");
+      } else {
+        setSubmitError("Une erreur s'est produite lors de l'envoi de votre candidature. Veuillez réessayer.");
+      }
     } finally {
       setIsSubmitting(false);
     }
   };
-  // Trigger the file input when clicking on the upload area
+
   const triggerFileInput = () => {
     document.getElementById("file-upload-input").click();
   };
 
   const displayedJobs = hasSearched ? filteredJobs : jobListings;
 
-  // Count jobs that are within 30 days
   const countJobsWithin30Days = () => {
     const today = new Date();
     const thirtyDaysAgo = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 30);
@@ -280,7 +278,6 @@ const Postule = () => {
     <div className="careers-page">
       <Navbar />
       
-      {/* Banner and search bar */}
       <div className="banner">
         <div className="search-container">
           <form onSubmit={handleSearch}>
@@ -306,7 +303,6 @@ const Postule = () => {
 
       <div className="content-container">
         <div className="filters-container">
-          {/* Filters section */}
           <div className="filters-header">
             <h2>Filtres</h2>
             <button className="reset-button" onClick={resetFilters}>
@@ -410,7 +406,6 @@ const Postule = () => {
         </div>
       </div>
 
-      {/* Modal for job application */}
       {isModalOpen && selectedJob && (
         <div className="modal-overlay" onClick={closeModal}>
           <div 
@@ -429,7 +424,7 @@ const Postule = () => {
             ) : (
               <form onSubmit={handleSubmit}>
                 {submitError && (
-                  <div className="submit-error">
+                  <div className={`submit-message ${submitError.includes("déjà postulé") ? "warning-message" : "error-message"}`}>
                     <p>{submitError}</p>
                   </div>
                 )}
@@ -842,7 +837,6 @@ const Postule = () => {
           text-align: center;
           margin-bottom: 25px;
           padding-bottom: 15px;
-          
         }
 
         .modal-title h2 {
@@ -892,11 +886,6 @@ const Postule = () => {
           flex: 1;
         }
 
-        .country-code {
-          width: 40%;
-          flex: 0.4;
-        }
-
         .file-upload {
           border: 2px dashed #1a73e8;
           padding: 20px;
@@ -905,11 +894,6 @@ const Postule = () => {
           border-radius: 4px;
           background-color: #f5f9ff;
           transition: all 0.3s ease;
-        }
-
-        .file-upload:hover {
-          background-color: #e8f1fe;
-          border-color: #0d47a1;
         }
 
         .file-upload.file-error {
@@ -967,6 +951,33 @@ const Postule = () => {
 
         .submit-application:hover {
           background-color: #0d47a1;
+        }
+
+        /* Messages styles */
+        .success-message {
+          background-color: #d4edda;
+          color: #155724;
+          padding: 15px;
+          border-radius: 4px;
+          margin-bottom: 20px;
+          text-align: center;
+        }
+
+        .submit-message {
+          padding: 15px;
+          border-radius: 4px;
+          margin-bottom: 20px;
+          text-align: center;
+        }
+
+        .error-message {
+          background-color: #f8d7da;
+          color: #721c24;
+        }
+
+        .warning-message {
+          background-color: #fff3cd;
+          color: #856404;
         }
 
         @media (max-width: 768px) {

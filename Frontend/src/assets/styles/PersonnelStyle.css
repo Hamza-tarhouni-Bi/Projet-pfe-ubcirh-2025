@@ -438,3 +438,436 @@
     border-radius: 8px;
     border: 1px dashed #ccc;
   }
+
+  /* Styles de base */
+.gp-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.gp-header {
+  margin-bottom: 20px;
+}
+
+.gp-header h1 {
+  font-size: 24px;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+/* Contrôles */
+.gp-controls {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.gp-search {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.gp-search-icon {
+  padding: 8px 12px;
+  color: #666;
+}
+
+.gp-search input {
+  border: none;
+  padding: 8px;
+  min-width: 250px;
+  outline: none;
+}
+
+.gp-search select {
+  border: none;
+  border-left: 1px solid #ddd;
+  padding: 8px;
+  background: #f5f5f5;
+  outline: none;
+}
+
+.gp-add-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.gp-add-btn:hover {
+  background: #45a049;
+}
+
+/* Filtres */
+.gp-filters {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.gp-filter-btn {
+  padding: 6px 12px;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.gp-filter-btn.active {
+  background: #2196F3;
+  color: white;
+  border-color: #2196F3;
+}
+
+/* Tableau */
+.gp-table-wrapper {
+  overflow-x: auto;
+  margin-bottom: 20px;
+}
+
+.gp-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.gp-table th, .gp-table td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+.gp-table th {
+  background: #f5f5f5;
+  font-weight: 600;
+}
+
+.gp-table tr:hover {
+  background: #f9f9f9;
+}
+
+.gp-dept-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  background: #e3f2fd;
+  color: #1976d2;
+  border-radius: 12px;
+  font-size: 12px;
+}
+
+.gp-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.gp-action-btn {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.gp-action-btn.view {
+  background: #2196F3;
+  color: white;
+}
+
+.gp-action-btn.edit {
+  background: #FFC107;
+  color: white;
+}
+
+.gp-action-btn.delete {
+  background: #F44336;
+  color: white;
+}
+
+.gp-action-btn:hover {
+  opacity: 0.8;
+}
+
+.gp-no-data {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+}
+
+/* Pagination */
+.gp-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.gp-pagination-info {
+  color: #666;
+  font-size: 14px;
+}
+
+.gp-pagination-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.gp-pagination-controls button {
+  padding: 6px 12px;
+  border: 1px solid #ddd;
+  background: white;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.gp-pagination-controls button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.gp-pagination-controls button.active {
+  background: #2196F3;
+  color: white;
+  border-color: #2196F3;
+}
+
+/* Modals */
+.gp-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.gp-modal {
+  background: white;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.gp-confirm-modal {
+  background: white;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 500px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.gp-modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.gp-modal-header h2 {
+  font-size: 18px;
+  margin: 0;
+}
+
+.gp-modal-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #666;
+}
+
+.gp-modal-body {
+  padding: 20px;
+}
+
+.gp-modal-footer {
+  padding: 16px 20px;
+  border-top: 1px solid #eee;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.gp-form-group {
+  margin-bottom: 16px;
+}
+
+.gp-form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.gp-form-group input,
+.gp-form-group select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.gp-password-field {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.gp-password-field input {
+  flex: 1;
+}
+
+.gp-copy-btn {
+  background: #2196F3;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0 12px;
+  cursor: pointer;
+}
+
+.gp-generate-btn {
+  background: none;
+  border: none;
+  color: #2196F3;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.gp-btn {
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.gp-btn-cancel {
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+}
+
+.gp-btn-save {
+  background: #4CAF50;
+  color: white;
+  border: none;
+}
+
+.gp-btn-danger {
+  background: #F44336;
+  color: white;
+  border: none;
+}
+
+/* Détails employé */
+.gp-details-content {
+  padding: 20px;
+}
+
+.gp-employee-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.gp-employee-header h3 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.gp-status-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.gp-status-badge.actif {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.gp-status-badge.inactif {
+  background: #ffebee;
+  color: #c62828;
+}
+
+.gp-details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.gp-detail-item {
+  margin-bottom: 12px;
+}
+
+.gp-detail-label {
+  font-weight: 500;
+  color: #666;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.gp-detail-value {
+  display: block;
+}
+
+/* Toast */
+.gp-toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 12px 20px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1100;
+  animation: slideIn 0.3s ease-out;
+}
+
+.gp-toast-success {
+  background: #4CAF50;
+  color: white;
+}
+
+.gp-toast-error {
+  background: #F44336;
+  color: white;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
