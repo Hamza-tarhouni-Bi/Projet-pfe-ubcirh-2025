@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, AlertCircle, Check, X } from "lucide-react";
+import { Search, AlertCircle, Check, X, Filter } from "lucide-react";
 import axios from "axios";
 
 const encapsulatedStyles = `
@@ -24,9 +24,15 @@ const encapsulatedStyles = `
     color: #1f2937;
   }
   
+  .gf-search-filter-container {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  
   .gf-search-container {
     position: relative;
-    margin-bottom: 1rem;
+    flex-grow: 1;
   }
   
   .gf-search-icon {
@@ -52,6 +58,31 @@ const encapsulatedStyles = `
     box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.2);
   }
   
+  .gf-filter-container {
+    position: relative;
+    min-width: 180px;
+  }
+  
+  .gf-filter-select {
+    appearance: none;
+    width: 100%;
+    padding: 0.5rem 2.5rem 0.5rem 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    background-color: white;
+    font-size: 0.875rem;
+    cursor: pointer;
+  }
+  
+  .gf-filter-icon {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+    pointer-events: none;
+  }
+  
   .gf-table-container {
     width: 100%;
     overflow-x: auto;
@@ -69,7 +100,7 @@ const encapsulatedStyles = `
     font-weight: 600;
     text-transform: uppercase;
     color: #6b7280;
-    background-color: #f9fafb;
+    background-color: #f5f5f5;
     border-bottom: 1px solid #e5e7eb;
   }
   
@@ -198,43 +229,28 @@ const encapsulatedStyles = `
   }
   
   .gf-action-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 1.75rem;
-    height: 1.75rem;
+    padding: 0.375rem;
     border-radius: 0.375rem;
-    color: #6b7280;
-    background-color: white;
-    border: 1px solid #e5e7eb;
-    cursor: pointer;
     transition: all 0.2s ease;
+    margin-right: 0.5rem;
   }
-  
-  .gf-action-button:hover {
-    background-color: #f9fafb;
-    color: #111827;
-    border-color: #d1d5db;
-  }
-  
-  .gf-action-button-accepter:hover {
-    color: #047857;
-    background-color: #ecfdf5;
-    border-color: #a7f3d0;
-  }
-  
+
   .gf-action-button-accepter {
-    color: #047857;
+    background-color: #d1fae5;
+    color: #059669;
   }
-  
+
+  .gf-action-button-accepter:hover {
+    background-color: #a7f3d0;
+  }
+
   .gf-action-button-refuser {
-    color: #b91c1c;
-  }
-  
-  .gf-action-button-refuser:hover {
+    background-color: #fee2e2;
     color: #dc2626;
-    background-color: #fef2f2;
-    border-color: #fecaca;
+  }
+
+  .gf-action-button-refuser:hover {
+    background-color: #fecaca;
   }
   
   .gf-loading {
@@ -288,14 +304,63 @@ const encapsulatedStyles = `
       opacity: 1;
     }
   }
+
+  /* Pagination styles */
+  .gf-pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background-color: #f9fafb;
+    border-top: 1px solid #e5e7eb;
+  }
+  
+  .gf-pagination-info {
+    font-size: 0.875rem;
+    color: #64748b;
+  }
+  
+  .gf-pagination-controls {
+    display: flex;
+    gap: 0.5rem;
+  }
+  
+  .gf-pagination-button {
+    padding: 0.5rem 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    background-color: white;
+    color: #334155;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s;
+  }
+  
+  .gf-pagination-button:hover {
+    background-color: #f1f5f9;
+  }
+  
+  .gf-pagination-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  .gf-pagination-button.active {
+    background-color: #14b8a6;
+    color: white;
+    border-color: #14b8a6;
+  }
 `;
 
 const GestionFormations = () => {
   const [demandes, setDemandes] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [filtreStatut, setFiltreStatut] = useState("Tous");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [toasts, setToasts] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
   const showToast = (message, type = 'success') => {
     const id = Date.now();
@@ -330,13 +395,28 @@ const GestionFormations = () => {
 
   const filteredDemandes = demandes.filter(demande => {
     const searchLower = searchTerm.toLowerCase();
-    return (
+    const matchesSearch = (
       demande.nom.toLowerCase().includes(searchLower) ||
       demande.prenom.toLowerCase().includes(searchLower) ||
       demande.nomFormation.toLowerCase().includes(searchLower) ||
       demande._id.toLowerCase().includes(searchLower)
     );
+    
+    const matchesStatus = filtreStatut === "Tous" || 
+      (filtreStatut === "Approuvée" && demande.statut === "Approuvée") ||
+      (filtreStatut === "En attente" && demande.statut === "En attente") ||
+      (filtreStatut === "Rejetée" && demande.statut === "Rejetée");
+    
+    return matchesSearch && matchesStatus;
   });
+
+  // Pagination logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredDemandes.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredDemandes.length / itemsPerPage);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   const updateStatut = async (_id, newStatus) => {
     try {
@@ -420,17 +500,35 @@ const GestionFormations = () => {
         <div className="gf-header-section">
           <h1 className="gf-title">Gestion des Demandes de Formation</h1>
           
-          <div className="gf-search-container">
-            <div className="gf-search-icon">
-              <Search size={18} />
+          <div className="gf-search-filter-container">
+            <div className="gf-search-container">
+              <div className="gf-search-icon">
+                <Search size={18} />
+              </div>
+              <input
+                type="text"
+                className="gf-search-input"
+                placeholder="Rechercher par ID, nom, prénom ou formation..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
             </div>
-            <input
-              type="text"
-              className="gf-search-input"
-              placeholder="Rechercher par ID, nom, prénom ou formation..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+            
+            <div className="gf-filter-container">
+              <select
+                className="gf-filter-select"
+                value={filtreStatut}
+                onChange={(e) => setFiltreStatut(e.target.value)}
+              >
+                <option value="Tous">Tous les statuts</option>
+                <option value="En attente">En attente</option>
+                <option value="Approuvée">Approuvée</option>
+                <option value="Rejetée">Rejetée</option>
+              </select>
+              <div className="gf-filter-icon">
+                <Filter size={18} />
+              </div>
+            </div>
           </div>
         </div>
 
@@ -439,80 +537,106 @@ const GestionFormations = () => {
         ) : error ? (
           <div className="gf-loading" style={{ color: '#b91c1c' }}>{error}</div>
         ) : (
-          <div className="gf-table-container">
-            <table className="gf-table">
-              <thead>
-                <tr>
-                  <th className="gf-th">ID</th>
-                  <th className="gf-th">Nom</th>
-                  <th className="gf-th">Prénom</th>
-                  <th className="gf-th">Formation</th>
-                  <th className="gf-th">Statut</th>
-                  <th className="gf-th">Date</th>
-                  <th className="gf-th">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredDemandes.length === 0 ? (
+          <>
+            <div className="gf-table-container">
+              <table className="gf-table">
+                <thead>
                   <tr>
-                    <td colSpan={7} className="gf-td" style={{ textAlign: 'center' }}>
-                      Aucune demande trouvée
-                    </td>
+                    <th className="gf-th">Nom</th>
+                    <th className="gf-th">Prénom</th>
+                    <th className="gf-th">Formation</th>
+                    <th className="gf-th">Statut</th>
+                    <th className="gf-th">Date</th>
+                    <th className="gf-th">Actions</th>
                   </tr>
-                ) : (
-                  filteredDemandes.map(demande => (
-                    <tr key={demande._id} className="gf-tr">
-                      <td className="gf-td">
-                        <div className="gf-id" title={demande._id}>
-                          {demande._id.substring(0, 8)}...
-                        </div>
-                      </td>
-                      <td className="gf-td">
-                        <div className="gf-nom">{demande.nom}</div>
-                      </td>
-                      <td className="gf-td">
-                        <div className="gf-prenom">{demande.prenom}</div>
-                      </td>
-                      <td className="gf-td">
-                        <div className="gf-formation-titre">{demande.nomFormation}</div>
-                      </td>
-                      <td className="gf-td">
-                        {renderStatusBadge(demande.statut)}
-                      </td>
-                      <td className="gf-td">
-                        <div className="gf-date">{formatDate(demande.dateDemande)}</div>
-                      </td>
-                      <td className="gf-td">
-                        {demande.statut === 'En attente' && (
-                          <div className="gf-actions">
-                            <button
-                              className="gf-action-button gf-action-button-accepter"
-                              onClick={() => updateStatut(demande._id, 'accepte')}
-                              title="Accepter"
-                            >
-                              <Check size={16} />
-                            </button>
-                            <button
-                              className="gf-action-button gf-action-button-refuser"
-                              onClick={() => updateStatut(demande._id, 'refuse')}
-                              title="Refuser"
-                            >
-                              <X size={16} />
-                            </button>
-                          </div>
-                        )}
+                </thead>
+                <tbody>
+                  {currentItems.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="gf-td" style={{ textAlign: 'center' }}>
+                        Aucune demande trouvée
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                  ) : (
+                    currentItems.map(demande => (
+                      <tr key={demande._id} className="gf-tr">
+                        <td className="gf-td">
+                          <div className="gf-nom">{demande.nom}</div>
+                        </td>
+                        <td className="gf-td">
+                          <div className="gf-prenom">{demande.prenom}</div>
+                        </td>
+                        <td className="gf-td">
+                          <div className="gf-formation-titre">{demande.nomFormation}</div>
+                        </td>
+                        <td className="gf-td">
+                          {renderStatusBadge(demande.statut)}
+                        </td>
+                        <td className="gf-td">
+                          <div className="gf-date">{formatDate(demande.dateDemande)}</div>
+                        </td>
+                        <td className="gf-td">
+                          {demande.statut === 'En attente' && (
+                            <div className="gf-actions">
+                              <button
+                                className="gf-action-button gf-action-button-accepter"
+                                onClick={() => updateStatut(demande._id, 'accepte')}
+                                title="Accepter"
+                              >
+                                <Check size={16} />
+                              </button>
+                              <button
+                                className="gf-action-button gf-action-button-refuser"
+                                onClick={() => updateStatut(demande._id, 'refuse')}
+                                title="Refuser"
+                              >
+                                <X size={16} />
+                              </button>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            <div className="gf-pagination">
+              <div className="gf-pagination-info">
+                Affichage de {indexOfFirstItem + 1} à {Math.min(indexOfLastItem, filteredDemandes.length)} sur {filteredDemandes.length} demandes
+              </div>
+              <div className="gf-pagination-controls">
+                <button 
+                  onClick={() => paginate(currentPage - 1)} 
+                  disabled={currentPage === 1}
+                  className="gf-pagination-button"
+                >
+                  Précédent
+                </button>
+                
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(number => (
+                  <button
+                    key={number}
+                    onClick={() => paginate(number)}
+                    className={`gf-pagination-button ${currentPage === number ? 'active' : ''}`}
+                  >
+                    {number}
+                  </button>
+                ))}
+                
+                <button 
+                  onClick={() => paginate(currentPage + 1)} 
+                  disabled={currentPage === totalPages || totalPages === 0}
+                  className="gf-pagination-button"
+                >
+                  Suivant
+                </button>
+              </div>
+            </div>
+          </>
         )}
-        
-        <div className="gf-footer">
-          {!loading && !error && `Affichage de ${filteredDemandes.length} demandes sur ${demandes.length}`}
-        </div>
       </div>
 
       {/* Toast notifications */}

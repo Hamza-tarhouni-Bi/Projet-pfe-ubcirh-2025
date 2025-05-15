@@ -66,9 +66,18 @@ export default function ProfileForm() {
       }
     });
     
-    // Email format
-    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = "Format d'email invalide";
+    // FirstName and LastName must be alphabetic
+    if (formData.firstName && !/^[a-zA-ZÀ-ÿ\s-]+$/.test(formData.firstName)) {
+      newErrors.firstName = "Le prénom ne doit contenir que des lettres";
+    }
+    
+    if (formData.lastName && !/^[a-zA-ZÀ-ÿ\s-]+$/.test(formData.lastName)) {
+      newErrors.lastName = "Le nom ne doit contenir que des lettres";
+    }
+    
+    // Phone must be exactly 8 digits
+    if (formData.phone && !/^\d{8}$/.test(formData.phone)) {
+      newErrors.phone = "Le téléphone doit contenir exactement 8 chiffres";
     }
     
     // Password validation
@@ -78,9 +87,11 @@ export default function ProfileForm() {
         newErrors.currentPassword = "Le mot de passe actuel est requis pour changer le mot de passe";
       }
       
-      // Vérifier la complexité du nouveau mot de passe
+      // Vérifier la complexité du nouveau mot de passe (alphanumérique, minimum 8 caractères)
       if (formData.newPassword.length < 8) {
         newErrors.newPassword = "Le nouveau mot de passe doit contenir au moins 8 caractères";
+      } else if (!/^(?=.*[a-zA-Z])(?=.*[0-9])/.test(formData.newPassword)) {
+        newErrors.newPassword = "Le mot de passe doit être alphanumérique";
       }
       
       // Vérifier que la confirmation correspond
@@ -290,6 +301,8 @@ export default function ProfileForm() {
                     className={errors.email ? "ubci-input-error" : ""}
                     value={formData.email}
                     onChange={handleChange}
+                    readOnly
+                    style={{ backgroundColor: "#f0f0f0", cursor: "not-allowed" }}
                   />
                   {errors.email && <div className="ubci-error-text">{errors.email}</div>}
                 </div>
@@ -304,7 +317,8 @@ export default function ProfileForm() {
                     className={errors.phone ? "ubci-input-error" : ""}
                     value={formData.phone}
                     onChange={handleChange}
-                    placeholder="Ex: 06 12 34 56 78"
+                    placeholder="Ex: 06123456"
+                    maxLength="8"
                   />
                   {errors.phone && <div className="ubci-error-text">{errors.phone}</div>}
                 </div>
@@ -368,7 +382,7 @@ export default function ProfileForm() {
                       className={errors.newPassword ? "ubci-input-error" : ""}
                       value={formData.newPassword}
                       onChange={handleChange}
-                      placeholder="Entrez votre nouveau mot de passe"
+                      placeholder="8 caractères minimum, alphanumérique"
                     />
                     <button 
                       type="button" 
@@ -489,7 +503,7 @@ export default function ProfileForm() {
         /* Profile Card */
         .ubci-profile-card {
           width: 100%;
-          max-width: 1000px; /* Augmenté de 800px à 1000px */
+          max-width: 1000px;
           background-color: var(--ubci-card-bg);
           border-radius: 0.5rem;
           overflow: hidden;
@@ -499,7 +513,7 @@ export default function ProfileForm() {
 
         /* Profile Body */
         .ubci-profile-body {
-          padding: 2.5rem; /* Augmenté de 2rem à 2.5rem */
+          padding: 2.5rem;
         }
 
         /* Success Alert */
@@ -542,7 +556,7 @@ export default function ProfileForm() {
         }
 
         .ubci-section-title h2 {
-          font-size: 1.25rem; /* Augmenté de 1.125rem à 1.25rem */
+          font-size: 1.25rem;
           font-weight: 600;
           color: #2c7a7b;
           margin: 0;
@@ -552,8 +566,8 @@ export default function ProfileForm() {
         .ubci-form-row {
           display: grid;
           grid-template-columns: 1fr;
-          gap: 1.75rem; /* Augmenté de 1.5rem à 1.75rem */
-          margin-bottom: 1.75rem; /* Augmenté de 1.5rem à 1.75rem */
+          gap: 1.75rem;
+          margin-bottom: 1.75rem;
         }
 
         @media (min-width: 640px) {
@@ -564,12 +578,12 @@ export default function ProfileForm() {
 
         /* Form Group */
         .ubci-form-group {
-          margin-bottom: 1.25rem; /* Augmenté de 1rem à 1.25rem */
+          margin-bottom: 1.25rem;
         }
 
         .ubci-form-group label {
           display: block;
-          font-size: 0.925rem; /* Augmenté de 0.875rem à 0.925rem */
+          font-size: 0.925rem;
           font-weight: 500;
           color: var(--ubci-gray-700);
           margin-bottom: 0.5rem;
@@ -583,8 +597,8 @@ export default function ProfileForm() {
         /* Form Inputs */
         .ubci-form-group input {
           width: 100%;
-          padding: 0.75rem 1rem; /* Augmenté de 0.625rem 0.875rem à 0.75rem 1rem */
-          font-size: 1rem; /* Augmenté de 0.95rem à 1rem */
+          padding: 0.75rem 1rem;
+          font-size: 1rem;
           border: 1px solid var(--ubci-gray-300);
           border-radius: 0.375rem;
           background-color: white;
@@ -618,19 +632,18 @@ export default function ProfileForm() {
         /* Message d'erreur amélioré */
         .ubci-error-text {
           color: var(--ubci-danger);
-          font-size: 0.7rem; /* Taille réduite */
-          margin-top: 0.25rem; /* Espacement réduit */
-          font-weight: 400; /* Police moins épaisse */
-          padding-left: 0.25rem; /* Légère indentation */
+          font-size: 0.7rem;
+          margin-top: 0.25rem;
+          font-weight: 400;
+          padding-left: 0.25rem;
           display: flex;
           align-items: center;
-          opacity: 0.9; /* Légèrement transparent */
-          max-width: 90%; /* Limite la largeur */
-          line-height: 1.2; /* Hauteur de ligne réduite */
+          opacity: 0.9;
+          max-width: 90%;
+          line-height: 1.2;
           transition: all 0.2s ease;
         }
 
-        /* Ajoutez cette icône avant le message d'erreur */
         .ubci-error-text::before {
           content: "";
           display: inline-block;
@@ -642,7 +655,6 @@ export default function ProfileForm() {
           flex-shrink: 0;
         }
 
-        /* Animation subtile pour les erreurs */
         @keyframes ubciErrorAppear {
           from { opacity: 0; transform: translateY(-3px); }
           to { opacity: 0.9; transform: translateY(0); }
@@ -678,7 +690,6 @@ export default function ProfileForm() {
           position: relative;
         }
 
-
         .ubci-visibility-toggle {
           position: absolute;
           right: 0.75rem;
@@ -706,9 +717,9 @@ export default function ProfileForm() {
 
         /* Divider */
         .ubci-divider {
-          height: 2px; /* Augmenté de 1px à 2px */
+          height: 2px;
           background: #e2e8f0;
-          margin: 2.5rem 0; /* Augmenté de 2rem à 2.5rem */
+          margin: 2.5rem 0;
         }
 
         /* Form Actions */
@@ -716,7 +727,7 @@ export default function ProfileForm() {
           display: flex;
           justify-content: flex-end;
           gap: 1rem;
-          margin-top: 2.5rem; /* Augmenté de 2rem à 2.5rem */
+          margin-top: 2.5rem;
         }
 
         .ubci-btn-cancel, .ubci-btn-save {
@@ -724,8 +735,8 @@ export default function ProfileForm() {
           align-items: center;
           justify-content: center;
           font-weight: 500;
-          font-size: 0.925rem; /* Augmenté de 0.875rem à 0.925rem */
-          padding: 0.75rem 1.5rem; /* Augmenté de 0.625rem 1.25rem à 0.75rem 1.5rem */
+          font-size: 0.925rem;
+          padding: 0.75rem 1.5rem;
           border-radius: 0.375rem;
           cursor: pointer;
           transition: all 0.2s ease;

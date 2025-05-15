@@ -1,40 +1,21 @@
-import React, { useState } from 'react';
+import React from 'react';
 
-const SalaryAdvanceRequest = () => {
-  const [formData, setFormData] = useState({
-    fullName: '',
-    employeeId: '',
-    amount: '',
-    reason: '',
-    urgency: 'standard'
-  });
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value
-    });
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // Ici, vous implémenteriez la logique pour soumettre la demande
-    console.log('Demande soumise:', formData);
-    alert('Votre demande d\'avance sur salaire a été soumise avec succès!');
-  };
-
+const PowerBIDashboard = () => {
+  // Styles pour le composant
   const styles = {
     container: {
-      maxWidth: '600px',
-      margin: '0 auto',
-      padding: '20px',
+      width: '100%',
+      height: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
       backgroundColor: '#f5f7fa',
       fontFamily: 'Arial, sans-serif'
     },
     header: {
       textAlign: 'center',
-      marginBottom: '24px'
+      padding: '20px 0',
+      backgroundColor: '#ffffff',
+      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
     },
     title: {
       fontSize: '24px',
@@ -48,152 +29,40 @@ const SalaryAdvanceRequest = () => {
       backgroundColor: '#3b82f6',
       margin: '8px auto'
     },
-    form: {
-      backgroundColor: '#ffffff',
-      borderRadius: '8px',
-      padding: '24px',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+    dashboardContainer: {
+      flex: '1',
+      padding: '20px',
+      backgroundColor: '#f5f7fa'
     },
-    formGroup: {
-      marginBottom: '20px'
-    },
-    label: {
-      display: 'block',
-      marginBottom: '6px',
-      fontWeight: '500',
-      fontSize: '14px',
-      color: '#334155'
-    },
-    input: {
+    iframe: {
       width: '100%',
-      padding: '10px',
-      borderRadius: '6px',
-      border: '1px solid #e2e8f0',
-      fontSize: '14px'
-    },
-    select: {
-      width: '100%',
-      padding: '10px',
-      borderRadius: '6px',
-      border: '1px solid #e2e8f0',
-      fontSize: '14px',
-      backgroundColor: '#fff'
-    },
-    textarea: {
-      width: '100%',
-      padding: '10px',
-      borderRadius: '6px',
-      border: '1px solid #e2e8f0',
-      fontSize: '14px',
-      minHeight: '100px',
-      resize: 'vertical'
-    },
-    infoText: {
-      fontSize: '12px',
-      color: '#64748b',
-      marginTop: '4px'
-    },
-    submitBtn: {
-      width: '100%',
-      padding: '12px',
-      backgroundColor: '#2563eb',
-      color: '#ffffff',
-      borderRadius: '6px',
-      fontWeight: '500',
+      height: '100%',
       border: 'none',
-      cursor: 'pointer',
-      fontSize: '16px'
+      borderRadius: '8px',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
     }
   };
+
+  // URL de votre rapport Power BI
+  const powerBiUrl = "https://app.powerbi.com/reportEmbed?reportId=627210b7-a2a9-48d4-9ac2-544ec0985ba3&autoAuth=true&ctid=dbd6664d-4eb9-46eb-99d8-5c43ba153c61";
 
   return (
     <div style={styles.container}>
       <div style={styles.header}>
-        <h1 style={styles.title}>Demande d'avance sur salaire</h1>
+        <h1 style={styles.title}>Dashboard Avances sur Salaire</h1>
         <div style={styles.divider}></div>
       </div>
-
-      <form style={styles.form} onSubmit={handleSubmit}>
-        <div style={styles.formGroup}>
-          <label style={styles.label} htmlFor="fullName">Nom complet</label>
-          <input
-            type="text"
-            id="fullName"
-            name="fullName"
-            style={styles.input}
-            value={formData.fullName}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <div style={styles.formGroup}>
-          <label style={styles.label} htmlFor="employeeId">Identifiant employé</label>
-          <input
-            type="text"
-            id="employeeId"
-            name="employeeId"
-            style={styles.input}
-            value={formData.employeeId}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <div style={styles.formGroup}>
-          <label style={styles.label} htmlFor="amount">Montant demandé (TND)</label>
-          <input
-            type="number"
-            id="amount"
-            name="amount"
-            style={styles.input}
-            value={formData.amount}
-            onChange={handleChange}
-            required
-            min="1"
-          />
-          <p style={styles.infoText}>Le montant maximum est de 30% de votre salaire mensuel</p>
-        </div>
-
-        <div style={styles.formGroup}>
-          <label style={styles.label} htmlFor="urgency">Type de demande</label>
-          <select
-            id="urgency"
-            name="urgency"
-            style={styles.select}
-            value={formData.urgency}
-            onChange={handleChange}
-            required
-          >
-            <option value="standard">Standard (traitement sous 3 jours)</option>
-            <option value="urgent">Urgente (traitement sous 24h)</option>
-            <option value="exceptional">Exceptionnelle (évaluation sous 5 jours)</option>
-          </select>
-        </div>
-
-        <div style={styles.formGroup}>
-          <label style={styles.label} htmlFor="reason">Motif de la demande</label>
-          <textarea
-            id="reason"
-            name="reason"
-            style={styles.textarea}
-            value={formData.reason}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <button 
-          type="submit" 
-          style={styles.submitBtn}
-          onMouseOver={(e) => e.target.style.backgroundColor = '#1d4ed8'}
-          onMouseOut={(e) => e.target.style.backgroundColor = '#2563eb'}
-        >
-          Soumettre ma demande
-        </button>
-      </form>
+      
+      <div style={styles.dashboardContainer}>
+        <iframe 
+          title="pfeubcirh" 
+          style={styles.iframe}
+          src={powerBiUrl}
+          allowFullScreen={true}
+        ></iframe>
+      </div>
     </div>
   );
 };
 
-export default SalaryAdvanceRequest;
+export default PowerBIDashboard;

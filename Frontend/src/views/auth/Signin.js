@@ -12,7 +12,7 @@ const Signin = () => {
     password: ''
   });
   const [forgotEmail, setForgotEmail] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [loginMessage, setLoginMessage] = useState('');
@@ -88,11 +88,6 @@ const Signin = () => {
         const role = response.data.personnel.role || 'inconnu';
         const message = `Utilisateur existe. Rôle: ${role}`;
         setLoginMessage(message);
-        
-        if (rememberMe) {
-          localStorage.setItem('userEmail', credentials.email);
-          localStorage.setItem('userRole', role);
-        }
         
         setTimeout(() => {
           if (role.toLowerCase() === 'personnel') {
@@ -173,7 +168,6 @@ const Signin = () => {
       }
       setShowToast(true);
       
-      // Réinitialiser le formulaire après 5 secondes seulement si succès
       if (response.data.success) {
         setTimeout(() => {
           setShowToast(false);
@@ -190,7 +184,6 @@ const Signin = () => {
       let errorMessage = "Erreur lors de la réinitialisation. Veuillez réessayer.";
       
       if (err.response) {
-        // Personnalisation des messages d'erreur selon le code de statut
         switch(err.response.status) {
           case 400:
             errorMessage = "Adresse email invalide";
@@ -222,13 +215,7 @@ const Signin = () => {
 
   const handleLogout = () => {
     localStorage.removeItem('userData');
-    localStorage.removeItem('userEmail');
-    localStorage.removeItem('userRole');
     history.push('/signin');
-  };
-
-  const handleSocialLogin = (provider) => {
-    console.log(`Attempting to login with ${provider}`);
   };
 
   const Alert = ({ message, type, onClose }) => {
@@ -274,9 +261,16 @@ const Signin = () => {
           
           <div className="login-right-panel">
             <div className="login-form-wrapper">
-              <h3 className="login-title">
-                {mode === 'login' ? 'Connectez-vous à votre compte' : 'Réinitialisation du mot de passe'}
-              </h3>
+              <div className="login-header">
+                <h3 className="login-title">
+                  {mode === 'login' ? 'Connectez-vous à votre compte' : 'Réinitialisation du mot de passe'}
+                </h3>
+                <p className="login-subtitle">
+                  {mode === 'login' ? 
+                    '' : 
+                    ''}
+                </p>
+              </div>
               
               {error && <Alert message={error} type="error" onClose={() => setError('')} />}
               
@@ -297,118 +291,80 @@ const Signin = () => {
               )}
               
               {mode === 'login' ? (
-                <>
-                  <div className="social-login">
-                    <button 
-                      type="button" 
-                      className="social-btn linkedin"
-                      onClick={() => handleSocialLogin('linkedin')}
-                    >
-                      <svg className="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path 
-                          fill="#0077B5" 
-                          d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"
-                        />
-                      </svg>
-                      LinkedIn
-                    </button>
-                    
-                    <button 
-                      type="button" 
-                      className="social-btn google"
-                      onClick={() => handleSocialLogin('gmail')}
-                    >
-                      <svg className="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path 
-                          fill="#EA4335" 
-                          d="M5.266 9.765A7.077 7.077 0 0 1 12 4.909c1.69 0 3.218.6 4.418 1.582L19.91 3C17.782 1.145 15.055 0 12 0 7.27 0 3.198 2.698 1.24 6.65l4.026 3.115Z"
-                        />
-                        <path 
-                          fill="#34A853" 
-                          d="M16.04 18.013c-1.09.703-2.474 1.078-4.04 1.078a7.077 7.077 0 0 1-6.723-4.823l-4.04 3.067A11.965 11.965 0 0 0 12 24c2.933 0 5.735-1.043 7.834-3l-3.793-2.987Z"
-                        />
-                        <path 
-                          fill="#4A90E2" 
-                          d="M19.834 21c2.195-2.048 3.62-5.096 3.62-9 0-.71-.109-1.473-.272-2.182H12v4.637h6.436c-.317 1.559-1.17 2.766-2.395 3.558L19.834 21Z"
-                        />
-                        <path 
-                          fill="#FBBC05" 
-                          d="M5.277 14.268A7.12 7.12 0 0 1 4.909 12c0-.782.125-1.533.357-2.235L1.24 6.65A11.934 11.934 0 0 0 0 12c0 1.92.445 3.73 1.237 5.335l4.04-3.067Z"
-                        />
-                      </svg>
-                      Google
-                    </button>
+                <form onSubmit={handleSubmit} className="auth-form">
+                  <div className="input-group">
+                    <label htmlFor="email">Email</label>
+                    <div className="input-container">
+                      <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        value={credentials.email}
+                        onChange={handleChange}
+                        placeholder="Entrez votre adresse email"
+                        disabled={isLoading}
+                      />
+                      <div className="input-icon">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M20 4H4C2.9 4 2 4.9 2 6V18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6C22 4.9 21.1 4 20 4ZM20 18H4V8L12 13L20 8V18ZM12 11L4 6H20L12 11Z" fill="currentColor"/>
+                        </svg>
+                      </div>
+                    </div>
                   </div>
                   
-                  <div className="divider">
-                    <span>ou continuer avec</span>
+                  <div className="input-group">
+                    <div className="label-row">
+                      <label htmlFor="password">Mot de passe</label>
+                      <a 
+                        href="#" 
+                        className="forgot-link"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setMode('forgot');
+                        }}
+                      >
+                        Oublié?
+                      </a>
+                    </div>
+                    <div className="input-container">
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        id="password"
+                        name="password"
+                        value={credentials.password}
+                        onChange={handleChange}
+                        placeholder="Entrez votre mot de passe"
+                        disabled={isLoading}
+                      />
+                      <div className="input-icon">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M18 8H17V6C17 3.24 14.76 1 12 1C9.24 1 7 3.24 7 6V8H6C4.9 8 4 8.9 4 10V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V10C20 8.9 19.1 8 18 8ZM12 17C10.9 17 10 16.1 10 15C10 13.9 10.9 13 12 13C13.1 13 14 13.9 14 15C14 16.1 13.1 17 12 17ZM15 8H9V6C9 4.34 10.34 3 12 3C13.66 3 15 4.34 15 6V8Z" fill="currentColor"/>
+                        </svg>
+                      </div>
+                    </div>
                   </div>
                   
-                  <form onSubmit={handleSubmit}>
-                    <div className="input-group">
-                      <label htmlFor="email">Email</label>
-                      <div className="input-container">
-                        <input
-                          type="email"
-                          id="email"
-                          name="email"
-                          value={credentials.email}
-                          onChange={handleChange}
-                          placeholder="Entrez votre adresse email"
-                          disabled={isLoading}
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="input-group">
-                      <div className="label-row">
-                        <label htmlFor="password">Mot de passe</label>
-                        <a 
-                          href="#" 
-                          className="forgot-link"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            setMode('forgot');
-                          }}
-                        >
-                          Oublié?
-                        </a>
-                      </div>
-                      <div className="input-container">
-                        <input
-                          type="password"
-                          id="password"
-                          name="password"
-                          value={credentials.password}
-                          onChange={handleChange}
-                          placeholder="Entrez votre mot de passe"
-                          disabled={isLoading}
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="remember-option">
-                      <label className="checkbox-container">
-                        <input
-                          type="checkbox"
-                          checked={rememberMe}
-                          onChange={() => setRememberMe(!rememberMe)}
-                          disabled={isLoading}
-                        />
-                        <span className="checkmark"></span>
-                        <span>Se souvenir de moi pendant 30 jours</span>
-                      </label>
-                    </div>
-                    
-                    <button 
-                      type="submit" 
-                      className={`sign-in-btn ${isLoading ? 'loading' : ''}`}
-                      disabled={isLoading}
-                    >
-                      {isLoading ? 'Connexion...' : 'Se connecter'}
-                    </button>
-                  </form>
-                </>
+                  <div className="remember-option">
+                    <label className="checkbox-container">
+                      <input
+                        type="checkbox"
+                        checked={showPassword}
+                        onChange={() => setShowPassword(!showPassword)}
+                        disabled={isLoading}
+                      />
+                      <span className="checkmark"></span>
+                      <span>Afficher le Mot de passe</span>
+                    </label>
+                  </div>
+                  
+                  <button 
+                    type="submit" 
+                    className={`sign-in-btn ${isLoading ? 'loading' : ''}`}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? 'Connexion...' : 'Se connecter'}
+                  </button>
+                </form>
               ) : (
                 <form onSubmit={handleForgotPassword} className="forgot-password-form">
                   <div className="input-group">
@@ -423,6 +379,11 @@ const Signin = () => {
                         placeholder="Entrez votre adresse email"
                         disabled={isLoading}
                       />
+                      <div className="input-icon">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M20 4H4C2.9 4 2 4.9 2 6V18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6C22 4.9 21.1 4 20 4ZM20 18H4V8L12 13L20 8V18ZM12 11L4 6H20L12 11Z" fill="currentColor"/>
+                        </svg>
+                      </div>
                     </div>
                   </div>
                   
@@ -441,7 +402,7 @@ const Signin = () => {
                       className={`forgot-btn ${isLoading ? 'loading' : ''}`}
                       disabled={isLoading}
                     >
-                      {isLoading ? 'Envoi...' : 'Envoyer le Mot de passe'}
+                      {isLoading ? 'Envoi...' : 'Envoyer un mail'}
                     </button>
                   </div>
                 </form>

@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  # Service Backend (Node.js)
+  backend:
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./Backend:/app
+      - /app/node_modules
+    environment:
+    
+      - NODE_ENV=development
+      - MONGO_URI=mongodb://mongo:27017/ubci_db
+    networks:
+      - app-network
+    depends_on:
+      - mongo
+
+  # Service Frontend (React/Vue/Next.js/etc.)
+  frontend:
+    build:
+      context: ./Frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./Frontend:/app
+      - /app/node_modules
+    networks:
+      - app-network
+    depends_on:
+      - backend
+
+  # Base de données MongoDB
+  mongo:
+    image: mongo:latest
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - app-network
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=admin
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mongo-data:

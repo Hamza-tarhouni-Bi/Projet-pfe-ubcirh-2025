@@ -70,10 +70,7 @@
                   <CardStats
                     statSubtitle="Nombre du personnel"
                     statTitle={personnelCount}
-                    statArrow="up"
-                    statPercent="3.48"
-                    statPercentColor="text-emerald-500"
-                    statDescripiron="Since last month"
+                  
                     statIconName="fas fa-users"
                     statIconColor="bg-pink-500"
                   />

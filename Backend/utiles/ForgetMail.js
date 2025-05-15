@@ -49,7 +49,7 @@ exports.sendCurrentPasswordEmail = async (email, nom, prenom, password) => {
           </div>
         </div>
       `,
-      attachments: [] // Vous pouvez ajouter le logo ici si nécessaire
+      attachments: [] 
     };
 
     const info = await transporter.sendMail(mailOptions);

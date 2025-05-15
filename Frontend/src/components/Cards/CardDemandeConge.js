@@ -443,10 +443,10 @@ const CardDemandeConge = () => {
                 <div style={styles.userInfoLabel}>Prénom</div>
                 <div style={styles.userInfoValue}>{userData.prenom || 'Non renseigné'}</div>
               </div>
-              <div style={styles.userInfoItem}>
-                <div style={styles.userInfoLabel}>Email</div>
-                <div style={styles.userInfoValue}>{userData.email || 'Non renseigné'}</div>
-              </div>
+              {/* <div style={styles.userInfoItem}>
+                <div style={styles.userInfoLabel}>Departement</div>
+                <div style={styles.userInfoValue}>{userData.departement || 'Non renseigné'}</div>
+              </div> */}
               <div style={styles.userInfoItem}>
                 <div style={styles.userInfoLabel}>ID Personnel</div>
                 <div style={styles.userInfoValue}>{userData.idpersonnel || 'Non renseigné'}</div>

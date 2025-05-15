@@ -99,7 +99,7 @@ const encapsulatedStyles = `
     font-weight: 600;
     text-transform: uppercase;
     color: #6b7280;
-    background-color: #f9fafb;
+    background-color: #f5f5f5;
     border-bottom: 1px solid #e5e7eb;
   }
   
@@ -212,38 +212,28 @@ const encapsulatedStyles = `
   }
   
   .gdc-action-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 2rem;
-    height: 2rem;
-    border-radius: 8px;
-    color: white;
-    border: none;
-    cursor: pointer;
+    padding: 0.375rem;
+    border-radius: 0.375rem;
     transition: all 0.2s ease;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-right: 0.5rem;
   }
-  
-  .gdc-action-button:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  }
-  
+
   .gdc-action-button-approve {
-    background-color: #10b981;
+    background-color: #d1fae5;
+    color: #059669;
   }
-  
+
   .gdc-action-button-approve:hover {
-    background-color: #059669;
+    background-color: #a7f3d0;
   }
-  
+
   .gdc-action-button-reject {
-    background-color: #ef4444;
+    background-color: #fee2e2;
+    color: #dc2626;
   }
-  
+
   .gdc-action-button-reject:hover {
-    background-color: #dc2626;
+    background-color: #fecaca;
   }
   
   .gdc-modal-overlay {
@@ -465,6 +455,47 @@ const encapsulatedStyles = `
       opacity: 1;
     }
   }
+
+  /* Pagination styles */
+  .gdc-pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background-color: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+  }
+
+  .gdc-pagination-controls {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .gdc-page-button {
+    padding: 0.5rem 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    background-color: white;
+    color: #4b5563;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.875rem;
+  }
+
+  .gdc-page-button:hover {
+    background-color: #f3f4f6;
+  }
+
+  .gdc-page-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .gdc-page-button.active {
+    background-color: #14b8a6;
+    color: white;
+    border-color: #14b8a6;
+  }
 `;
 
 export default function GestionConges() {
@@ -477,6 +508,8 @@ export default function GestionConges() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
   const [toasts, setToasts] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
   useEffect(() => {
     const fetchDemandes = async () => {
@@ -515,7 +548,16 @@ export default function GestionConges() {
     }
     
     setDemandesFiltrees(resultats);
+    setCurrentPage(1); // Reset à la première page quand les filtres changent
   }, [recherche, filtreStatut, demandes]);
+
+  // Pagination logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = demandesFiltrees.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(demandesFiltrees.length / itemsPerPage);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
@@ -568,7 +610,6 @@ export default function GestionConges() {
     setDemandeSelected(null);
   };
 
-  // Alternative approach - directly send the decrement value and let the backend handle the calculation
   const updateSoldeConge = async (idPersonnel, joursConges) => {
     try {
       const response = await fetch(`/updatepersonnel/${idPersonnel}`, {
@@ -589,7 +630,7 @@ export default function GestionConges() {
       return true;
     } catch (err) {
       console.error('Error in updateSoldeConge:', err);
-      throw err; // Propager l'erreur pour la gérer dans handleStatusUpdate
+      throw err;
     }
   };
 
@@ -604,7 +645,6 @@ export default function GestionConges() {
         try {
           await updateSoldeConge(demandeToUpdate.idpersonnel, joursConges);
         } catch (soldeError) {
-          // Annuler l'approbation si la mise à jour du solde échoue
           throw new Error(`Impossible de mettre à jour le solde: ${soldeError.message}`);
         }
       }
@@ -774,21 +814,20 @@ export default function GestionConges() {
                 <th className="gdc-th">Date début</th>
                 <th className="gdc-th">Date fin</th>
                 <th className="gdc-th">Période</th>
-                
                 <th className="gdc-th">Statut</th>
                 <th className="gdc-th">Motif</th>
                 <th className="gdc-th">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {demandesFiltrees.length === 0 ? (
+              {currentItems.length === 0 ? (
                 <tr>
-                  <td colSpan="9" className="gdc-td" style={{ textAlign: 'center' }}>
+                  <td colSpan="8" className="gdc-td" style={{ textAlign: 'center' }}>
                     Aucune demande de congé trouvée
                   </td>
                 </tr>
               ) : (
-                demandesFiltrees.map((demande) => (
+                currentItems.map((demande) => (
                   <tr key={demande._id} className="gdc-tr">
                     <td className="gdc-td">
                       <div className="gdc-employee-name">
@@ -815,7 +854,6 @@ export default function GestionConges() {
                         {calculerPeriode(demande.DateDebut, demande.DateFin)}
                       </div>
                     </td>
-                  
                     <td className="gdc-td">
                       {renderStatus(demande.statut)}
                     </td>
@@ -857,12 +895,39 @@ export default function GestionConges() {
           </table>
         </div>
         
-        <div className="gdc-footer">
+        <div className="gdc-pagination">
           <div className="gdc-count">
             <CheckCircle2 className="gdc-count-icon" size={16} />
-            <span>Affichage de {demandesFiltrees.length} sur {demandes.length} demandes</span>
+            <span>Affichage de {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, demandesFiltrees.length)} sur {demandesFiltrees.length} demandes</span>
           </div>
           
+          <div className="gdc-pagination-controls">
+            <button 
+              onClick={() => paginate(currentPage - 1)} 
+              disabled={currentPage === 1}
+              className="gdc-page-button"
+            >
+              Précédent
+            </button>
+            
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(number => (
+              <button
+                key={number}
+                onClick={() => paginate(number)}
+                className={`gdc-page-button ${currentPage === number ? 'active' : ''}`}
+              >
+                {number}
+              </button>
+            ))}
+            
+            <button 
+              onClick={() => paginate(currentPage + 1)} 
+              disabled={currentPage === totalPages || totalPages === 0}
+              className="gdc-page-button"
+            >
+              Suivant
+            </button>
+          </div>
         </div>
       </div>
 
@@ -909,7 +974,6 @@ export default function GestionConges() {
                     {calculerPeriode(demandeSelected.DateDebut, demandeSelected.DateFin)}
                   </span>
                 </div>
-               
                 <div className="gdc-modal-info-item">
                   <span className="gdc-modal-info-label">Statut</span>
                   <span className="gdc-modal-info-value">
@@ -934,6 +998,14 @@ export default function GestionConges() {
         </div>
       )}
 
+      <div className="gdc-toast-container">
+        {toasts.map(toast => (
+          <div key={toast.id} className={`gdc-toast gdc-toast-${toast.type}`}>
+            {toast.type === 'success' ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
+            {toast.message}
+          </div>
+        ))}
+      </div>
     </>
   );
 }

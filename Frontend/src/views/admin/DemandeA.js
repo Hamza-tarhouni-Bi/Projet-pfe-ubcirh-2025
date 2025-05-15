@@ -100,7 +100,7 @@ const encapsulatedStyles = `
     font-weight: 600;
     text-transform: uppercase;
     color: #6b7280;
-    background-color: #f9fafb;
+    background-color:#f5f5f5;
     border-bottom: 1px solid #e5e7eb;
   }
   
@@ -208,40 +208,30 @@ const encapsulatedStyles = `
     border-color: #9ca3af;
   }
   
-  .gav-action-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 2rem;
-    height: 2rem;
-    border-radius: 8px;
-    color: white;
-    border: none;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  }
-  
-  .gav-action-button:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  }
-  
-  .gav-action-button-approve {
-    background-color: #10b981;
-  }
-  
-  .gav-action-button-approve:hover {
-    background-color: #059669;
-  }
-  
-  .gav-action-button-reject {
-    background-color: #ef4444;
-  }
-  
-  .gav-action-button-reject:hover {
-    background-color: #dc2626;
-  }
+.gav-action-button {
+  padding: 0.375rem;
+  border-radius: 0.375rem;
+  transition: all 0.2s ease;
+  margin-right: 0.5rem;
+}
+
+.gav-action-button-approve {
+  background-color: #d1fae5;
+  color: #059669;
+}
+
+.gav-action-button-approve:hover {
+  background-color: #a7f3d0;
+}
+
+.gav-action-button-reject {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+.gav-action-button-reject:hover {
+  background-color: #fecaca;
+}
   
   .gav-modal-overlay {
     position: fixed;
@@ -473,6 +463,47 @@ const encapsulatedStyles = `
       opacity: 1;
     }
   }
+
+  /* Pagination styles */
+  .gav-pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background-color: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+  }
+
+  .gav-pagination-controls {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .gav-page-button {
+    padding: 0.5rem 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    background-color: white;
+    color: #4b5563;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.875rem;
+  }
+
+  .gav-page-button:hover {
+    background-color: #f3f4f6;
+  }
+
+  .gav-page-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .gav-page-button.active {
+    background-color: #14b8a6;
+    color: white;
+    border-color: #14b8a6;
+  }
 `;
 
 export default function GestionAvances() {
@@ -485,6 +516,8 @@ export default function GestionAvances() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
   const [toasts, setToasts] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
   // Charger les demandes depuis l'API
   useEffect(() => {
@@ -525,7 +558,16 @@ export default function GestionAvances() {
     }
     
     setDemandesFiltrees(resultats);
+    setCurrentPage(1); // Reset à la première page quand les filtres changent
   }, [recherche, filtreStatut, demandes]);
+
+  // Pagination logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = demandesFiltrees.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(demandesFiltrees.length / itemsPerPage);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   // Formater la date pour l'affichage
   const formatDate = (dateString) => {
@@ -706,14 +748,14 @@ export default function GestionAvances() {
               </tr>
             </thead>
             <tbody>
-              {demandesFiltrees.length === 0 ? (
+              {currentItems.length === 0 ? (
                 <tr>
                   <td colSpan="7" className="gav-td" style={{ textAlign: 'center' }}>
                     Aucune demande d'avance trouvée
                   </td>
                 </tr>
               ) : (
-                demandesFiltrees.map((demande) => (
+                currentItems.map((demande) => (
                   <tr key={demande._id} className="gav-tr">
                     <td className="gav-td">
                       <div className="gav-employee-name">
@@ -777,11 +819,39 @@ export default function GestionAvances() {
           </table>
         </div>
         
-        {/* Information sur les résultats */}
-        <div className="gav-footer">
+        {/* Pagination */}
+        <div className="gav-pagination">
           <div className="gav-count">
             <CheckCircle2 className="gav-count-icon" size={16} />
-            <span>Affichage de {demandesFiltrees.length} sur {demandes.length} demandes</span>
+            <span>Affichage de {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, demandesFiltrees.length)} sur {demandesFiltrees.length} demandes</span>
+          </div>
+          
+          <div className="gav-pagination-controls">
+            <button 
+              onClick={() => paginate(currentPage - 1)} 
+              disabled={currentPage === 1}
+              className="gav-page-button"
+            >
+              Précédent
+            </button>
+            
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(number => (
+              <button
+                key={number}
+                onClick={() => paginate(number)}
+                className={`gav-page-button ${currentPage === number ? 'active' : ''}`}
+              >
+                {number}
+              </button>
+            ))}
+            
+            <button 
+              onClick={() => paginate(currentPage + 1)} 
+              disabled={currentPage === totalPages || totalPages === 0}
+              className="gav-page-button"
+            >
+              Suivant
+            </button>
           </div>
         </div>
       </div>
@@ -851,38 +921,6 @@ export default function GestionAvances() {
               <button className="gav-modal-button gav-modal-button-secondary" onClick={fermerModal}>
                 Fermer
               </button>
-              {demandeSelected.statut === "En attente" && (
-                <>
-                  <button 
-                    className="gav-modal-button" 
-                    onClick={() => {
-                      handleReject(demandeSelected._id);
-                      fermerModal();
-                    }}
-                    style={{ 
-                      backgroundColor: "#fee2e2", 
-                      color: "#b91c1c",
-                      borderColor: "#fecaca" 
-                    }}
-                  >
-                    Refuser
-                  </button>
-                  <button 
-                    className="gav-modal-button" 
-                    onClick={() => {
-                      handleApprove(demandeSelected._id);
-                      fermerModal();
-                    }}
-                    style={{ 
-                      backgroundColor: "#dcfce7", 
-                      color: "#166534",
-                      borderColor: "#86efac" 
-                    }}
-                  >
-                    Approuver
-                  </button>
-                </>
-              )}
             </div>
           </div>
         </div>

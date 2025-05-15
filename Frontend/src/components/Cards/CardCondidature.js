@@ -3,7 +3,6 @@ import PropTypes from "prop-types";
 import { Search, Check, X, Eye, Filter } from "lucide-react";
 import axios from "axios";
 
-// CSS encapsulé avec préfixe "gp-" (cohérent avec Gestion Personnel)
 const encapsulatedStyles = `
   .gp-candidature-container {
     background: white;
@@ -25,26 +24,27 @@ const encapsulatedStyles = `
   }
   
   .gp-search-input {
-    flex: 1;
-    position: relative;
-  }
-  
-  .gp-search-icon {
-    position: absolute;
-    left: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #9ca3af;
-  }
+  position: relative;
+  flex-grow: 1; 
+}
 
-  .gp-input-field {
-    width: 100%;
-    padding: 0.5rem 0.5rem 0.5rem 2rem;
-    border: 1px solid #d1d5db;
-    border-radius: 0.375rem;
-    transition: all 0.2s ease;
-  }
-  
+.gp-search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+  pointer-events: none; 
+}
+
+.gp-input-field {
+  width: 100%;
+  padding: 0.5rem 0.75rem 0.5rem 2.5rem; 
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  transition: all 0.2s ease;
+  font-size: 0.875rem; 
+}
   .gp-input-field:focus {
     outline: none;
     border-color: #14b8a6;
@@ -157,6 +157,26 @@ const encapsulatedStyles = `
     align-items: center;
     margin-top: 1.5rem;
     padding: 0 1rem;
+  }
+  
+  .gp-page-button {
+    padding: 0.5rem 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    background-color: white;
+    color: #4b5563;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .gp-page-button:hover {
+    background-color: #f3f4f6;
+  }
+  
+  .gp-page-button.gp-active {
+    background-color: #14b8a6;
+    color: white;
+    border-color: #14b8a6;
   }
   
   .gp-modal-overlay {
@@ -325,6 +345,8 @@ export default function CardCandidature({ color = "light" }) {
   const [statusAction, setStatusAction] = useState(null);
   const [toast, setToast] = useState({ affiche: false, message: "", type: "" });
   const [isLoading, setIsLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
   // Fetch candidatures on component mount
   useEffect(() => {
@@ -371,6 +393,14 @@ export default function CardCandidature({ color = "light" }) {
       // Sort by date (newest first)
       return new Date(b.createdAt) - new Date(a.createdAt);
     });
+
+  // Pagination logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredCandidatures.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredCandidatures.length / itemsPerPage);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
   const afficherToast = (message, type) => {
     setToast({ affiche: true, message, type });
@@ -446,30 +476,33 @@ export default function CardCandidature({ color = "light" }) {
             </h1>
 
             {/* Search and filter section */}
-            <div className="gp-search-container">
-              <div className="gp-search-input">
-                <Search className="gp-search-icon" size={16} /> 
-                <input
-                  type="text"
-                  placeholder="Rechercher par nom, prénom, email ou poste..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="gp-input-field"
-                />
-              </div>
-              <div>
-                <select
-                  className="gp-filter-dropdown"
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                >
-                  <option value="all">Tous les statuts</option>
-                  <option value="pending">En attente</option>
-                  <option value="accepted">Acceptés</option>
-                  <option value="rejected">Refusés</option>
-                </select>
-              </div>
-            </div>
+          {/* Search and filter section */}
+<div className="gp-search-container">
+  <div className="gp-search-input">
+    <div className="gp-search-icon">
+      <Search size={18} />
+    </div>
+    <input
+      type="text"
+      placeholder="Rechercher par nom, prénom, email ou poste..."
+      value={searchTerm}
+      onChange={(e) => setSearchTerm(e.target.value)}
+      className="gp-input-field"
+    />
+  </div>
+  <div>
+    <select
+      className="gp-filter-dropdown"
+      value={filterStatus}
+      onChange={(e) => setFilterStatus(e.target.value)}
+    >
+      <option value="all">Tous les statuts</option>
+      <option value="pending">En attente</option>
+      <option value="accepted">Acceptés</option>
+      <option value="rejected">Refusés</option>
+    </select>
+  </div>
+</div>
 
             {/* Candidatures table */}
             <div className="gp-table-container">
@@ -481,7 +514,7 @@ export default function CardCandidature({ color = "light" }) {
                     <th className="gp-th">Email</th>
                     <th className="gp-th">Poste</th>
                     <th className="gp-th">Téléphone</th>
-                    <th className="gp-th">Date</th>
+                   
                     <th className="gp-th">Statut</th>
                     <th className="gp-th" style={{ textAlign: "center" }}>
                       Actions
@@ -503,15 +536,15 @@ export default function CardCandidature({ color = "light" }) {
                         Chargement des candidatures...
                       </td>
                     </tr>
-                  ) : filteredCandidatures.length > 0 ? (
-                    filteredCandidatures.map((candidature) => (
+                  ) : currentItems.length > 0 ? (
+                    currentItems.map((candidature) => (
                       <tr className="gp-tr" key={candidature._id}>
                         <td className="gp-td">{candidature.nom}</td>
                         <td className="gp-td">{candidature.prenom}</td>
                         <td className="gp-td">{candidature.email}</td>
                         <td className="gp-td">{candidature.posteTitle}</td>
                         <td className="gp-td">{candidature.tel}</td>
-                        <td className="gp-td">{formatDate(candidature.createdAt)}</td>
+                        
                         <td className="gp-td">
                           {getStatusBadge(candidature.status)}
                         </td>
@@ -574,8 +607,35 @@ export default function CardCandidature({ color = "light" }) {
             {/* Pagination */}
             <div className="gp-pagination">
               <div style={{ fontSize: "0.875rem", color: "#6b7280" }}>
-                Affichage de {filteredCandidatures.length} sur{" "}
-                {candidatures.length} candidatures
+                Affichage de {currentItems.length} sur{" "}
+                {filteredCandidatures.length} candidatures
+              </div>
+              <div style={{ display: "flex", gap: "0.5rem" }}>
+                <button 
+                  onClick={() => paginate(currentPage - 1)} 
+                  disabled={currentPage === 1}
+                  className="gp-page-button"
+                >
+                  Précédent
+                </button>
+                
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(number => (
+                  <button
+                    key={number}
+                    onClick={() => paginate(number)}
+                    className={`gp-page-button ${currentPage === number ? 'gp-active' : ''}`}
+                  >
+                    {number}
+                  </button>
+                ))}
+                
+                <button 
+                  onClick={() => paginate(currentPage + 1)} 
+                  disabled={currentPage === totalPages}
+                  className="gp-page-button"
+                >
+                  Suivant
+                </button>
               </div>
             </div>
           </div>
