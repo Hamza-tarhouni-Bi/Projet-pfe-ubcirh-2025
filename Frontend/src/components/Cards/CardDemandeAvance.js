@@ -100,7 +100,7 @@ const CardDemandeAvance = () => {
 
     try {
       console.log("Envoi de la demande...");
-      const response = await axios.post('/adddemandeavance', {
+      const response = await axios.post('/api/adddemandeavance', {
         ...formData,
         nom: userData.nom || '',
         prenom: userData.prenom || '',

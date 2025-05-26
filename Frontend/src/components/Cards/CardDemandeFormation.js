@@ -33,7 +33,7 @@ function CardDemandeFormation() {
     const fetchFormations = async () => {
       try {
         setLoading(true);
-        const response = await axios.get('/getformation');
+        const response = await axios.get('/api/getformation');
         
         const formattedFormations = response.data.map(formation => ({
           id: formation._id,
@@ -63,7 +63,7 @@ function CardDemandeFormation() {
   const fetchUserDemandes = async (userId) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get('/alldemandeformation', {
+      const response = await axios.get('/api/alldemandeformation', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -141,7 +141,7 @@ function CardDemandeFormation() {
     try {
       const token = localStorage.getItem('token');
       
-      const response = await axios.post('/adddemandeformation', {
+      const response = await axios.post('/api/adddemandeformation', {
         nom: userInfo.nom || '',
         prenom: userInfo.prenom || '',
         email: userInfo.email || '',
@@ -487,18 +487,41 @@ function CardDemandeFormation() {
           cursor: not-allowed;
         }
 
-        /* Toast de confirmation */
-        .toast-message {
-          position: fixed;
-          bottom: 30px;
-          left: 50%;
-          transform: translateX(-50%);
-          border-radius: 12px;
-          padding: 15px 20px;
-          box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-          z-index: 1000;
-          animation: slideUp 0.3s ease, fadeOut 0.5s ease 2.5s;
-        }
+     
+.toast-message {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #34d399;
+  color: white;
+  border-radius: 6px;
+  padding: 8px 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  font-size: 13px;
+  animation: slideUp 0.3s ease, fadeOut 0.5s ease 2.5s;
+  max-width: 90%;
+  width: fit-content;
+  min-width: auto;
+  white-space: nowrap;
+}
+
+
+.toast-message.error {
+  background-color: #f87171;
+}
+
+.toast-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.toast-icon {
+  font-size: 16px;
+}
+
 
         .toast-message.success {
           background-color: #34d399;
@@ -506,15 +529,15 @@ function CardDemandeFormation() {
         }
 
         .toast-message.error {
-          background-color: #f87171;
-          color: white;
-        }
+  background-color: #f87171;
+}
 
-        .toast-content {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
+.toast-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 
         @keyframes slideUp {
           from {

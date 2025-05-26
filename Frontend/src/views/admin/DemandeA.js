@@ -523,7 +523,7 @@ export default function GestionAvances() {
   useEffect(() => {
     const fetchDemandes = async () => {
       try {
-        const response = await fetch('/alldemandeavance');
+        const response = await fetch('/api/alldemandeavance');
         if (!response.ok) {
           throw new Error('Erreur lors de la récupération des demandes');
         }
@@ -608,7 +608,7 @@ export default function GestionAvances() {
   const handleStatusUpdate = async (id, newStatus) => {
     try {
       // Mettre à jour le statut de la demande via l'API
-      const response = await fetch(`/updatedemandeAvance/${id}`, {
+      const response = await fetch(`/api/updatedemandeAvance/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

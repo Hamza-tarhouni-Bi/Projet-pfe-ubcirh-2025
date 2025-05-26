@@ -13,7 +13,7 @@ export default function SidebarEmploye() {
   const handleLogout = async () => {
     try {
       // Call the logout API endpoint
-      await axios.post('/logout', {}, {
+      await axios.post('/api/logout', {}, {
         withCredentials: true
       });
       

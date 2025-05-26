@@ -125,6 +125,7 @@ exports.addPersonnelWithimage = async (req, res) => {
 
 // Update personnel - VERSION FINALE
 // Modification du contrôleur updatePersonnel
+// Mise à jour complète du contrôleur updatePersonnel
 exports.updatePersonnel = async (req, res) => {
   try {
     const { id } = req.params;
@@ -135,10 +136,25 @@ exports.updatePersonnel = async (req, res) => {
     if (!personnelBeforeUpdate) {
       return res.status(404).json({ error: "Personnel non trouvé" });
     }
-    
+
+    // Gestion spécifique de la décrémentation du solde de congé
+    if (updateData.decrementSolde) {
+      const joursConges = parseInt(updateData.decrementSolde);
+      
+      // Vérifier que le solde est suffisant
+      if (personnelBeforeUpdate.soldedeconge < joursConges) {
+        return res.status(400).json({ 
+          error: `Solde de congé insuffisant (solde actuel: ${personnelBeforeUpdate.soldedeconge}, jours demandés: ${joursConges})` 
+        });
+      }
+      
+      // Utiliser $inc pour décrémenter atomiquement
+      updateData.$inc = { soldedeconge: -joursConges };
+      delete updateData.decrementSolde;
+    }
+
     // Si un nouveau mot de passe est fourni, vérifier l'ancien mot de passe
     if (updateData.password && updateData.currentPassword) {
-      // Comparer le mot de passe actuel fourni avec celui stocké (crypté) en DB
       const isPasswordValid = await bcrypt.compare(
         updateData.currentPassword,
         personnelBeforeUpdate.password
@@ -148,30 +164,35 @@ exports.updatePersonnel = async (req, res) => {
         return res.status(401).json({ error: "Le mot de passe actuel est incorrect" });
       }
       
-      // Si mot de passe valide, crypter le nouveau mot de passe
+      // Crypter le nouveau mot de passe
       const salt = await bcrypt.genSalt(10);
       updateData.password = await bcrypt.hash(updateData.password, salt);
     }
     
-    // Supprimer le champ currentPassword car on ne veut pas le stocker
+    // Supprimer le champ currentPassword
     delete updateData.currentPassword;
     
     // Gestion de l'image
-    let imageUpdated = false;
-   
+    if (req.file) {
+      updateData.image = req.file.filename;
+      
+      // Supprimer l'ancienne image si ce n'est pas l'image par défaut
+      if (personnelBeforeUpdate.image && personnelBeforeUpdate.image !== 'images/defaultuser.jpg') {
+        const oldImagePath = path.join(__dirname, '../public', personnelBeforeUpdate.image);
+        if (fs.existsSync(oldImagePath)) {
+          fs.unlinkSync(oldImagePath);
+        }
+      }
+    }
 
-    // Détection des champs modifiés (sauf image)
+    // Détection des champs modifiés (sauf image et solde)
     const changedFields = {};
     Object.keys(updateData).forEach(key => {
-      if (key !== 'image' && key !== 'password' && personnelBeforeUpdate[key] !== updateData[key]) {
+      if (!['image', 'password', '$inc', 'soldedeconge'].includes(key) && 
+          personnelBeforeUpdate[key]?.toString() !== updateData[key]?.toString()) {
         changedFields[key] = updateData[key];
       }
     });
-    
-    // Si le mot de passe a été changé, indiquer que le champ a changé
-    if (updateData.password) {
-      changedFields.password = "Votre mot de passe a été modifié";
-    }
 
     // Mise à jour dans la base de données
     const updatedPersonnel = await personnelModal.findByIdAndUpdate(
@@ -180,7 +201,7 @@ exports.updatePersonnel = async (req, res) => {
       { new: true }
     );
 
-    // Envoyer l'email pour les autres champs modifiés (sauf si seul l'image a changé)
+    // Envoyer l'email pour les champs modifiés (sauf si seul le solde a changé)
     if (Object.keys(changedFields).length > 0) {
       try {
         await sendUpdateEmail(
@@ -189,20 +210,26 @@ exports.updatePersonnel = async (req, res) => {
           updatedPersonnel.prenom,
           changedFields
         );
-        console.log('Email pour champs modifiés envoyé avec succès');
+        console.log('Email de notification envoyé avec succès');
       } catch (emailError) {
-        console.error("Erreur d'envoi email champs:", emailError);
+        console.error("Erreur lors de l'envoi de l'email:", emailError);
       }
     }
-  
+
     // Ne pas renvoyer le mot de passe dans la réponse
     const responseData = updatedPersonnel.toObject();
     delete responseData.password;
     
-    res.status(200).json(responseData);
+    res.status(200).json({
+      ...responseData,
+      message: "Mise à jour effectuée avec succès"
+    });
   } catch (error) {
     console.error('Erreur dans updatePersonnel:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ 
+      error: error.message,
+      details: "Erreur serveur lors de la mise à jour du personnel" 
+    });
   }
 };
 

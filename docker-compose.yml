@@ -1,4 +1,4 @@
-version: '3.8'
+
 
 services:
   # Service Backend (Node.js)
@@ -34,6 +34,9 @@ services:
       - app-network
     depends_on:
       - backend
+    environment:
+      
+      -REACT_APP_API_URL=http://backend:5000/
 
   # Base de données MongoDB
   mongo:

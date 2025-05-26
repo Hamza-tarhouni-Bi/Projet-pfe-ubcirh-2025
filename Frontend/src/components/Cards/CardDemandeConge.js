@@ -24,10 +24,16 @@ const CardDemandeConge = () => {
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
   const [alertType, setAlertType] = useState('');
+  const [minDate, setMinDate] = useState('');
 
   useEffect(() => {
     // Récupérer les données utilisateur depuis localStorage
     const userDataStr = localStorage.getItem('userData');
+    
+    // Définir la date minimale (aujourd'hui)
+    const today = new Date();
+    const formattedDate = today.toISOString().split('T')[0];
+    setMinDate(formattedDate);
     
     if (userDataStr) {
       try {
@@ -74,6 +80,15 @@ const CardDemandeConge = () => {
 
     const start = new Date(formData.DateDebut);
     const end = new Date(formData.DateFin);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (start < today) {
+      return { 
+        days: 0, 
+        error: 'La date de début ne peut pas être antérieure à aujourd\'hui.' 
+      };
+    }
     
     if (start > end) {
       return { 
@@ -89,10 +104,20 @@ const CardDemandeConge = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value
-    }));
+    
+    // Si la date de début change, vérifier si la date de fin est toujours valide
+    if (name === 'DateDebut' && formData.DateFin && value > formData.DateFin) {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value,
+        DateFin: value // Réinitialiser la date de fin si elle devient invalide
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -137,7 +162,7 @@ const CardDemandeConge = () => {
         joursDemandes: joursDemandes
       };
 
-      const response = await axios.post('/adddemandeconge', requestData, {
+      const response = await axios.post('/api/adddemandeconge', requestData, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -443,10 +468,6 @@ const CardDemandeConge = () => {
                 <div style={styles.userInfoLabel}>Prénom</div>
                 <div style={styles.userInfoValue}>{userData.prenom || 'Non renseigné'}</div>
               </div>
-              {/* <div style={styles.userInfoItem}>
-                <div style={styles.userInfoLabel}>Departement</div>
-                <div style={styles.userInfoValue}>{userData.departement || 'Non renseigné'}</div>
-              </div> */}
               <div style={styles.userInfoItem}>
                 <div style={styles.userInfoLabel}>ID Personnel</div>
                 <div style={styles.userInfoValue}>{userData.idpersonnel || 'Non renseigné'}</div>
@@ -476,6 +497,7 @@ const CardDemandeConge = () => {
                   value={formData.DateDebut}
                   onChange={handleInputChange}
                   style={styles.input}
+                  min={minDate}
                   required
                 />
               </div>
@@ -487,6 +509,7 @@ const CardDemandeConge = () => {
                   value={formData.DateFin}
                   onChange={handleInputChange}
                   style={styles.input}
+                  min={formData.DateDebut || minDate}
                   required
                 />
                 <div style={styles.congeInfoTag}>

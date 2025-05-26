@@ -74,7 +74,7 @@ const Signin = () => {
     setIsLoading(true);
     
     try {
-      const apiUrl = '/login'; 
+      const apiUrl = '/api/login'; 
       console.log('Sending login request to:', apiUrl);
       
       const response = await axios.post(apiUrl, credentials);
@@ -157,7 +157,7 @@ const Signin = () => {
     setIsLoading(true);
     
     try {
-      const response = await axios.post('/forgot-password', { email: forgotEmail });
+      const response = await axios.post('/api/forgot-password', { email: forgotEmail });
       
       if (response.data.success) {
         setToastType('success');

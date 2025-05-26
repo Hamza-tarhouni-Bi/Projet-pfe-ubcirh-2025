@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Search, AlertCircle, Check, X, Eye } from "lucide-react";
 
-// CSS encapsulé avec préfixe "gav-" (Gestion Avances)
+
 const encapsulatedStyles = `
   .gav-container {
     background: white;

@@ -514,7 +514,7 @@ export default function GestionConges() {
   useEffect(() => {
     const fetchDemandes = async () => {
       try {
-        const response = await fetch('/alldemandeConge');
+        const response = await fetch('/api/alldemandeConge');
         if (!response.ok) {
           throw new Error('Erreur lors de la récupération des demandes');
         }
@@ -548,7 +548,7 @@ export default function GestionConges() {
     }
     
     setDemandesFiltrees(resultats);
-    setCurrentPage(1); // Reset à la première page quand les filtres changent
+    setCurrentPage(1); 
   }, [recherche, filtreStatut, demandes]);
 
   // Pagination logic
@@ -612,7 +612,7 @@ export default function GestionConges() {
 
   const updateSoldeConge = async (idPersonnel, joursConges) => {
     try {
-      const response = await fetch(`/updatepersonnel/${idPersonnel}`, {
+      const response = await fetch(`/api/updatepersonnel/${idPersonnel}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -649,7 +649,7 @@ export default function GestionConges() {
         }
       }
   
-      const response = await fetch(`/updatedemandeconge/${id}`, {
+      const response = await fetch(`/api/updatedemandeconge/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

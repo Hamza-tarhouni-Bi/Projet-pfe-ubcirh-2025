@@ -8,7 +8,7 @@ export default function ProfileForm() {
     phone: "",
     currentPassword: "",
     newPassword: "",
-    confirmNewPassword: ""
+    confirmNewPassword: "",
   });
 
   const [initialFormData, setInitialFormData] = useState({});
@@ -18,12 +18,10 @@ export default function ProfileForm() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // Récupérer les données utilisateur au chargement du composant
   useEffect(() => {
-    const userData = JSON.parse(localStorage.getItem('userData'));
-   
+    const userData = JSON.parse(localStorage.getItem("userData"));
+
     if (userData) {
-      // Mapper les données utilisateur aux champs du formulaire
       const initialData = {
         firstName: userData.prenom || "",
         lastName: userData.nom || "",
@@ -31,11 +29,11 @@ export default function ProfileForm() {
         phone: userData.tel || "",
         currentPassword: "",
         newPassword: "",
-        confirmNewPassword: ""
+        confirmNewPassword: "",
       };
-      
+
       setFormData(initialData);
-      // Conserver une copie des données initiales pour la fonction d'annulation
+
       setInitialFormData(initialData);
     }
   }, []);
@@ -44,67 +42,62 @@ export default function ProfileForm() {
     const { id, value } = e.target;
     setFormData({
       ...formData,
-      [id]: value
+      [id]: value,
     });
-    
-    // Clear error when field is edited
+
     if (errors[id]) {
       setErrors({
         ...errors,
-        [id]: ""
+        [id]: "",
       });
     }
   };
 
   const validateForm = () => {
     const newErrors = {};
-    
-    // Required fields
-    ["firstName", "lastName", "email"].forEach(field => {
+
+    ["firstName", "lastName", "email"].forEach((field) => {
       if (!formData[field].trim()) {
         newErrors[field] = "Ce champ est obligatoire";
       }
     });
-    
-    // FirstName and LastName must be alphabetic
+
     if (formData.firstName && !/^[a-zA-ZÀ-ÿ\s-]+$/.test(formData.firstName)) {
       newErrors.firstName = "Le prénom ne doit contenir que des lettres";
     }
-    
+
     if (formData.lastName && !/^[a-zA-ZÀ-ÿ\s-]+$/.test(formData.lastName)) {
       newErrors.lastName = "Le nom ne doit contenir que des lettres";
     }
-    
-    // Phone must be exactly 8 digits
+
     if (formData.phone && !/^\d{8}$/.test(formData.phone)) {
       newErrors.phone = "Le téléphone doit contenir exactement 8 chiffres";
     }
-    
-    // Password validation
+
     if (formData.newPassword) {
-      // Si un nouveau mot de passe est entré, le mot de passe actuel est obligatoire
+      //  le mot de passe actuel est obligatoire
       if (!formData.currentPassword) {
-        newErrors.currentPassword = "Le mot de passe actuel est requis pour changer le mot de passe";
+        newErrors.currentPassword =
+          "Le mot de passe actuel est requis pour changer le mot de passe";
       }
-      
+
       // Vérifier la complexité du nouveau mot de passe (alphanumérique, minimum 8 caractères)
       if (formData.newPassword.length < 8) {
-        newErrors.newPassword = "Le nouveau mot de passe doit contenir au moins 8 caractères";
+        newErrors.newPassword =
+          "Le nouveau mot de passe doit contenir au moins 8 caractères";
       } else if (!/^(?=.*[a-zA-Z])(?=.*[0-9])/.test(formData.newPassword)) {
         newErrors.newPassword = "Le mot de passe doit être alphanumérique";
       }
-      
-      // Vérifier que la confirmation correspond
+
       if (formData.newPassword !== formData.confirmNewPassword) {
         newErrors.confirmNewPassword = "Les mots de passe ne correspondent pas";
       }
     }
-    
-    // Si un mot de passe de confirmation est entré, le nouveau mot de passe est obligatoire
+
     if (formData.confirmNewPassword && !formData.newPassword) {
       newErrors.newPassword = "Veuillez entrer un nouveau mot de passe";
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -112,80 +105,98 @@ export default function ProfileForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSuccessMessage("");
-    
+
     if (validateForm()) {
       try {
         // Récupérer l'ID utilisateur du localStorage
-        const userData = JSON.parse(localStorage.getItem('userData'));
+        const userData = JSON.parse(localStorage.getItem("userData"));
         const userId = userData?._id;
-        
+
         if (!userId) {
-          setErrors({ currentPassword: "Impossible de récupérer l'ID utilisateur" });
+          setErrors({
+            currentPassword: "Impossible de récupérer l'ID utilisateur",
+          });
           return;
         }
-        
+
         // Préparer les données à envoyer
         const updateData = {
           nom: formData.lastName,
           prenom: formData.firstName,
           email: formData.email,
-          tel: formData.phone
+          tel: formData.phone,
         };
-        
+
         // Ajouter le mot de passe seulement si l'utilisateur tente de le changer
         if (formData.newPassword && formData.currentPassword) {
           updateData.password = formData.newPassword;
           updateData.currentPassword = formData.currentPassword;
         }
-        
+
         // Appel à l'API pour mettre à jour les données
-        const response = await fetch(`/updatePersonnel/${userId}`, {
-          method: 'PUT',
+        const response = await fetch(`/api/updatePersonnel/${userId}`, {
+          method: "PUT",
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('jwt_token_ubcirh')}`
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("jwt_token_ubcirh")}`,
           },
-          body: JSON.stringify(updateData)
+          body: JSON.stringify(updateData),
         });
-        
+
         if (!response.ok) {
           const errorData = await response.json();
           // Afficher l'erreur de mot de passe sous le champ spécifique plutôt qu'en haut
           if (errorData.error && errorData.error.includes("mot de passe")) {
-            setErrors({ currentPassword: errorData.error || "Mot de passe incorrect" });
+            setErrors({
+              currentPassword: errorData.error || "Mot de passe incorrect",
+            });
           } else {
-            setErrors({ form: errorData.error || "Erreur lors de la mise à jour" });
+            setErrors({
+              form: errorData.error || "Erreur lors de la mise à jour",
+            });
           }
           return;
         }
-        
+
         const updatedUserData = await response.json();
-        
+
         // Mettre à jour les données utilisateur dans le localStorage
-        localStorage.setItem('userData', JSON.stringify({
-          ...userData,
-          ...updatedUserData
-        }));
-        
+        localStorage.setItem(
+          "userData",
+          JSON.stringify({
+            ...userData,
+            ...updatedUserData,
+          })
+        );
+
         setSuccessMessage("Profil mis à jour avec succès!");
-        
+
         // Réinitialiser les champs de mot de passe
         setFormData({
           ...formData,
           currentPassword: "",
           newPassword: "",
-          confirmNewPassword: ""
+          confirmNewPassword: "",
         });
-        
+
         // Faire défiler vers le haut pour voir le message
         window.scrollTo({ top: 0, behavior: "smooth" });
       } catch (error) {
         console.error("Erreur lors de la mise à jour du profil:", error);
         // Afficher l'erreur sous le champ de mot de passe actuel si elle concerne le mot de passe
-        if (error.message && error.message.toLowerCase().includes("mot de passe")) {
-          setErrors({ currentPassword: error.message || "Erreur avec le mot de passe" });
+        if (
+          error.message &&
+          error.message.toLowerCase().includes("mot de passe")
+        ) {
+          setErrors({
+            currentPassword: error.message || "Erreur avec le mot de passe",
+          });
         } else {
-          setErrors({ form: error.message || "Une erreur s'est produite lors de la mise à jour du profil" });
+          setErrors({
+            form:
+              error.message ||
+              "Une erreur s'est produite lors de la mise à jour du profil",
+          });
         }
       }
     } else {
@@ -205,23 +216,23 @@ export default function ProfileForm() {
       ...initialFormData,
       currentPassword: "",
       newPassword: "",
-      confirmNewPassword: ""
+      confirmNewPassword: "",
     });
-    
+
     // Effacer les erreurs et messages
     setErrors({});
     setSuccessMessage("");
-    
+
     // Revenir en haut du formulaire
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const togglePasswordVisibility = (field) => {
-    if (field === 'currentPassword') {
+    if (field === "currentPassword") {
       setShowCurrentPassword(!showCurrentPassword);
-    } else if (field === 'newPassword') {
+    } else if (field === "newPassword") {
       setShowNewPassword(!showNewPassword);
-    } else if (field === 'confirmPassword') {
+    } else if (field === "confirmPassword") {
       setShowConfirmPassword(!showConfirmPassword);
     }
   };
@@ -233,33 +244,60 @@ export default function ProfileForm() {
           <div className="ubci-profile-body">
             {successMessage && (
               <div className="ubci-success-alert">
-                <svg className="ubci-success-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                <svg
+                  className="ubci-success-icon"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
                 </svg>
                 <span>{successMessage}</span>
               </div>
             )}
-            
+
             {errors.form && (
               <div className="ubci-error-alert">
-                <svg className="ubci-error-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <svg
+                  className="ubci-error-icon"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
                 </svg>
                 <span>{errors.form}</span>
               </div>
             )}
-            
+
             <form onSubmit={handleSubmit}>
               <div className="ubci-section-title">
                 <div className="ubci-section-icon">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                     <circle cx="12" cy="7" r="4"></circle>
                   </svg>
                 </div>
                 <h2>Informations personnelles</h2>
               </div>
-              
+
               <div className="ubci-form-row">
                 <div className="ubci-form-group">
                   <label htmlFor="firstName">
@@ -272,9 +310,11 @@ export default function ProfileForm() {
                     value={formData.firstName}
                     onChange={handleChange}
                   />
-                  {errors.firstName && <div className="ubci-error-text">{errors.firstName}</div>}
+                  {errors.firstName && (
+                    <div className="ubci-error-text">{errors.firstName}</div>
+                  )}
                 </div>
-                
+
                 <div className="ubci-form-group">
                   <label htmlFor="lastName">
                     Nom <span className="ubci-required">*</span>
@@ -286,7 +326,9 @@ export default function ProfileForm() {
                     value={formData.lastName}
                     onChange={handleChange}
                   />
-                  {errors.lastName && <div className="ubci-error-text">{errors.lastName}</div>}
+                  {errors.lastName && (
+                    <div className="ubci-error-text">{errors.lastName}</div>
+                  )}
                 </div>
               </div>
 
@@ -302,15 +344,18 @@ export default function ProfileForm() {
                     value={formData.email}
                     onChange={handleChange}
                     readOnly
-                    style={{ backgroundColor: "#f0f0f0", cursor: "not-allowed" }}
+                    style={{
+                      backgroundColor: "#f0f0f0",
+                      cursor: "not-allowed",
+                    }}
                   />
-                  {errors.email && <div className="ubci-error-text">{errors.email}</div>}
+                  {errors.email && (
+                    <div className="ubci-error-text">{errors.email}</div>
+                  )}
                 </div>
-                
+
                 <div className="ubci-form-group">
-                  <label htmlFor="phone">
-                    Téléphone
-                  </label>
+                  <label htmlFor="phone">Téléphone</label>
                   <input
                     id="phone"
                     type="tel"
@@ -320,61 +365,108 @@ export default function ProfileForm() {
                     placeholder="Ex: 06123456"
                     maxLength="8"
                   />
-                  {errors.phone && <div className="ubci-error-text">{errors.phone}</div>}
+                  {errors.phone && (
+                    <div className="ubci-error-text">{errors.phone}</div>
+                  )}
                 </div>
               </div>
 
               <div className="ubci-divider"></div>
-              
+
               <div className="ubci-section-title">
                 <div className="ubci-section-icon">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <rect
+                      x="3"
+                      y="11"
+                      width="18"
+                      height="11"
+                      rx="2"
+                      ry="2"
+                    ></rect>
                     <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                   </svg>
                 </div>
                 <h2>Modifier votre mot de passe</h2>
               </div>
-              
+
               <div className="ubci-form-row">
                 <div className="ubci-form-group">
-                  <label htmlFor="currentPassword">
-                    Mot de passe actuel
-                  </label>
+                  <label htmlFor="currentPassword">Mot de passe actuel</label>
                   <div className="ubci-password-field">
                     <input
                       id="currentPassword"
                       type={showCurrentPassword ? "text" : "password"}
-                      className={errors.currentPassword ? "ubci-input-error" : ""}
+                      className={
+                        errors.currentPassword ? "ubci-input-error" : ""
+                      }
                       value={formData.currentPassword}
                       onChange={handleChange}
                       placeholder="Entrez votre mot de passe actuel"
                     />
-                    <button 
-                      type="button" 
-                      className="ubci-visibility-toggle" 
-                      onClick={() => togglePasswordVisibility('currentPassword')}
-                      aria-label={showCurrentPassword ? "Cacher le mot de passe" : "Montrer le mot de passe"}
+                    <button
+                      type="button"
+                      className="ubci-visibility-toggle"
+                      onClick={() =>
+                        togglePasswordVisibility("currentPassword")
+                      }
+                      aria-label={
+                        showCurrentPassword
+                          ? "Cacher le mot de passe"
+                          : "Montrer le mot de passe"
+                      }
                     >
                       {showCurrentPassword ? (
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                          />
                         </svg>
                       ) : (
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                          />
                         </svg>
                       )}
                     </button>
                   </div>
-                  {errors.currentPassword && <div className="ubci-error-text">{errors.currentPassword}</div>}
+                  {errors.currentPassword && (
+                    <div className="ubci-error-text">
+                      {errors.currentPassword}
+                    </div>
+                  )}
                 </div>
-                
+
                 <div className="ubci-form-group">
-                  <label htmlFor="newPassword">
-                    Nouveau mot de passe
-                  </label>
+                  <label htmlFor="newPassword">Nouveau mot de passe</label>
                   <div className="ubci-password-field">
                     <input
                       id="newPassword"
@@ -384,25 +476,54 @@ export default function ProfileForm() {
                       onChange={handleChange}
                       placeholder="8 caractères minimum, alphanumérique"
                     />
-                    <button 
-                      type="button" 
-                      className="ubci-visibility-toggle" 
-                      onClick={() => togglePasswordVisibility('newPassword')}
-                      aria-label={showNewPassword ? "Cacher le mot de passe" : "Montrer le mot de passe"}
+                    <button
+                      type="button"
+                      className="ubci-visibility-toggle"
+                      onClick={() => togglePasswordVisibility("newPassword")}
+                      aria-label={
+                        showNewPassword
+                          ? "Cacher le mot de passe"
+                          : "Montrer le mot de passe"
+                      }
                     >
                       {showNewPassword ? (
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                          />
                         </svg>
                       ) : (
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                          />
                         </svg>
                       )}
                     </button>
                   </div>
-                  {errors.newPassword && <div className="ubci-error-text">{errors.newPassword}</div>}
+                  {errors.newPassword && (
+                    <div className="ubci-error-text">{errors.newPassword}</div>
+                  )}
                 </div>
               </div>
 
@@ -415,44 +536,89 @@ export default function ProfileForm() {
                     <input
                       id="confirmNewPassword"
                       type={showConfirmPassword ? "text" : "password"}
-                      className={errors.confirmNewPassword ? "ubci-input-error" : ""}
+                      className={
+                        errors.confirmNewPassword ? "ubci-input-error" : ""
+                      }
                       value={formData.confirmNewPassword}
                       onChange={handleChange}
                       placeholder="Confirmez votre nouveau mot de passe"
                     />
-                    <button 
-                      type="button" 
-                      className="ubci-visibility-toggle" 
-                      onClick={() => togglePasswordVisibility('confirmPassword')}
-                      aria-label={showConfirmPassword ? "Cacher le mot de passe" : "Montrer le mot de passe"}
+                    <button
+                      type="button"
+                      className="ubci-visibility-toggle"
+                      onClick={() =>
+                        togglePasswordVisibility("confirmPassword")
+                      }
+                      aria-label={
+                        showConfirmPassword
+                          ? "Cacher le mot de passe"
+                          : "Montrer le mot de passe"
+                      }
                     >
                       {showConfirmPassword ? (
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                          />
                         </svg>
                       ) : (
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                          />
                         </svg>
                       )}
                     </button>
                   </div>
-                  {errors.confirmNewPassword && <div className="ubci-error-text">{errors.confirmNewPassword}</div>}
+                  {errors.confirmNewPassword && (
+                    <div className="ubci-error-text">
+                      {errors.confirmNewPassword}
+                    </div>
+                  )}
                 </div>
               </div>
 
               <div className="ubci-actions">
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="ubci-btn-cancel"
                   onClick={handleCancel}
                 >
                   Annuler
                 </button>
                 <button type="submit" className="ubci-btn-save">
-                  <svg className="ubci-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  <svg
+                    className="ubci-btn-icon"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
                   </svg>
                   Enregistrer
                 </button>
@@ -483,9 +649,12 @@ export default function ProfileForm() {
           --ubci-gray-800: #1a202c;
           --ubci-gray-900: #171923;
           --ubci-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-          --ubci-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-          --ubci-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-          --ubci-font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+          --ubci-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1),
+            0 1px 2px 0 rgba(0, 0, 0, 0.06);
+          --ubci-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+            0 2px 4px -1px rgba(0, 0, 0, 0.06);
+          --ubci-font: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+            Roboto, Arial, sans-serif;
         }
 
         /* Form Container */
@@ -493,11 +662,11 @@ export default function ProfileForm() {
           font-family: var(--ubci-font);
           color: var(--ubci-gray-800);
           line-height: 1.5;
-          
+
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 1.5rem 1.rem;
+          padding: 1.5rem 1rem;
         }
 
         /* Profile Card */
@@ -656,8 +825,14 @@ export default function ProfileForm() {
         }
 
         @keyframes ubciErrorAppear {
-          from { opacity: 0; transform: translateY(-3px); }
-          to { opacity: 0.9; transform: translateY(0); }
+          from {
+            opacity: 0;
+            transform: translateY(-3px);
+          }
+          to {
+            opacity: 0.9;
+            transform: translateY(0);
+          }
         }
 
         .ubci-error-text {
@@ -730,7 +905,8 @@ export default function ProfileForm() {
           margin-top: 2.5rem;
         }
 
-        .ubci-btn-cancel, .ubci-btn-save {
+        .ubci-btn-cancel,
+        .ubci-btn-save {
           display: inline-flex;
           align-items: center;
           justify-content: center;
@@ -773,8 +949,14 @@ export default function ProfileForm() {
 
         /* Animations */
         @keyframes ubciFadeIn {
-          from { opacity: 0; transform: translateY(-10px); }
-          to { opacity: 1; transform: translateY(0); }
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
         }
 
         .ubci-profile-card {

@@ -8,9 +8,9 @@ import {
   Filter,
   Check
 } from 'lucide-react';
-import axios from 'axios'; // Importation d'axios pour les requêtes HTTP
+import axios from 'axios'; 
 
-// CSS encapsulé avec préfixe "cr-" (Card Recrutement)
+
 const encapsulatedStyles = `
   .cr-container {
     background: white;
@@ -226,7 +226,6 @@ const encapsulatedStyles = `
   
   .cr-form-select {
     width: 100%;
-   
     border: 1px solid #d1d5db;
     border-radius: 0.375rem;
     transition: all 0.2s ease;
@@ -315,12 +314,13 @@ const encapsulatedStyles = `
   .cr-page-button:hover:not(.cr-active) {
     background-color: #f9fafb;
   }
+  
+  .cr-page-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
 `;
 
-// Configuration de base pour les appels API
-const API_URL = 'http://localhost:5000'; // Ajustez selon votre configuration
-
-// Composant de toast pour les notifications
 const Toast = ({ message, type, onClose }) => {
   const toastClass = type === 'success' ? 'cr-toast-success' : 'cr-toast-error';
   
@@ -352,19 +352,18 @@ const CardRecrutement = () => {
   const [toast, setToast] = useState({ show: false, message: '', type: '' });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [offersPerPage] = useState(5);
 
-  // Charger les offres depuis le backend au chargement du composant
   useEffect(() => {
     fetchOffers();
   }, []);
 
-  // Fonction pour récupérer les offres depuis l'API
   const fetchOffers = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get(`/alloffre`);
+      const response = await axios.get(`/api/alloffre`);
       
-      // Transformer les données pour correspondre à notre structure
       const formattedOffers = response.data.map(offer => ({
         id: offer._id,
         title: offer.titre,
@@ -382,16 +381,13 @@ const CardRecrutement = () => {
     }
   };
 
-  // Effet pour filtrer les offres basé sur les critères de recherche et filtre
   useEffect(() => {
     let filtered = [...offers];
     
-    // Filtre par lieu
     if (locationFilter !== 'all') {
       filtered = filtered.filter(offer => offer.location === locationFilter);
     }
     
-    // Filtre par recherche
     if (searchTerm.trim() !== '') {
       filtered = filtered.filter(offer => 
         offer.title.toLowerCase().includes(searchTerm.toLowerCase())
@@ -399,37 +395,37 @@ const CardRecrutement = () => {
     }
     
     setFilteredOffers(filtered);
+    setCurrentPage(1);
   }, [offers, searchTerm, locationFilter]);
 
-  // Fonction pour afficher un toast
+  const indexOfLastOffer = currentPage * offersPerPage;
+  const indexOfFirstOffer = indexOfLastOffer - offersPerPage;
+  const currentOffers = filteredOffers.slice(indexOfFirstOffer, indexOfLastOffer);
+  const totalPages = Math.ceil(filteredOffers.length / offersPerPage);
+
   const showToast = (message, type) => {
     setToast({ show: true, message, type });
   };
 
-  // Fonction pour fermer le toast
   const closeToast = () => {
     setToast({ ...toast, show: false });
   };
 
-  // Ouvrir le modal pour ajouter une offre
   const handleAddOffer = () => {
     setCurrentOffer({ title: '', location: '', date: new Date().toISOString().split('T')[0] });
     setIsModalOpen(true);
   };
 
-  // Ouvrir le modal pour modifier une offre
   const handleEditOffer = (offer) => {
     setCurrentOffer({ ...offer });
     setIsModalOpen(true);
   };
 
-  // Ouvrir le modal de confirmation de suppression
   const handleDeleteOffer = (offer) => {
     setOfferToDelete(offer);
     setIsDeleteModalOpen(true);
   };
 
-  // Fermer les modals
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setCurrentOffer(null);
@@ -440,13 +436,11 @@ const CardRecrutement = () => {
     setOfferToDelete(null);
   };
 
-  // Gérer les changements dans le formulaire
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setCurrentOffer({ ...currentOffer, [name]: value });
   };
 
-  // Sauvegarder une offre (ajout ou modification)
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -456,25 +450,20 @@ const CardRecrutement = () => {
     }
     
     try {
-      // Adapter le format des données pour correspondre au backend
       const offerData = {
         titre: currentOffer.title,
         lieu: currentOffer.location,
         date: currentOffer.date
       };
       
-      // Vérifier si c'est une modification ou un ajout
       if (currentOffer.id) {
-        // Modification
-        await axios.put(`/updateoffre/${currentOffer.id}`, offerData);
+        await axios.put(`/api/updateoffre/${currentOffer.id}`, offerData);
         showToast("Offre modifiée avec succès", "success");
       } else {
-        // Ajout
-        await axios.post(`/addoffre`, offerData);
+        await axios.post(`/api/addoffre`, offerData);
         showToast("Offre ajoutée avec succès", "success");
       }
       
-      // Recharger les offres
       fetchOffers();
       setIsModalOpen(false);
       setCurrentOffer(null);
@@ -484,14 +473,11 @@ const CardRecrutement = () => {
     }
   };
 
-  // Confirmer la suppression d'une offre
   const confirmDelete = async () => {
     if (offerToDelete) {
       try {
-        await axios.delete(`/deleteoffre/${offerToDelete.id}`);
+        await axios.delete(`/api/deleteoffre/${offerToDelete.id}`);
         showToast("Offre supprimée avec succès", "success");
-        
-        // Recharger les offres
         fetchOffers();
         setIsDeleteModalOpen(false);
         setOfferToDelete(null);
@@ -502,10 +488,8 @@ const CardRecrutement = () => {
     }
   };
 
-  // Générer les lieux uniques pour les filtres
   const uniqueLocations = ['all', ...new Set(offers.map(offer => offer.location))];
 
-  // Formater la date pour l'affichage
   const formatDate = (dateString) => {
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
     return new Date(dateString).toLocaleDateString('fr-FR', options);
@@ -513,235 +497,243 @@ const CardRecrutement = () => {
 
   return (
     <>
-      {/* Injection du CSS */}
       <div className={"relative flex flex-col min-w-0 break-words w-full mb-6 shadow-lg rounded"}>
-      <style>{encapsulatedStyles}</style>
-      
-      <div className="cr-container">
-        <div className="cr-header-section">
-          <h1 className="cr-modal-title" style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>
-            Offres d'Emploi
-          </h1>
-          
-          {/* Section de recherche et filtres */}
-          <div className="cr-search-container">
-            <div className="cr-search-input">
-              <div className="cr-search-icon">
-                <Search size={20} />
-              </div>
-              <input
-                type="text"
-                placeholder="Rechercher une offre..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="cr-form-input"
-                style={{ paddingLeft: '2.5rem' }}
-              />
-            </div>
+        <style>{encapsulatedStyles}</style>
+        
+        <div className="cr-container">
+          <div className="cr-header-section">
+            <h1 className="cr-modal-title" style={{ fontSize: '1.5rem', marginBottom: '1.5rem' }}>
+              Offres d'Emploi
+            </h1>
             
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Filter size={20} style={{ color: '#9ca3af' }} />
-              <select 
-                value={locationFilter} 
-                onChange={(e) => setLocationFilter(e.target.value)}
-                className="cr-form-select"
-              >
-                <option value="all">Tous les lieux</option>
-                {uniqueLocations.filter(loc => loc !== 'all').map((location, idx) => (
-                  <option key={idx} value={location}>{location}</option>
-                ))}
-              </select>
-            </div>
-            
-            <button className="cr-add-button" onClick={handleAddOffer}>
-              <Plus size={20} />
-              Ajouter une offre
-            </button>
-          </div>
-          
-          {/* État de chargement */}
-          {isLoading ? (
-            <div style={{ textAlign: 'center', padding: '2rem 0', color: '#6b7280' }}>
-              Chargement des offres...
-            </div>
-          ) : error ? (
-            <div style={{ textAlign: 'center', padding: '2rem 0', color: '#ef4444' }}>
-              {error}
-            </div>
-          ) : (
-            /* Liste des offres */
-            filteredOffers.length > 0 ? (
-              filteredOffers.map((offer) => (
-                <div key={offer.id} className="cr-job-listing">
-                  <h2 className="cr-job-title">{offer.title}</h2>
-                  <div className="cr-job-detail">
-                    <strong>Lieu:</strong>
-                    <span className="cr-job-badge">{offer.location}</span>
-                  </div>
-                  <div className="cr-job-detail">
-                    <strong>Date:</strong> {formatDate(offer.date)}
-                  </div>
-                  
-                  <div className="cr-action-buttons">
-                    <button 
-                      className="cr-action-button cr-edit-button" 
-                      onClick={() => handleEditOffer(offer)}
-                      title="Modifier l'offre"
-                    >
-                      <Edit size={16} />
-                    </button>
-                    <button 
-                      className="cr-action-button cr-delete-button" 
-                      onClick={() => handleDeleteOffer(offer)}
-                      title="Supprimer l'offre"
-                    >
-                      <Trash size={16} />
-                    </button>
-                  </div>
+            <div className="cr-search-container">
+              <div className="cr-search-input">
+                <div className="cr-search-icon">
+                  <Search size={20} />
                 </div>
-              ))
-            ) : (
+                <input
+                  type="text"
+                  placeholder="Rechercher une offre..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="cr-form-input"
+                  style={{ paddingLeft: '2.5rem' }}
+                />
+              </div>
+              
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Filter size={20} style={{ color: '#9ca3af' }} />
+                <select 
+                  value={locationFilter} 
+                  onChange={(e) => setLocationFilter(e.target.value)}
+                  className="cr-form-select"
+                >
+                  <option value="all">Tous les lieux</option>
+                  {uniqueLocations.filter(loc => loc !== 'all').map((location, idx) => (
+                    <option key={idx} value={location}>{location}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <button className="cr-add-button" onClick={handleAddOffer}>
+                <Plus size={20} />
+                Ajouter une offre
+              </button>
+            </div>
+            
+            {isLoading ? (
               <div style={{ textAlign: 'center', padding: '2rem 0', color: '#6b7280' }}>
-                Aucune offre trouvée
+                Chargement des offres...
               </div>
-            )
-          )}
-          
-          {/* Pagination */}
-          {!isLoading && !error && filteredOffers.length > 0 && (
-            <div className="cr-pagination">
-              <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-                Affichage de {filteredOffers.length} sur {offers.length} offres
+            ) : error ? (
+              <div style={{ textAlign: 'center', padding: '2rem 0', color: '#ef4444' }}>
+                {error}
               </div>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button className="cr-page-button">
-                  Précédent
-                </button>
-                <button className="cr-page-button cr-active">
-                  1
-                </button>
-                <button className="cr-page-button">
-                  Suivant
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-      
-      {/* Modal pour ajouter/modifier une offre */}
-      {isModalOpen && (
-        <div className="cr-modal-overlay">
-          <div className="cr-modal-container">
-            <div className="cr-modal-header">
-              <h2 className="cr-modal-title">
-                {currentOffer.id ? "Modifier une offre" : "Ajouter une offre"}
-              </h2>
-              <button className="cr-modal-close" onClick={handleCloseModal}>
-                <X size={24} />
-              </button>
-            </div>
+            ) : (
+              currentOffers.length > 0 ? (
+                currentOffers.map((offer) => (
+                  <div key={offer.id} className="cr-job-listing">
+                    <h2 className="cr-job-title">{offer.title}</h2>
+                    <div className="cr-job-detail">
+                      <strong>Lieu:</strong>
+                      <span className="cr-job-badge">{offer.location}</span>
+                    </div>
+                    <div className="cr-job-detail">
+                      <strong>Date:</strong> {formatDate(offer.date)}
+                    </div>
+                    
+                    <div className="cr-action-buttons">
+                      <button 
+                        className="cr-action-button cr-edit-button" 
+                        onClick={() => handleEditOffer(offer)}
+                        title="Modifier l'offre"
+                      >
+                        <Edit size={16} />
+                      </button>
+                      <button 
+                        className="cr-action-button cr-delete-button" 
+                        onClick={() => handleDeleteOffer(offer)}
+                        title="Supprimer l'offre"
+                      >
+                        <Trash size={16} />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div style={{ textAlign: 'center', padding: '2rem 0', color: '#6b7280' }}>
+                  Aucune offre trouvée
+                </div>
+              )
+            )}
             
-            <form onSubmit={handleSubmit}>
-              <div className="cr-form-group">
-                <label className="cr-form-label">Titre de l'offre</label>
-                <input
-                  type="text"
-                  name="title"
-                  placeholder="Ex: Développeur Frontend React"
-                  className="cr-form-input"
-                  value={currentOffer?.title || ''}
-                  onChange={handleInputChange}
-                />
+            {!isLoading && !error && filteredOffers.length > 0 && (
+              <div className="cr-pagination">
+                <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                  Affichage de {indexOfFirstOffer + 1}-{Math.min(indexOfLastOffer, filteredOffers.length)} sur {offers.length} offres
+                </div>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button 
+                    className="cr-page-button" 
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                  >
+                    Précédent
+                  </button>
+                  
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                    <button 
+                      key={page}
+                      className={`cr-page-button ${currentPage === page ? 'cr-active' : ''}`}
+                      onClick={() => setCurrentPage(page)}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                  
+                  <button 
+                    className="cr-page-button" 
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                  >
+                    Suivant
+                  </button>
+                </div>
               </div>
-              
-              <div className="cr-form-group">
-                <label className="cr-form-label">Lieu</label>
-                <input
-                  type="text"
-                  name="location"
-                  placeholder="Ex: Tunis, Remote, etc."
-                  className="cr-form-input"
-                  value={currentOffer?.location || ''}
-                  onChange={handleInputChange}
-                />
-              </div>
-              
-              <div className="cr-form-group">
-                <label className="cr-form-label">Date</label>
-                <input
-                  type="date"
-                  name="date"
-                  className="cr-form-input"
-                  value={currentOffer?.date || ''}
-                  onChange={handleInputChange}
-                />
-              </div>
-              
-              <div className="cr-modal-footer">
-                <button 
-                  type="button" 
-                  className="cr-btn cr-btn-cancel" 
-                  onClick={handleCloseModal}
-                >
-                  Annuler
-                </button>
-                <button 
-                  type="submit" 
-                  className="cr-btn cr-btn-save"
-                >
-                  Sauvegarder
-                </button>
-              </div>
-            </form>
+            )}
           </div>
         </div>
-      )}
-      
-      {/* Modal de confirmation de suppression */}
-      {isDeleteModalOpen && offerToDelete && (
-        <div className="cr-modal-overlay">
-          <div className="cr-modal-container">
-            <div className="cr-modal-header">
-              <h2 className="cr-modal-title">Confirmation de suppression</h2>
-              <button className="cr-modal-close" onClick={handleCloseDeleteModal}>
-                <X size={24} />
-              </button>
-            </div>
-            
-            <div>
-              <p style={{ marginBottom: '1.5rem', color: '#4b5563' }}>
-                Êtes-vous sûr de vouloir supprimer l'offre <strong>{offerToDelete.title}</strong> ?
-              </p>
+        
+        {isModalOpen && (
+          <div className="cr-modal-overlay">
+            <div className="cr-modal-container">
+              <div className="cr-modal-header">
+                <h2 className="cr-modal-title">
+                  {currentOffer.id ? "Modifier une offre" : "Ajouter une offre"}
+                </h2>
+                <button className="cr-modal-close" onClick={handleCloseModal}>
+                  <X size={24} />
+                </button>
+              </div>
               
-              <div className="cr-modal-footer">
-                <button 
-                  className="cr-btn cr-btn-cancel" 
-                  onClick={handleCloseDeleteModal}
-                >
-                  Annuler
+              <form onSubmit={handleSubmit}>
+                <div className="cr-form-group">
+                  <label className="cr-form-label">Titre de l'offre</label>
+                  <input
+                    type="text"
+                    name="title"
+                    placeholder="Ex: Développeur Frontend React"
+                    className="cr-form-input"
+                    value={currentOffer?.title || ''}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                
+                <div className="cr-form-group">
+                  <label className="cr-form-label">Lieu</label>
+                  <input
+                    type="text"
+                    name="location"
+                    placeholder="Ex: Tunis, Remote, etc."
+                    className="cr-form-input"
+                    value={currentOffer?.location || ''}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                
+                <div className="cr-form-group">
+                  <label className="cr-form-label">Date</label>
+                  <input
+                    type="date"
+                    name="date"
+                    className="cr-form-input"
+                    value={currentOffer?.date || ''}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                
+                <div className="cr-modal-footer">
+                  <button 
+                    type="button" 
+                    className="cr-btn cr-btn-cancel" 
+                    onClick={handleCloseModal}
+                  >
+                    Annuler
+                  </button>
+                  <button 
+                    type="submit" 
+                    className="cr-btn cr-btn-save"
+                  >
+                    Sauvegarder
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+        
+        {isDeleteModalOpen && offerToDelete && (
+          <div className="cr-modal-overlay">
+            <div className="cr-modal-container">
+              <div className="cr-modal-header">
+                <h2 className="cr-modal-title">Confirmation de suppression</h2>
+                <button className="cr-modal-close" onClick={handleCloseDeleteModal}>
+                  <X size={24} />
                 </button>
-                <button 
-                  className="cr-btn cr-btn-save" 
-                  onClick={confirmDelete}
-                  style={{ backgroundColor: '#ef4444' }}
-                >
-                  Supprimer
-                </button>
+              </div>
+              
+              <div>
+                <p style={{ marginBottom: '1.5rem', color: '#4b5563' }}>
+                  Êtes-vous sûr de vouloir supprimer l'offre <strong>{offerToDelete.title}</strong> ?
+                </p>
+                
+                <div className="cr-modal-footer">
+                  <button 
+                    className="cr-btn cr-btn-cancel" 
+                    onClick={handleCloseDeleteModal}
+                  >
+                    Annuler
+                  </button>
+                  <button 
+                    className="cr-btn cr-btn-save" 
+                    onClick={confirmDelete}
+                    style={{ backgroundColor: '#ef4444' }}
+                  >
+                    Supprimer
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
-      
-      {/* Toast notifications */}
-      {toast.show && (
-        <Toast 
-          message={toast.message} 
-          type={toast.type} 
-          onClose={closeToast} 
-        />
-      )}
+        )}
+        
+        {toast.show && (
+          <Toast 
+            message={toast.message} 
+            type={toast.type} 
+            onClose={closeToast} 
+          />
+        )}
       </div>
     </>
   );

@@ -15,7 +15,7 @@ export default function Sidebar() {
     
     try {
       // Vérifiez si votre API a le bon chemin - ajustez selon votre configuration
-      await axios.post('/logout');
+      await axios.post('/api/logout');
       
       // Clear any auth tokens or user data from localStorage
       localStorage.removeItem('token');

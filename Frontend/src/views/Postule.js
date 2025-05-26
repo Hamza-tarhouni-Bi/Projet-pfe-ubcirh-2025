@@ -24,6 +24,14 @@ const Postule = () => {
     cv: null
   });
 
+  // Form validation errors
+  const [formErrors, setFormErrors] = useState({
+    prenom: "",
+    nom: "",
+    tel: "",
+    email: ""
+  });
+
   // Search and filter states
   const [dateFilter, setDateFilter] = useState("N'importe quand");
   const [isDateExpanded, setIsDateExpanded] = useState(true);
@@ -39,7 +47,7 @@ const Postule = () => {
     const fetchJobListings = async () => {
       try {
         setIsLoading(true);
-        const response = await axios.get('/alloffre');
+        const response = await axios.get('/api/alloffre');
         
         const formattedJobs = response.data.map(job => ({
           id: job._id,
@@ -139,6 +147,57 @@ const Postule = () => {
     }
   }, [dateFilter, jobListings]);
 
+  // Validate name (alphabetic only)
+  const validateName = (name, field) => {
+    const regex = /^[a-zA-ZÀ-ÿ\s'-]+$/;
+    if (!regex.test(name)) {
+      setFormErrors(prev => ({
+        ...prev,
+        [field]: "Ne doit contenir que des lettres alphabétiques"
+      }));
+      return false;
+    }
+    setFormErrors(prev => ({
+      ...prev,
+      [field]: ""
+    }));
+    return true;
+  };
+
+  // Validate phone number
+  const validatePhone = (phone) => {
+    const regex = /^[2,5,7,9]\d{7}$/;
+    if (!regex.test(phone)) {
+      setFormErrors(prev => ({
+        ...prev,
+        tel: "Doit contenir 8 chiffres et commencer par 2, 5, 7 ou 9"
+      }));
+      return false;
+    }
+    setFormErrors(prev => ({
+      ...prev,
+      tel: ""
+    }));
+    return true;
+  };
+
+  // Validate email
+  const validateEmail = (email) => {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!regex.test(email)) {
+      setFormErrors(prev => ({
+        ...prev,
+        email: "Adresse email invalide"
+      }));
+      return false;
+    }
+    setFormErrors(prev => ({
+      ...prev,
+      email: ""
+    }));
+    return true;
+  };
+
   // Open application modal
   const openApplicationModal = (job) => {
     setSelectedJob(job);
@@ -154,6 +213,12 @@ const Postule = () => {
       posteId: job.id,
       posteTitle: job.title
     });
+    setFormErrors({
+      prenom: "",
+      nom: "",
+      tel: "",
+      email: ""
+    });
     setSubmitSuccess(false);
     setSubmitError("");
   };
@@ -166,13 +231,32 @@ const Postule = () => {
     setFileError("");
   };
 
-  // Handle input changes
+  // Handle input changes with validation
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    
     setFormData({
       ...formData,
       [name]: value
     });
+
+    // Validate fields as user types
+    switch(name) {
+      case 'prenom':
+      case 'nom':
+        validateName(value, name);
+        break;
+      case 'tel':
+        if (value.length <= 8) { // Only validate if length <= 8
+          validatePhone(value);
+        }
+        break;
+      case 'email':
+        validateEmail(value);
+        break;
+      default:
+        break;
+    }
   };
 
   // Handle file upload with PDF validation
@@ -207,12 +291,27 @@ const Postule = () => {
     }
   };
 
+  // Validate all form fields before submission
+  const validateForm = () => {
+    let isValid = true;
+    
+    if (!validateName(formData.prenom, 'prenom')) isValid = false;
+    if (!validateName(formData.nom, 'nom')) isValid = false;
+    if (!validatePhone(formData.tel)) isValid = false;
+    if (!validateEmail(formData.email)) isValid = false;
+    if (!formData.cv) {
+      setFileError("Erreur: Veuillez télécharger votre CV et lettre de motivation.");
+      isValid = false;
+    }
+    
+    return isValid;
+  };
+
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!formData.cv) {
-      setFileError("Erreur: Veuillez télécharger votre CV et lettre de motivation.");
+    if (!validateForm()) {
       return;
     }
   
@@ -229,7 +328,7 @@ const Postule = () => {
       formDataToSend.append("posteTitle", formData.posteTitle);
       formDataToSend.append("cv", formData.cv);
       
-      const response = await axios.post('/addcondidature', formDataToSend, {
+      const response = await axios.post('/api/addcondidature', formDataToSend, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
@@ -432,22 +531,30 @@ const Postule = () => {
                 <div className="form-section">
                   <label>Nom complet</label> 
                   <div className="name-inputs">
-                    <input 
-                      type="text" 
-                      name="prenom" 
-                      placeholder="Prénom" 
-                      value={formData.prenom}
-                      onChange={handleInputChange}
-                      required 
-                    />
-                    <input 
-                      type="text" 
-                      name="nom" 
-                      placeholder="Nom de famille" 
-                      value={formData.nom}
-                      onChange={handleInputChange}
-                      required 
-                    />
+                    <div className="input-group">
+                      <input 
+                        type="text" 
+                        name="prenom" 
+                        placeholder="Prénom" 
+                        value={formData.prenom}
+                        onChange={handleInputChange}
+                        required 
+                        className={formErrors.prenom ? "error-input" : ""}
+                      />
+                      {formErrors.prenom && <span className="error-text">{formErrors.prenom}</span>}
+                    </div>
+                    <div className="input-group">
+                      <input 
+                        type="text" 
+                        name="nom" 
+                        placeholder="Nom de famille" 
+                        value={formData.nom}
+                        onChange={handleInputChange}
+                        required 
+                        className={formErrors.nom ? "error-input" : ""}
+                      />
+                      {formErrors.nom && <span className="error-text">{formErrors.nom}</span>}
+                    </div>
                   </div>
                 </div>
 
@@ -466,32 +573,39 @@ const Postule = () => {
 
                 <div className="form-section">
                   <label>Adresse E-mail</label>
-                  <input 
-                    type="email" 
-                    name="email" 
-                    placeholder="Prénom@gmail.com" 
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    required 
-                  />
-                </div>
-
-                <div className="form-section">
-                  <label>Numéro de téléphone</label>
-                  <div className="phone-input">
+                  <div className="input-group">
                     <input 
-                      type="text" 
-                      name="tel" 
-                      placeholder="Numéro de téléphone" 
-                      value={formData.tel}
+                      type="email" 
+                      name="email" 
+                      placeholder="Prénom@gmail.com" 
+                      value={formData.email}
                       onChange={handleInputChange}
                       required 
+                      className={formErrors.email ? "error-input" : ""}
                     />
+                    {formErrors.email && <span className="error-text">{formErrors.email}</span>}
                   </div>
                 </div>
 
                 <div className="form-section">
-                  <label>Déposez votre CV  (format PDF uniquement)</label>
+                  <label>Numéro de téléphone</label>
+                  <div className="phone-input input-group">
+                    <input 
+                      type="text" 
+                      name="tel" 
+                      placeholder="Numéro de téléphone (8 chiffres)" 
+                      value={formData.tel}
+                      onChange={handleInputChange}
+                      required 
+                      maxLength="8"
+                      className={formErrors.tel ? "error-input" : ""}
+                    />
+                    {formErrors.tel && <span className="error-text">{formErrors.tel}</span>}
+                  </div>
+                </div>
+
+                <div className="form-section">
+                  <label>Déposez votre CV (format PDF uniquement)</label>
                   <div className={`file-upload ${fileError ? "file-error" : ""}`} onClick={triggerFileInput}>
                     <input 
                       type="file" 
@@ -872,6 +986,21 @@ const Postule = () => {
           box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.2);
         }
 
+        .error-input {
+          border-color: #d32f2f !important;
+        }
+
+        .error-text {
+          color: #d32f2f;
+          font-size: 12px;
+          margin-top: 5px;
+          display: block;
+        }
+
+        .input-group {
+          margin-bottom: 10px;
+        }
+
         .name-inputs,
         .address-details,
         .phone-input {
@@ -951,6 +1080,11 @@ const Postule = () => {
 
         .submit-application:hover {
           background-color: #0d47a1;
+        }
+
+        .submit-application:disabled {
+          background-color: #cccccc;
+          cursor: not-allowed;
         }
 
         /* Messages styles */

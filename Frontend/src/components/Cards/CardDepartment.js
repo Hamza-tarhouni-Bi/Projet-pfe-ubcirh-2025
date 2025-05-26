@@ -143,6 +143,31 @@ const encapsulatedStyles = `
     padding: 0 1rem;
   }
   
+  .gp-page-button {
+    padding: 0.375rem 0.75rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+    background: none;
+    cursor: pointer;
+  }
+  
+  .gp-page-button.gp-active {
+    background-color: #14b8a6;
+    color: white;
+    border-color: #14b8a6;
+  }
+  
+  .gp-page-button:hover:not(.gp-active) {
+    background-color: #f9fafb;
+  }
+  
+  .gp-page-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
   .gp-modal-overlay {
     position: fixed;
     inset: 0;
@@ -279,6 +304,7 @@ const encapsulatedStyles = `
     background-color: #ef4444;
   }
 `;
+
 // Toast component for notifications
 const Toast = ({ message, type, onClose }) => {
   const toastClass =
@@ -320,19 +346,19 @@ export default function CardDepartment({ color = "light" }) {
   const [errors, setErrors] = useState({});
   const [toast, setToast] = useState({ affiche: false, message: "", type: "" });
   const [isLoading, setIsLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [departmentsPerPage] = useState(5);
 
   // Fetch departments on component mount
   useEffect(() => {
     fetchDepartments();
   }, []);
 
-
-
   // Fetch all departments
   const fetchDepartments = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get(`/alldepartment`);
+      const response = await axios.get(`/api/alldepartment`);
       setDepartments(response.data);
       setIsLoading(false);
     } catch (error) {
@@ -342,6 +368,7 @@ export default function CardDepartment({ color = "light" }) {
     }
   };
 
+  // Filter and sort departments
   const filteredDepartments = departments
     .filter((department) => {
       if (!isNaN(searchTerm) && searchTerm !== "") {
@@ -356,6 +383,20 @@ export default function CardDepartment({ color = "light" }) {
       if (sortOption === "departement") return a.nom.localeCompare(b.nom);
       return 0;
     });
+
+  // Get current departments for pagination
+  const indexOfLastDepartment = currentPage * departmentsPerPage;
+  const indexOfFirstDepartment = indexOfLastDepartment - departmentsPerPage;
+  const currentDepartments = filteredDepartments.slice(
+    indexOfFirstDepartment,
+    indexOfLastDepartment
+  );
+  const totalPages = Math.ceil(filteredDepartments.length / departmentsPerPage);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, sortOption, departments]);
 
   // Display a toast notification
   const afficherToast = (message, type) => {
@@ -389,7 +430,7 @@ export default function CardDepartment({ color = "light" }) {
   const handleConfirmDelete = async () => {
     try {
       await axios.delete(
-        `/deletedepartment/${selectedDepartmentId}`
+        `/api/deletedepartment/${selectedDepartmentId}`
       );
       setDepartments(
         departments.filter(
@@ -429,7 +470,7 @@ export default function CardDepartment({ color = "light" }) {
     if (!validateForm(newDepartment)) return;
 
     try {
-      const response = await axios.post(`/adddepartment`, {
+      const response = await axios.post(`/api/adddepartment`, {
         nom: newDepartment.nom,
       });
 
@@ -459,7 +500,7 @@ export default function CardDepartment({ color = "light" }) {
 
     try {
       await axios.put(
-        `/updatedepartment/${selectedDepartment._id}`,
+        `/api/updatedepartment/${selectedDepartment._id}`,
         {
           nom: selectedDepartment.nom,
         }
@@ -575,8 +616,8 @@ export default function CardDepartment({ color = "light" }) {
                         Chargement des départements...
                       </td>
                     </tr>
-                  ) : filteredDepartments.length > 0 ? (
-                    filteredDepartments.map((department) => (
+                  ) : currentDepartments.length > 0 ? (
+                    currentDepartments.map((department) => (
                       <tr className="gp-tr" key={department._id}>
                         <td className="gp-td">
                           {department._id.substring(0, 8)}...
@@ -646,8 +687,36 @@ export default function CardDepartment({ color = "light" }) {
             {/* Pagination */}
             <div className="gp-pagination">
               <div style={{ fontSize: "0.875rem", color: "#6b7280" }}>
-                Affichage de {filteredDepartments.length} sur{" "}
-                {departments.length} départements
+                Affichage de {indexOfFirstDepartment + 1}-
+                {Math.min(indexOfLastDepartment, filteredDepartments.length)} sur{" "}
+                {filteredDepartments.length} départements
+              </div>
+              <div style={{ display: "flex", gap: "0.5rem" }}>
+                <button
+                  className="gp-page-button"
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                >
+                  Précédent
+                </button>
+                
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                  <button
+                    key={page}
+                    className={`gp-page-button ${currentPage === page ? 'gp-active' : ''}`}
+                    onClick={() => setCurrentPage(page)}
+                  >
+                    {page}
+                  </button>
+                ))}
+                
+                <button
+                  className="gp-page-button"
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                >
+                  Suivant
+                </button>
               </div>
             </div>
           </div>

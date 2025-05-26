@@ -25,6 +25,11 @@ const generatePassword = () => {
   return password;
 };
 
+// Fonctions de validation
+const isPhoneValid = (phone) => /^[2579]\d{7}$/.test(phone);
+const isEmailValid = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+const isAlpha = (str) => /^[a-zA-ZÀ-ÿ\s'-]+$/.test(str);
+
 // Composant Modal pour les détails
 const DetailsModal = ({ employe, onClose }) => {
   if (!employe) return null;
@@ -33,7 +38,7 @@ const DetailsModal = ({ employe, onClose }) => {
     <div className="gp-modal-overlay">
       <div className="gp-modal-container">
         <div className="gp-modal-header">
-          <h2 className="gp-modal-title">DETAILS:</h2>
+          <h2 className="gp-modal-title">Détails du personnel:</h2>
           <button onClick={onClose} className="gp-modal-close">
             <X size={24} />
           </button>
@@ -147,12 +152,16 @@ export default function GestionPersonnel() {
   const [employeASupprimer, setEmployeASupprimer] = useState(null);
   const [toast, setToast] = useState({ affiche: false, message: "", type: "" });
   const [departements, setDepartements] = useState([]);
+  
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
   // Charger les départements
   useEffect(() => {
     const fetchDepartements = async () => {
       try {
-        const response = await fetch("/alldepartment");
+        const response = await fetch("/api/alldepartment");
         if (!response.ok) {
           throw new Error("Erreur lors de la récupération des départements");
         }
@@ -206,6 +215,7 @@ export default function GestionPersonnel() {
     }
 
     setEmployesAffiches(filtres);
+    setCurrentPage(1); // Reset à la première page quand les filtres changent
   }, [recherche, filtreType, filtreDepartement, employes]);
 
   // Afficher un toast
@@ -293,7 +303,7 @@ export default function GestionPersonnel() {
   useEffect(() => {
     const fetchEmployes = async () => {
       try {
-        const response = await axios.get("/allpersonnel");
+        const response = await axios.get("/api/allpersonnel");
         // Filtrer pour exclure les DRH
         const filteredEmployes = response.data.filter(employe => 
           !employe.role || employe.role.toLowerCase() !== "drh"
@@ -308,6 +318,14 @@ export default function GestionPersonnel() {
     fetchEmployes();
   }, []);
 
+  // Logique de pagination
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = employesAffiches.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(employesAffiches.length / itemsPerPage);
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
   // Sauvegarder l'employé (ajout ou modification)
   const sauvegarderEmploye = async () => {
     // Validation des champs obligatoires
@@ -319,12 +337,45 @@ export default function GestionPersonnel() {
       !employeActuel.departement ||
       !employeActuel.sexe
     ) {
-      afficherToast("Veuillez remplir tous les champs obligatoires", "error");
+      afficherToast("Veuillez remplir tous les champs obligatoires (*)", "error");
       return;
     }
 
-    if (employeActuel.salaire && isNaN(employeActuel.salaire)) {
-      afficherToast("Le salaire doit être un nombre valide", "error");
+    // Validation nom et prénom alphabétiques
+    if (!isAlpha(employeActuel.nom)) {
+      afficherToast("Le nom ne doit contenir que des lettres", "error");
+      return;
+    }
+
+    if (!isAlpha(employeActuel.prenom)) {
+      afficherToast("Le prénom ne doit contenir que des lettres", "error");
+      return;
+    }
+
+    // Validation email
+    if (!isEmailValid(employeActuel.email)) {
+      afficherToast("Veuillez entrer une adresse email valide (ex: exemple@domaine.com)", "error");
+      return;
+    }
+
+    // Validation téléphone
+    if (!isPhoneValid(employeActuel.telephone)) {
+      afficherToast(
+        "Le numéro de téléphone doit contenir exactement 8 chiffres et commencer par 2, 5, 7 ou 9",
+        "error"
+      );
+      return;
+    }
+
+    // Validation salaire
+    if (employeActuel.salaire && (isNaN(employeActuel.salaire) || employeActuel.salaire < 0)) {
+      afficherToast("Le salaire doit être un nombre positif (ex: 1500)", "error");
+      return;
+    }
+
+    // Validation solde congé
+    if (employeActuel.soldeConge < 0 || !Number.isInteger(Number(employeActuel.soldeConge))) {
+      afficherToast("Le solde de congé doit être un nombre entier positif (ex: 30)", "error");
       return;
     }
 
@@ -344,16 +395,16 @@ export default function GestionPersonnel() {
 
       if (employeActuel._id) {
         // Modification
-        await axios.put(`/updatepersonnel/${employeActuel._id}`, employeData);
+        await axios.put(`/api/updatepersonnel/${employeActuel._id}`, employeData);
         afficherToast("Employé modifié avec succès", "success");
       } else {
         // Ajout
-        await axios.post("/addPersonnel", employeData);
+        await axios.post("/api/addPersonnel", employeData);
         afficherToast("Employé ajouté avec succès", "success");
       }
 
       // Recharger les données
-      const { data } = await axios.get("/allpersonnel");
+      const { data } = await axios.get("/api/allpersonnel");
       const filteredEmployes = data.filter(employe => 
         !employe.role || employe.role.toLowerCase() !== "drh"
       );
@@ -361,10 +412,17 @@ export default function GestionPersonnel() {
       fermerModal();
     } catch (error) {
       console.error("Erreur:", error);
-      afficherToast(
-        error.response?.data?.error || "Erreur lors de l'opération",
-        "error"
-      );
+      let errorMessage = "Erreur lors de l'opération";
+      
+      if (error.response) {
+        if (error.response.status === 409) {
+          errorMessage = "Cet email est déjà utilisé par un autre personnel";
+        } else if (error.response.data && error.response.data.error) {
+          errorMessage = error.response.data.error;
+        }
+      }
+      
+      afficherToast("Cet email est déjà utilisé par un autre personnel", "error");
     }
   };
 
@@ -373,10 +431,10 @@ export default function GestionPersonnel() {
     if (!employeASupprimer) return;
 
     try {
-      await axios.delete(`/deletepersonnel/${employeASupprimer._id}`);
+      await axios.delete(`/api/deletepersonnel/${employeASupprimer._id}`);
       
       // Recharger les données
-      const { data } = await axios.get("/allpersonnel");
+      const { data } = await axios.get("/api/allpersonnel");
       const filteredEmployes = data.filter(employe => 
         !employe.role || employe.role.toLowerCase() !== "drh"
       );
@@ -386,10 +444,17 @@ export default function GestionPersonnel() {
       fermerSuppressionModal();
     } catch (error) {
       console.error("Erreur lors de la suppression:", error);
-      afficherToast(
-        error.response?.data?.error || "Erreur lors de la suppression",
-        "error"
-      );
+      let errorMessage = "Erreur lors de la suppression";
+      
+      if (error.response) {
+        if (error.response.status === 404) {
+          errorMessage = "Employé introuvable - peut-être déjà supprimé";
+        } else if (error.response.data && error.response.data.error) {
+          errorMessage = error.response.data.error;
+        }
+      }
+      
+      afficherToast(errorMessage, "error");
     }
   };
 
@@ -484,8 +549,8 @@ export default function GestionPersonnel() {
                   </tr>
                 </thead>
                 <tbody>
-                  {employesAffiches.length > 0 ? (
-                    employesAffiches.map((employe, index) => (
+                  {currentItems.length > 0 ? (
+                    currentItems.map((employe, index) => (
                       <tr key={index} className="gp-tr">
                         <td className="gp-td">{employe.nom}</td>
                         <td className="gp-td">{employe.prenom}</td>
@@ -540,14 +605,36 @@ export default function GestionPersonnel() {
 
             <div className="gp-pagination">
               <div style={{ fontSize: "0.875rem", color: "#6b7280" }}>
-                Affichage de {employesAffiches.length} sur {employes.length}{" "}
-                employés
+                Affichage de {indexOfFirstItem + 1} à{" "}
+                {Math.min(indexOfLastItem, employesAffiches.length)} sur{" "}
+                {employesAffiches.length} employés
               </div>
               <div style={{ display: "flex", gap: "0.5rem" }}>
-                <button className="gp-page-button">Précédent</button>
-                <button className="gp-page-button gp-active">1</button>
-                <button className="gp-page-button">2</button>
-                <button className="gp-page-button">Suivant</button>
+                <button 
+                  onClick={() => paginate(currentPage - 1)} 
+                  className="gp-page-button" 
+                  disabled={currentPage === 1}
+                >
+                  Précédent
+                </button>
+                
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(number => (
+                  <button
+                    key={number}
+                    onClick={() => paginate(number)}
+                    className={`gp-page-button ${currentPage === number ? "gp-active" : ""}`}
+                  >
+                    {number}
+                  </button>
+                ))}
+                
+                <button 
+                  onClick={() => paginate(currentPage + 1)} 
+                  className="gp-page-button" 
+                  disabled={currentPage === totalPages}
+                >
+                  Suivant
+                </button>
               </div>
             </div>
           </div>
@@ -588,9 +675,14 @@ export default function GestionPersonnel() {
                     name="nom"
                     value={employeActuel.nom}
                     onChange={handleChange}
-                    className="gp-form-input"
+                    className={`gp-form-input ${
+                      employeActuel.nom && !isAlpha(employeActuel.nom) ? 'gp-input-error' : ''
+                    }`}
                     required
                   />
+                  {employeActuel.nom && !isAlpha(employeActuel.nom) && (
+                    <p className="gp-error-message">Le nom ne doit contenir que des lettres</p>
+                  )}
                 </div>
 
                 <div className="gp-form-group">
@@ -600,9 +692,14 @@ export default function GestionPersonnel() {
                     name="prenom"
                     value={employeActuel.prenom}
                     onChange={handleChange}
-                    className="gp-form-input"
+                    className={`gp-form-input ${
+                      employeActuel.prenom && !isAlpha(employeActuel.prenom) ? 'gp-input-error' : ''
+                    }`}
                     required
                   />
+                  {employeActuel.prenom && !isAlpha(employeActuel.prenom) && (
+                    <p className="gp-error-message">Le prénom ne doit contenir que des lettres</p>
+                  )}
                 </div>
 
                 <div className="gp-form-group">
@@ -612,9 +709,14 @@ export default function GestionPersonnel() {
                     name="email"
                     value={employeActuel.email}
                     onChange={handleChange}
-                    className="gp-form-input"
+                    className={`gp-form-input ${
+                      employeActuel.email && !isEmailValid(employeActuel.email) ? 'gp-input-error' : ''
+                    }`}
                     required
                   />
+                  {employeActuel.email && !isEmailValid(employeActuel.email) && (
+                    <p className="gp-error-message">Format d'email invalide (ex: exemple@domaine.com)</p>
+                  )}
                 </div>
 
                 <div className="gp-form-group">
@@ -624,9 +726,17 @@ export default function GestionPersonnel() {
                     name="telephone"
                     value={employeActuel.telephone}
                     onChange={handleChange}
-                    className="gp-form-input"
+                    className={`gp-form-input ${
+                      employeActuel.telephone && !isPhoneValid(employeActuel.telephone) ? 'gp-input-error' : ''
+                    }`}
                     required
+                    placeholder="Ex: 50123456"
                   />
+                  {employeActuel.telephone && !isPhoneValid(employeActuel.telephone) && (
+                    <p className="gp-error-message">
+                      Doit contenir exactement 8 chiffres et commencer par 2, 5, 7 ou 9
+                    </p>
+                  )}
                 </div>
 
                 <div className="gp-form-group">
@@ -669,10 +779,15 @@ export default function GestionPersonnel() {
                     name="salaire"
                     value={employeActuel.salaire}
                     onChange={handleChange}
-                    className="gp-form-input"
+                    className={`gp-form-input ${
+                      employeActuel.salaire && (isNaN(employeActuel.salaire)) || employeActuel.salaire < 0 ? 'gp-input-error' : ''
+                    }`}
                     placeholder="Salaire mensuel en TND"
                     required
                   />
+                  {employeActuel.salaire && (isNaN(employeActuel.salaire) || employeActuel.salaire < 0) && (
+                    <p className="gp-error-message">Doit être un nombre positif (ex: 1500)</p>
+                  )}
                 </div>
 
                 <div className="gp-form-group">
@@ -682,10 +797,15 @@ export default function GestionPersonnel() {
                     name="soldeConge"
                     value={employeActuel.soldeConge}
                     onChange={handleChange}
-                    className="gp-form-input"
+                    className={`gp-form-input ${
+                      employeActuel.soldeConge < 0 || !Number.isInteger(Number(employeActuel.soldeConge)) ? 'gp-input-error' : ''
+                    }`}
                     placeholder="Jours de congés restants"
                     required
                   />
+                  {(employeActuel.soldeConge < 0 || !Number.isInteger(Number(employeActuel.soldeConge))) && (
+                    <p className="gp-error-message">Doit être un nombre entier positif (ex: 30)</p>
+                  )}
                 </div>
 
                 <div className="gp-form-group">

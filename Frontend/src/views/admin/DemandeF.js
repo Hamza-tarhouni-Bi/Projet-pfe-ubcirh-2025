@@ -380,7 +380,7 @@ const GestionFormations = () => {
   useEffect(() => {
     const fetchDemandes = async () => {
       try {
-        const response = await axios.get('/alldemandeformation');
+        const response = await axios.get('/api/alldemandeformation');
         setDemandes(response.data);
       } catch (err) {
         setError("Erreur lors du chargement des demandes");
@@ -434,12 +434,12 @@ const GestionFormations = () => {
       if (!demande) throw new Error("Demande introuvable");
 
       // Mettre à jour le statut de la demande
-      await axios.put(`/updatedemandeformation/${_id}`, { statut: backendStatus });
+      await axios.put(`/api/updatedemandeformation/${_id}`, { statut: backendStatus });
 
       // Si la demande est acceptée, incrémenter le nombre d'inscrits
       if (newStatus === 'accepte' && demande.idFormation) {
         try {
-          await axios.put(`/updatenbinscrit/${demande.idFormation}`, {
+          await axios.put(`/api/updatenbinscrit/${demande.idFormation}`, {
             action: 'increment'
           });
         } catch (err) {
@@ -453,7 +453,7 @@ const GestionFormations = () => {
         item._id === _id ? { ...item, statut: backendStatus } : item
       ));
 
-      showToast(`Statut mis à jour avec succès ! Demande ${newStatus === 'accepte' ? 'acceptée' : 'refusée'}`);
+      showToast(` Demande ${newStatus === 'accepte' ? 'acceptée' : 'refusée'}`);
     } catch (err) {
       console.error("Erreur de mise à jour:", err);
       showToast("Échec de la mise à jour: " + (err.response?.data?.message || err.message), 'error');

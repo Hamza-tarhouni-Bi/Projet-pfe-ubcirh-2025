@@ -356,7 +356,7 @@ export default function CardCandidature({ color = "light" }) {
   const fetchCandidatures = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get("/allcondidature");
+      const response = await axios.get("/api/allcondidature");
     
       const formattedCandidatures = response.data.map(candidature => ({
         ...candidature,
@@ -424,7 +424,7 @@ export default function CardCandidature({ color = "light" }) {
   const handleConfirmStatusChange = async () => {
     try {
       // Update the status in the API
-      await axios.put(`/updatecondidature/${selectedCandidature._id}`, {
+      await axios.put(`/api/updatecondidature/${selectedCandidature._id}`, {
         status: statusAction
       });
 
@@ -709,30 +709,7 @@ export default function CardCandidature({ color = "light" }) {
                   Fermer
                 </button>
                 
-                {selectedCandidature.status === "pending" && (
-                  <>
-                    <button
-                      onClick={() => {
-                        setIsViewModalOpen(false);
-                        handleStatusAction("accepted", selectedCandidature);
-                      }}
-                      className="gp-btn gp-btn-confirm"
-                      style={{ backgroundColor: "#059669" }}
-                    >
-                      Accepter
-                    </button>
-                    <button
-                      onClick={() => {
-                        setIsViewModalOpen(false);
-                        handleStatusAction("rejected", selectedCandidature);
-                      }}
-                      className="gp-btn gp-btn-confirm"
-                      style={{ backgroundColor: "#dc2626" }}
-                    >
-                      Refuser
-                    </button>
-                  </>
-                )}
+               
               </div>
             </div>
           </div>

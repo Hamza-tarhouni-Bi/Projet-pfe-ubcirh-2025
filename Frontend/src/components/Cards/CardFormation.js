@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { Check, X, AlertCircle, Info } from 'lucide-react';
 
 function CardFormation() {
   const [formations, setFormations] = useState([]);
@@ -22,13 +23,55 @@ function CardFormation() {
     places: false,
     inscrits: false
   });
+  const [toast, setToast] = useState({ show: false, message: '', type: '' });
+  const [formSubmitted, setFormSubmitted] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [formationsPerPage] = useState(5);
 
-  // Charger les formations depuis l'API
+  const Toast = ({ message, type, onClose }) => {
+    const toastClass = {
+      success: 'toast-success',
+      error: 'toast-error',
+      info: 'toast-info',
+      warning: 'toast-warning'
+    }[type];
+
+    const icon = {
+      success: <Check size={20} />,
+      error: <X size={20} />,
+      info: <Info size={20} />,
+      warning: <AlertCircle size={20} />
+    }[type];
+
+    useEffect(() => {
+      const timer = setTimeout(() => {
+        onClose();
+      }, 3000);
+
+      return () => clearTimeout(timer);
+    }, [onClose]);
+
+    return (
+      <div className={`toast ${toastClass}`}>
+        <div className="toast-icon">{icon}</div>
+        <p>{message}</p>
+      </div>
+    );
+  };
+
+  const showToast = (message, type) => {
+    setToast({ show: true, message, type });
+  };
+
+  const hideToast = () => {
+    setToast({ ...toast, show: false });
+  };
+
   useEffect(() => {
     const fetchFormations = async () => {
       try {
         setLoading(true);
-        const response = await axios.get('/getformation');
+        const response = await axios.get('/api/getformation');
         
         const formattedData = response.data.map(formation => ({
           id: formation._id,
@@ -47,13 +90,13 @@ function CardFormation() {
         console.error("Erreur lors du chargement des formations:", err);
         setError("Impossible de charger les formations. Veuillez réessayer plus tard.");
         setLoading(false);
+        showToast("Erreur lors du chargement des formations", "error");
       }
     };
 
     fetchFormations();
   }, []);
 
-  // Filtrer les formations
   useEffect(() => {
     let result = [...formations];
     
@@ -84,13 +127,23 @@ function CardFormation() {
     });
     
     setFilteredFormations(result);
+    setCurrentPage(1);
   }, [formations, searchTerm, sortConfig, activeTab]);
 
+  const indexOfLastFormation = currentPage * formationsPerPage;
+  const indexOfFirstFormation = indexOfLastFormation - formationsPerPage;
+  const currentFormations = filteredFormations.slice(indexOfFirstFormation, indexOfLastFormation);
+  const totalPages = Math.ceil(filteredFormations.length / formationsPerPage);
+
   const validateForm = () => {
+    const today = new Date(new Date().setHours(0, 0, 0, 0));
+    const selectedDate = new Date(currentFormation.date);
+    
     const errors = {
       titre: !currentFormation.titre.trim(),
       description: !currentFormation.description.trim(),
-      date: !currentFormation.date || new Date(currentFormation.date) < new Date(new Date().setHours(0, 0, 0, 0)),
+      // Modification ici: pas de validation de date pour les modifications
+      date: currentFormation.id ? false : (!currentFormation.date || selectedDate < today),
       duree: currentFormation.duree <= 0,
       places: currentFormation.places <= 0,
       inscrits: currentFormation.inscrits < 0 || currentFormation.inscrits > currentFormation.places
@@ -101,7 +154,9 @@ function CardFormation() {
   };
 
   const handleBlur = (field) => {
-    validateForm();
+    if (formSubmitted) {
+      validateForm();
+    }
   };
 
   const requestSort = (key) => {
@@ -131,6 +186,7 @@ function CardFormation() {
       places: false,
       inscrits: false
     });
+    setFormSubmitted(false);
     setModalOpen(true);
   };
 
@@ -144,22 +200,26 @@ function CardFormation() {
       places: false,
       inscrits: false
     });
+    setFormSubmitted(false);
     setModalOpen(true);
   };
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`/deleteformation/${id}`);
+      await axios.delete(`/api/deleteformation/${id}`);
       setFormations(formations.filter(formation => formation.id !== id));
       setConfirmDeleteId(null);
+      showToast("Formation supprimée avec succès", "success");
     } catch (err) {
       console.error("Erreur lors de la suppression:", err);
-      alert("Impossible de supprimer la formation. Veuillez réessayer.");
+      showToast("Impossible de supprimer la formation. Veuillez réessayer.", "error");
     }
   };
 
   const handleSave = async () => {
+    setFormSubmitted(true);
     if (!validateForm()) {
+      showToast("Veuillez vérifiez les champs du formulaire", "error");
       return;
     }
 
@@ -175,7 +235,7 @@ function CardFormation() {
       };
 
       if (currentFormation.id) {
-        const response = await axios.put(`/updateformation/${currentFormation.id}`, formationData);
+        await axios.put(`/api/updateformation/${currentFormation.id}`, formationData);
         setFormations(formations.map(formation => 
           formation.id === currentFormation.id ? {
             ...formation,
@@ -188,8 +248,9 @@ function CardFormation() {
             statut: currentFormation.statut
           } : formation
         ));
+        showToast("Formation mise à jour avec succès", "success");
       } else {
-        const response = await axios.post('/addformation', formationData);
+        const response = await axios.post('/api/addformation', formationData);
         const newFormation = {
           id: response.data._id,
           titre: response.data.titre,
@@ -201,11 +262,24 @@ function CardFormation() {
           statut: response.data.statut
         };
         setFormations([...formations, newFormation]);
+        showToast("Formation ajoutée avec succès", "success");
       }
       setModalOpen(false);
     } catch (err) {
       console.error("Erreur lors de l'enregistrement:", err);
-      alert("Impossible d'enregistrer la formation. Veuillez vérifier les données et réessayer.");
+      showToast("Erreur lors de l'enregistrement de la formation", "error");
+    }
+  };
+
+  const handleStatusChange = (e) => {
+    const newStatus = e.target.value;
+    setCurrentFormation({
+      ...currentFormation,
+      statut: newStatus
+    });
+    
+    if (formSubmitted) {
+      validateForm();
     }
   };
 
@@ -246,6 +320,10 @@ function CardFormation() {
   return (
     <div className="relative flex flex-col min-w-0 break-words w-full mb-6 shadow-lg rounded">
       <div className="container">
+        {toast.show && (
+          <Toast message={toast.message} type={toast.type} onClose={hideToast} />
+        )}
+
         <div className="gp-header-section">
           <h1 className="gp-modal-title" style={{ fontSize: "1.5rem", marginBottom: "" }}>
             Gestion des Formations
@@ -342,8 +420,8 @@ function CardFormation() {
                 </tr>
               </thead>
               <tbody>
-                {filteredFormations.length > 0 ? (
-                  filteredFormations.map((formation) => (
+                {currentFormations.length > 0 ? (
+                  currentFormations.map((formation) => (
                     <tr key={formation.id}>
                       <td>
                         <div className="formation-title">
@@ -413,13 +491,32 @@ function CardFormation() {
 
           <div className="pagination">
             <div className="pagination-info">
-              Affichage de <span className="bold">{filteredFormations.length}</span> formation(s)
+              Affichage de <span className="bold">{indexOfFirstFormation + 1}-{Math.min(indexOfLastFormation, filteredFormations.length)}</span> sur <span className="bold">{filteredFormations.length}</span> formation(s)
             </div>
             <div className="pagination-buttons">
-              <button className="btn-page" disabled={true}>
+              <button 
+                className="btn-page" 
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+              >
                 Précédent
               </button>
-              <button className="btn-page" disabled={true}>
+              
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                <button
+                  key={page}
+                  className={`btn-page ${currentPage === page ? 'active' : ''}`}
+                  onClick={() => setCurrentPage(page)}
+                >
+                  {page}
+                </button>
+              ))}
+              
+              <button 
+                className="btn-page" 
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+              >
                 Suivant
               </button>
             </div>
@@ -471,12 +568,15 @@ function CardFormation() {
                         type="date" 
                         className={`form-control ${validationErrors.date ? 'error' : ''}`}
                         value={currentFormation.date}
-                        min={new Date().toISOString().split('T')[0]}
+                        // Modification ici: pas de restriction min pour les modifications
+                        min={currentFormation.id ? undefined : new Date().toISOString().split('T')[0]}
                         onChange={(e) => setCurrentFormation({...currentFormation, date: e.target.value})}
                         onBlur={() => handleBlur('date')}
                       />
                       {validationErrors.date && (
-                        <span className="error-message">La date doit être aujourd'hui ou dans le futur</span>
+                        <span className="error-message">
+                          {currentFormation.id ? "La date est requise" : "La date doit être aujourd'hui ou dans le futur"}
+                        </span>
                       )}
                     </div>
 
@@ -538,7 +638,7 @@ function CardFormation() {
                     <select 
                       className="form-control"
                       value={currentFormation.statut}
-                      onChange={(e) => setCurrentFormation({...currentFormation, statut: e.target.value})}
+                      onChange={handleStatusChange}
                     >
                       <option value="Programmée">Programmée</option>
                       <option value="Complète">Complète</option>
@@ -565,6 +665,7 @@ function CardFormation() {
           </div>
         )}
 
+
         <style jsx>{`
           .container {
             background: white;
@@ -590,6 +691,54 @@ function CardFormation() {
             font-size: 1.25rem;
             font-weight: 700;
             color: #1f2937;
+          }
+
+          /* Toast Styles */
+          .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 16px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            animation: slideIn 0.3s ease-out;
+          }
+
+          @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+          }
+
+          .toast-success {
+            background-color: #ecfdf5;
+            color: #059669;
+            border-left: 4px solid #10b981;
+          }
+
+          .toast-error {
+            background-color: #fee2e2;
+            color: #dc2626;
+            border-left: 4px solid #ef4444;
+          }
+
+          .toast-info {
+            background-color: #dbeafe;
+            color: #2563eb;
+            border-left: 4px solid #3b82f6;
+          }
+
+          .toast-warning {
+            background-color: #fef3c7;
+            color: #d97706;
+            border-left: 4px solid #f59e0b;
+          }
+
+          .toast-icon {
+            display: flex;
           }
 
           .toolbar {
@@ -907,6 +1056,12 @@ function CardFormation() {
             cursor: not-allowed;
           }
 
+          .btn-page.active {
+            background-color: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+          }
+
           .modal-overlay {
             position: fixed;
             inset: 0;
@@ -975,7 +1130,6 @@ function CardFormation() {
             font-weight: 500;
             color: #475569;
           }
-
           .form-control {
             padding: 8px 12px;
             border: 1px solid #cbd5e1;
@@ -1074,6 +1228,7 @@ function CardFormation() {
               align-items: stretch;
             }
             
+          
             .toolbar-left {
               flex-direction: column;
             }

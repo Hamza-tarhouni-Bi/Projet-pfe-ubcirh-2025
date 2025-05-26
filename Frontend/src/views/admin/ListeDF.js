@@ -1,9 +1,9 @@
 
 import { useState, useEffect } from "react";
 import { Search, AlertCircle, Check, X, Eye } from "lucide-react";
-import axios from "axios"; // Assurez-vous d'installer axios: npm install axios
+import axios from "axios"; 
 
-// CSS encapsulé avec préfixe "gav-" (Gestion Avances)
+
 const encapsulatedStyles = `
   .gav-container {
     background: white;
@@ -475,7 +475,7 @@ export default function GestionAvances() {
     const fetchDemandes = async () => {
       try {
         setLoading(true);
-        const response = await axios.get('/getdemandea');
+        const response = await axios.get('/api/getdemandea');
       
         console.log(response.data.nom)
         
@@ -508,7 +508,7 @@ export default function GestionAvances() {
       // Récupérer les détails de chaque employé en parallèle
       const promises = ids.map(async (id) => {
         try {
-          const response = await axios.get(`/getpersonnel/${id}`);
+          const response = await axios.get(`/api/getpersonnel/${id}`);
           return { id, data: response.data };
         } catch (err) {
           console.error(`Erreur lors de la récupération des données pour l'employé ${id}:`, err);

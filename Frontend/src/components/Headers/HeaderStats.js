@@ -13,7 +13,7 @@
       
       const fetchPersonnelCount = async () => {
         try {
-          const response = await axios.get('/allpersonnel');
+          const response = await axios.get('/api/allpersonnel');
           
           setPersonnelCount(response.data.length.toString());
         } catch (error) {
@@ -29,7 +29,7 @@
       // Récupérer le nombre de départements 
       const fetchDepartmentCount = async () => {
         try {
-          const response = await axios.get('/alldepartment');
+          const response = await axios.get('/api/alldepartment');
           
           setDepartmentCount(response.data.length.toString());
         } catch (error) {
@@ -46,7 +46,7 @@
       
         const fetchFormationCount = async () => {
           try {
-            const response = await axios.get('/getformation');
+            const response = await axios.get('/api/getformation');
             
             setFormationCount(response.data.length.toString());
           } catch (error) {

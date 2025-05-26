@@ -14,13 +14,13 @@ const sendWelcomeEmail = async (email, nom, prenom, password) => {
   try {
     // Définir les options de l'email
     const mailOptions = {
-      from: `"UBICI RH" <${process.env.EMAIL_USER}>`,
+      from: `"UBCI RH" <${process.env.EMAIL_USER}>`,
       to: email,
       subject: 'Bienvenue chez UBCI HR MANAGER - Vos informations de connexion',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e1e1e1; border-radius: 5px;">
           <div style="text-align: center; padding: 10px; background-color: #f8f8f8; margin-bottom: 20px;">
-            <h2 style="color: #333;">Bienvenue chez UBICI</h2>
+            <h2 style="color: #333;">Bienvenue chez UBCI</h2>
           </div>
           
           <p>Bonjour <strong>${prenom} ${nom}</strong>,</p>
@@ -31,7 +31,7 @@ const sendWelcomeEmail = async (email, nom, prenom, password) => {
           
           <div style="background-color: #f8f8f8; padding: 15px; border-left: 4px solid #007bff; margin: 15px 0;">
             <p><strong>Email :</strong> ${email}</p>
-            <p><strong>Mot de passe temporaire :</strong> ${password}</p>
+            <p><strong>Mot de passe :</strong> ${password}</p>
           </div>
           
           <p>Pour des raisons de sécurité, nous vous recommandons de changer votre mot de passe lors de votre première connexion.</p>

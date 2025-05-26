@@ -1,7 +1,6 @@
 import React from 'react';
 
 const PowerBIDashboard = () => {
-  // Styles pour le composant
   const styles = {
     container: {
       width: '100%',
@@ -32,18 +31,22 @@ const PowerBIDashboard = () => {
     dashboardContainer: {
       flex: '1',
       padding: '20px',
-      backgroundColor: '#f5f7fa'
+      backgroundImage: 'url("https://www.ubci.tn/wp-content/themes/ubci/img/logo-banque-ubci-xs.png")',
+      backgroundRepeat: 'no-repeat',
+      backgroundPosition: 'center',
+      backgroundSize: '200px',
+      position: 'relative'
     },
     iframe: {
       width: '100%',
       height: '100%',
       border: 'none',
       borderRadius: '8px',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+      boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+      backgroundColor: 'rgba(255, 255, 255, 0.95)' // légère opacité pour améliorer la lisibilité
     }
   };
 
-  // URL de votre rapport Power BI
   const powerBiUrl = "https://app.powerbi.com/reportEmbed?reportId=627210b7-a2a9-48d4-9ac2-544ec0985ba3&autoAuth=true&ctid=dbd6664d-4eb9-46eb-99d8-5c43ba153c61";
 
   return (
